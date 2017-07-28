@@ -32,8 +32,8 @@ public class GesturePane extends Pane {
 
 	private final ChangeListener<Bounds> boundChangeListener;
 	private Parent target;
-	private final ObjectProperty<ScrollMode> scrollMode = new SimpleObjectProperty<>(
-			                                                                                ScrollMode.ZOOM);
+	private final ObjectProperty<ScrollMode> scrollMode = new SimpleObjectProperty<>(ScrollMode
+			                                                                                 .ZOOM);
 
 	private Affine affine = new Affine();
 
@@ -200,7 +200,8 @@ public class GesturePane extends Pane {
 	private void invalidateMinScale(ObservableValue<? extends Bounds> observable, Bounds oldValue,
 	                                Bounds newValue) {
 		Bounds bounds = target.getLayoutBounds();
-		minScale.set(Math.min(newValue.getWidth() / bounds.getWidth(),
+		minScale.set(Math.min(
+				newValue.getWidth() / bounds.getWidth(),
 				newValue.getHeight() / bounds.getHeight()));
 		if (currentScale.lessThan(minScale).get()) {
 			affine.setMxx(minScale.get());
@@ -230,6 +231,14 @@ public class GesturePane extends Pane {
 
 	private void translate(double x, double y) {
 		affine.prependTranslation(x, y);
+//		affine.getTx()
+		if (affine.getTx() > 0) affine.setTx(0);
+		if (affine.getTy() > 0) affine.setTy(0);
+
+
+		System.out.println("Aff ->" + affine.toString());
+
+		System.out.println("translate(" + affine.getTx() + "," + affine.getTy() + ")");
 
 	}
 

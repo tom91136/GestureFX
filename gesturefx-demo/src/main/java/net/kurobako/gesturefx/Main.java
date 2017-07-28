@@ -15,7 +15,7 @@ public class Main extends Application {
 	public void start(Stage primaryStage) throws Exception {
 		StackPane root = new StackPane();
 		Pane node = new Pane(new ImageView(getClass().getResource("/lena.png").toExternalForm()));
-		root.getChildren().add(new GesturePane(node , ScrollMode.PAN));
+		root.getChildren().add(new GesturePane(node , ScrollMode.ZOOM));
 		primaryStage.setScene(new Scene(root, 600,600));
 		primaryStage.show();
 	}
