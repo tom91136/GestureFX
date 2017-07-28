@@ -13,13 +13,15 @@ import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.beans.value.WritableValue;
 import javafx.geometry.Bounds;
+import javafx.geometry.HPos;
 import javafx.geometry.Point2D;
+import javafx.geometry.VPos;
 import javafx.scene.CacheHint;
 import javafx.scene.DepthTest;
-import javafx.scene.Parent;
+import javafx.scene.Node;
 import javafx.scene.input.GestureEvent;
 import javafx.scene.input.KeyCode;
-import javafx.scene.layout.Pane;
+import javafx.scene.layout.Region;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.transform.Affine;
 import javafx.util.Duration;
@@ -28,10 +30,10 @@ import javafx.util.Duration;
  * Pane that transforms children when a gesture is applied
  */
 @SuppressWarnings("unused")
-public class GesturePane extends Pane {
+public class GesturePane extends Region {
 
 	private final ChangeListener<Bounds> boundChangeListener;
-	private Parent target;
+	private Node target;
 	private final ObjectProperty<ScrollMode> scrollMode = new SimpleObjectProperty<>(ScrollMode
 			                                                                                 .ZOOM);
 
@@ -51,8 +53,8 @@ public class GesturePane extends Pane {
 		ZOOM, PAN
 	}
 
-	public GesturePane(Parent target, ScrollMode mode) {
-		super(target);
+	public GesturePane(Node target, ScrollMode mode) {
+		getChildren().add(target);
 		this.target = target;
 		this.scrollMode.setValue(mode);
 		boundChangeListener = this::invalidateMinScale;
@@ -73,13 +75,13 @@ public class GesturePane extends Pane {
 			cacheEnabled(false);
 		});
 
-		setOnMouseClicked(e -> {
-			if (e.getClickCount() == 2) {
-				currentScale.set(clamp(minScale.get(), maxScale.get(), currentScale.get() + 1));
-				scale(currentScale.get(), new Point2D(e.getX(), e.getY()));
-				e.consume();
-			}
-		});
+//		setOnMouseClicked(e -> {
+//			if (e.getClickCount() == 2) {
+//				currentScale.set(clamp(minScale.get(), maxScale.get(), currentScale.get() + 1));
+//				scale(currentScale.get(), new Point2D(e.getX(), e.getY()));
+//				e.consume();
+//			}
+//		});
 
 		setOnZoom(e -> {
 			scale(e.getZoomFactor(), mapPoint(fromGesture(e)));
@@ -143,6 +145,12 @@ public class GesturePane extends Pane {
 		target.getTransforms().add(affine);
 	}
 
+	@Override
+	protected void layoutChildren() {
+		super.layoutChildren();
+		layoutInArea(target, 0, 0, getWidth(), getHeight(), 0, HPos.LEFT, VPos.TOP);
+	}
+
 	public void zoomTo(double scale) {
 		double mxx = affine.getMxx();
 		double s = minScale.multiply(scale).get();
@@ -164,6 +172,8 @@ public class GesturePane extends Pane {
 	}
 
 	public void translateTo(Point2D point2D) {
+
+
 		Point2D centrePoint = target.parentToLocal(new Point2D(getWidth() / 2, getHeight() / 2));
 		// move to centre point and apply scale
 		Point2D newPoint = centrePoint.subtract(point2D);
@@ -199,14 +209,14 @@ public class GesturePane extends Pane {
 
 	private void invalidateMinScale(ObservableValue<? extends Bounds> observable, Bounds oldValue,
 	                                Bounds newValue) {
-		Bounds bounds = target.getLayoutBounds();
-		minScale.set(Math.min(
-				newValue.getWidth() / bounds.getWidth(),
-				newValue.getHeight() / bounds.getHeight()));
-		if (currentScale.lessThan(minScale).get()) {
-			affine.setMxx(minScale.get());
-			affine.setMyy(minScale.get());
-		}
+//		Bounds bounds = target.getLayoutBounds();
+//		minScale.set(Math.min(
+//				newValue.getWidth() / bounds.getWidth(),
+//				newValue.getHeight() / bounds.getHeight()));
+//		if (currentScale.lessThan(minScale).get()) {
+//			affine.setMxx(minScale.get());
+//			affine.setMyy(minScale.get());
+//		}
 	}
 
 	public void cover() {
@@ -232,18 +242,34 @@ public class GesturePane extends Pane {
 	private void translate(double x, double y) {
 		affine.prependTranslation(x, y);
 //		affine.getTx()
-		if (affine.getTx() > 0) affine.setTx(0);
-		if (affine.getTy() > 0) affine.setTy(0);
 
+
+		clampAtBound();
+
+	}
+
+
+	private void clampAtBound() {
+		double scaledWidth = affine.getMxx() * target.getLayoutBounds().getWidth();
+		double scaledHeight = affine.getMyy() * target.getLayoutBounds().getHeight();
+		double maxX = getWidth() - scaledWidth;
+		double maxY = getHeight() - scaledHeight;
+		if (affine.getTx() < maxX) affine.setTx(maxX);
+		if (affine.getTy() < maxY) affine.setTy(maxY);
+		if (affine.getTy() > 0) affine.setTy(0);
+		if (affine.getTx() > 0) affine.setTx(0);
+
+
+		if (getWidth() > scaledWidth || getHeight() > scaledHeight) {
+			// TODO clamp to min scale
+		}
 
 		System.out.println("Aff ->" + affine.toString());
-
-		System.out.println("translate(" + affine.getTx() + "," + affine.getTy() + ")");
-
 	}
 
 	private void scale(double factor, Point2D origin) {
 		affine.appendScale(factor, factor, origin);
+		clampAtBound();
 	}
 
 	private void cacheEnabled(boolean enable) {
