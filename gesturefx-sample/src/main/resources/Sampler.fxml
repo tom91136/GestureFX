@@ -4,9 +4,9 @@
 <?import javafx.scene.control.SplitPane?>
 <?import javafx.scene.control.TitledPane?>
 
-<SplitPane fx:id="root" dividerPositions="0.25" prefHeight="700.0" prefWidth="800.0" xmlns="http://javafx.com/javafx/8.0.121" xmlns:fx="http://javafx.com/fxml/1" fx:controller="net.kurobako.gesturefx.SamplerController">
+<SplitPane fx:id="root" dividerPositions="0.25" prefHeight="700.0" prefWidth="800.0" xmlns="http://javafx.com/javafx/8.0.111" xmlns:fx="http://javafx.com/fxml/1" fx:controller="net.kurobako.gesturefx.SamplerController">
    <items>
-      <ListView fx:id="samples" />
-      <TitledPane fx:id="samplePane" collapsible="false" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" minWidth="500.0" />
+      <ListView fx:id="samples" maxWidth="200.0" minWidth="200.0" prefWidth="200.0" />
+      <TitledPane fx:id="samplePane" collapsible="false" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" minWidth="400.0" />
    </items>
 </SplitPane>

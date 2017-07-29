@@ -7,14 +7,15 @@ import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
 import javafx.animation.Timeline;
 import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.ReadOnlyDoubleProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.beans.value.WritableValue;
-import javafx.collections.ObservableList;
 import javafx.geometry.Bounds;
 import javafx.geometry.HPos;
 import javafx.geometry.Orientation;
@@ -29,44 +30,16 @@ import javafx.scene.input.KeyCode;
 import javafx.scene.layout.Region;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.transform.Affine;
-import javafx.scene.transform.Translate;
 import javafx.util.Duration;
+
+import static net.kurobako.gesturefx.GesturePane.FitMode.*;
+import static net.kurobako.gesturefx.GesturePane.ScrollMode.*;
 
 /**
  * Pane that transforms children when a gesture is applied
  */
-@SuppressWarnings("unused")
+@SuppressWarnings({"unused", "WeakerAccess"})
 public class GesturePane extends Region {
-
-	private final ChangeListener<Bounds> boundChangeListener;
-	private Node target;
-
-
-	private final BooleanProperty gesture = new SimpleBooleanProperty(true);
-	private final ScrollBar horizontal;
-	private final ScrollBar vertical;
-
-	public FitMode getFitMode() {
-		return fitMode.get();
-	}
-
-	public ObjectProperty<FitMode> fitModeProperty() {
-		return fitMode;
-	}
-
-	private final ObjectProperty<FitMode> fitMode =
-			new SimpleObjectProperty<>(FitMode.COVER);
-	private final ObjectProperty<ScrollMode> scrollMode =
-			new SimpleObjectProperty<>(ScrollMode.ZOOM);
-
-	private Affine affine = new Affine();
-
-	private final SimpleDoubleProperty minScale = new SimpleDoubleProperty(0.55);
-	private final SimpleDoubleProperty maxScale = new SimpleDoubleProperty(10);
-	private final SimpleDoubleProperty currentScale = new SimpleDoubleProperty(1);
-
-
-	private Point2D lastPosition;
 
 
 	public enum FitMode {
@@ -89,20 +62,35 @@ public class GesturePane extends Region {
 		ZOOM, PAN
 	}
 
+	private Node target;
+
+
+	private final Affine affine = new Affine();
+	private final ScrollBar horizontal = new ScrollBar();
+	private final ScrollBar vertical = new ScrollBar();
+
+	private final BooleanProperty gesture = new SimpleBooleanProperty(true);
+	private final BooleanProperty verticalScrollBarEnabled = new SimpleBooleanProperty(true);
+	private final BooleanProperty horizontalScrollBarEnabled = new SimpleBooleanProperty(true);
+	private final ObjectProperty<FitMode> fitMode = new SimpleObjectProperty<>(COVER);
+	private final ObjectProperty<ScrollMode> scrollMode = new SimpleObjectProperty<>(ZOOM);
+
+	private final SimpleDoubleProperty minScale = new SimpleDoubleProperty(0.55);
+	private final SimpleDoubleProperty maxScale = new SimpleDoubleProperty(10);
+	private final SimpleDoubleProperty currentScale = new SimpleDoubleProperty(1);
+
+
+	private Point2D lastPosition;
+
+
 	public GesturePane(Node target, ScrollMode mode) {
+		this.target = target;
+		this.scrollMode.setValue(mode);
 		getChildren().add(target);
 		setMaxSize(Double.MAX_VALUE, Double.MAX_VALUE);
 		setMinSize(0, 0);
-		this.target = target;
-		this.scrollMode.setValue(mode);
-		boundChangeListener = this::invalidateMinScale;
 		setFocusTraversable(true);
-
-
-		setDepthTest(DepthTest.DISABLE);
-		cacheEnabled(true);
-		setCacheHint(CacheHint.SPEED);
-		setCacheShape(true);
+		cache(false);
 
 		// clip stuff that goes out of bound
 		Rectangle rectangle = new Rectangle();
@@ -110,30 +98,17 @@ public class GesturePane extends Region {
 		rectangle.widthProperty().bind(widthProperty());
 		setClip(rectangle);
 
-		parentProperty().addListener((o, p, n) -> {
-			if (p != null) p.layoutBoundsProperty().removeListener(boundChangeListener);
-			if (n != null) {
-				n.layoutBoundsProperty().addListener(boundChangeListener);
-			}
-		});
 
 		gesture.addListener(o -> setupGestures());
 		setupGestures();
 
-
 		target.getTransforms().add(affine);
 
-
-		horizontal = new ScrollBar();
 		horizontal.setOrientation(Orientation.HORIZONTAL);
 		horizontal.prefWidthProperty().bind(widthProperty());
-
-		vertical = new ScrollBar();
 		vertical.prefHeightProperty().bind(heightProperty());
 		vertical.setOrientation(Orientation.VERTICAL);
-
-		getChildren().add(horizontal);
-		getChildren().add(vertical);
+		getChildren().addAll(vertical, horizontal);
 
 
 		//TODO finish me
@@ -142,6 +117,9 @@ public class GesturePane extends Region {
 //		vertical.setMax(512);
 //		horizontal.setMax(512);
 
+		horizontal.managedProperty().bind(horizontalScrollBarEnabled);
+		vertical.managedProperty().bind(verticalScrollBarEnabled);
+
 		vertical.valueProperty().bindBidirectional(affine.txProperty());
 		horizontal.valueProperty().bindBidirectional(affine.tyProperty());
 
@@ -149,13 +127,11 @@ public class GesturePane extends Region {
 
 
 	private void setupGestures() {
-
 		boolean disabled = !gesture.get();
-
 
 		setOnMousePressed(disabled ? null : e -> {
 			lastPosition = new Point2D(e.getX(), e.getY());
-			cacheEnabled(true);
+			cache(true);
 			e.consume();
 		});
 
@@ -166,7 +142,7 @@ public class GesturePane extends Region {
 		});
 
 		setOnMouseReleased(disabled ? null : e -> {
-			cacheEnabled(false);
+			cache(false);
 		});
 
 //		setOnMouseClicked(e -> {
@@ -182,7 +158,7 @@ public class GesturePane extends Region {
 		});
 
 		setOnScrollStarted(disabled ? null : e -> {
-			cacheEnabled(true);
+			cache(true);
 		});
 		setOnScroll(disabled ? null : e -> {
 			switch (scrollMode.get()) {
@@ -220,35 +196,28 @@ public class GesturePane extends Region {
 			}
 		});
 
+	}
 
+	private void cache(boolean enable) {
+		setCacheHint(enable ? CacheHint.SPEED : CacheHint.QUALITY);
 	}
 
 
 	@Override
 	protected void layoutChildren() {
 		super.layoutChildren();
-//		layoutInArea(target, 0, 0 ,getWidth(), getHeight(), 0, HPos.LEFT, VPos.TOP);
 		clampAtBound(false);
 
-
-		layoutInArea(vertical, 0, 0,
-				getWidth(),
-				getHeight() - horizontal.getHeight(),
-				0, HPos.RIGHT, VPos.CENTER);
-		layoutInArea(horizontal, 0, 0,
-				getWidth() - vertical.getWidth(),
-				getHeight(),
-				0, HPos.CENTER, VPos.BOTTOM);
-
-//		double oX = -(getWidth() - target.getLayoutBounds().getWidth())/2;
-//		double oY = -(getHeight() - target.getLayoutBounds().getHeight())/2;
-
-//		target.setTranslateX(oX);
-//		target.setTranslateY(oY);
-//		target.setLayoutX(target.getLayoutX() + oX);
-//		target.setLayoutY(target.getLayoutY() + oY);
-
-
+		if (vertical.isManaged())
+			layoutInArea(vertical, 0, 0,
+			             getWidth(),
+			             getHeight() - horizontal.getHeight(),
+			             0, HPos.RIGHT, VPos.CENTER);
+		if (horizontal.isManaged())
+			layoutInArea(horizontal, 0, 0,
+			             getWidth() - vertical.getWidth(),
+			             getHeight(),
+			             0, HPos.CENTER, VPos.BOTTOM);
 	}
 
 	public void zoomTo(double scale) {
@@ -271,10 +240,14 @@ public class GesturePane extends Region {
 
 	}
 
+	public Point2D centrePoint() {
+		return target.parentToLocal(new Point2D(getWidth() / 2, getHeight() / 2));
+	}
+
 	public void translateTo(Point2D point2D) {
 
 
-		Point2D centrePoint = target.parentToLocal(new Point2D(getWidth() / 2, getHeight() / 2));
+		Point2D centrePoint = centrePoint();
 		// move to centre point and apply scale
 		Point2D newPoint = centrePoint.subtract(point2D);
 		affine.setTx(affine.getTx() + newPoint.getX() * affine.getMxx());
@@ -283,7 +256,7 @@ public class GesturePane extends Region {
 
 	public void translateTo(Point2D point2D, Duration duration, Runnable callback) {
 		// get current centre point
-		Point2D centrePoint = target.parentToLocal(new Point2D(getWidth() / 2, getHeight() / 2));
+		Point2D centrePoint = centrePoint();
 		// move to centre point and apply scale
 		Point2D newPoint = centrePoint.subtract(point2D);
 		double ttx = newPoint.getX() * affine.getMxx();
@@ -296,59 +269,32 @@ public class GesturePane extends Region {
 		}, callback);
 	}
 
-	public Point2D centrePoint() {
-		return target.parentToLocal(new Point2D(getWidth() / 2, getHeight() / 2));
-	}
-
 	public void zoomTo(double zoom, boolean animate) {
 		if (zoom < 1) throw new IllegalArgumentException("Zoom range must >= 1");
-		Point2D centrePoint = target.parentToLocal(new Point2D(getWidth() / 2, getHeight() / 2));
+		Point2D centrePoint = centrePoint();
 		affine.setMxx(minScale.multiply(zoom).get());
 		affine.setMyy(minScale.multiply(zoom).get());
 	}
 
-	private void invalidateMinScale(ObservableValue<? extends Bounds> observable, Bounds oldValue,
-	                                Bounds newValue) {
 
-//		System.out.println("Bound delta");
-//		clampAtBound();
-//		Bounds bounds = target.getLayoutBounds();
-//		minScale.set(Math.min(
-//				newValue.getWidth() / bounds.getWidth(),
-//				newValue.getHeight() / bounds.getHeight()));
-//		if (currentScale.lessThan(minScale).get()) {
-//			affine.setMxx(minScale.get());
-//			affine.setMyy(minScale.get());
-//		}
-	}
-
-	public void cover() {
-		zoomTo(1, false);
-	}
-
-	private Bounds targetBound() {
-		return target.getLayoutBounds();
+	// TODO set to FitMode with proper size
+	public void reset() {
+		zoomTo(1);
 	}
 
 	private Point2D mapPoint(Point2D point) {
 		return target.parentToLocal(point);
 	}
 
-	private static double clamp(double min, double max, double value) {
-		return Math.max(min, Math.min(max, value));
-	}
 
-	private static Point2D fromGesture(GestureEvent event) {
-		return new Point2D(event.getX(), event.getY());
+	private void scale(double factor, Point2D origin) {
+		affine.appendScale(factor, factor, origin);
+		clampAtBound(factor >= 1);
 	}
 
 	private void translate(double x, double y) {
 		affine.prependTranslation(x, y);
-//		affine.getTx()
-
-
 		clampAtBound(true);
-
 	}
 
 
@@ -366,69 +312,46 @@ public class GesturePane extends Region {
 		double maxY = height - scaledHeight;
 
 
-//		if (width < scaledWidth && height < scaledHeight) {
 		if (affine.getTx() < maxX) affine.setTx(maxX);
 		if (affine.getTy() < maxY) affine.setTy(maxY);
 		if (affine.getTy() > 0) affine.setTy(0);
 		if (affine.getTx() > 0) affine.setTx(0);
-//		}
-
-
-		if (width < scaledWidth && height < scaledHeight) return;
-		System.out.println(fitMode);
+		if (width >= scaledWidth)
+			affine.setTx((width - affine.getMxx() * targetWidth) / 2);
+		if (height >= scaledHeight)
+			affine.setTy((height - affine.getMyy() * targetHeight) / 2);
 
 		switch (fitMode.get()) {
 			case COVER:
-				if (width > scaledWidth || height > scaledHeight) {
-					double scale = Math.max(width / targetWidth, height / targetHeight);
-					affine.setTx((width - scale * targetWidth) / 2);
-					affine.setTy((height - scale * targetHeight) / 2);
-					affine.setMxx(scale);
-					affine.setMyy(scale);
-					System.out.println("!");
-				}
-				break;
+				if (width < scaledWidth && height < scaledHeight)
+					return;
+				double coverScale = Math.max(width / targetWidth, height / targetHeight);
+				affine.setMxx(coverScale);
+				affine.setMyy(coverScale);
+				//TODO need to centre the image back to origin
+//					affine.setTy((height - coverScale * targetHeight) / 2);
+//				if (height >= scaledHeight)
+//					affine.setTx((width - coverScale * targetWidth) / 2);
+//				break;
 			case FIT:
+				double fitScale = Math.min(width / targetWidth, height / targetHeight);
+				if (zoomPositive ||
+						    affine.getMxx() > fitScale ||
+						    affine.getMyy() > fitScale) return;
+				affine.setTx((width - fitScale * targetWidth) / 2);
+				affine.setTy((height - fitScale * targetHeight) / 2);
 
-
-				// if actual size < pane
-				if (width > scaledWidth || height > scaledHeight) {
-					double scale = Math.min(width / targetWidth, height / targetHeight);
-//					if(!zoomPositive) {
-					affine.setMxx(scale);
-					affine.setMyy(scale);
-
-//					}
-
-					affine.setTx((width - affine.getMxx() * targetWidth) / 2);
-					affine.setTy((height - affine.getMyy() * targetHeight) / 2);
-					System.out.println("Snap");
-				}
+				affine.setMxx(fitScale);
+				affine.setMyy(fitScale);
 				break;
 			case CENTER:
-				affine.setTx((width - affine.getMxx() * targetWidth) / 2);
-				affine.setTy((height - affine.getMyy() * targetHeight) / 2);
 				break;
 		}
 
-
-//		if (width > scaledWidth) affine.setMxx(width / targetWidth);
-//		if (height > scaledHeight) affine.setMyy(height / targetHeight);
-
 	}
 
-	private void scale(double factor, Point2D origin) {
-		System.out.println(factor);
-		affine.appendScale(factor, factor, origin);
-		clampAtBound(factor >= 1);
-	}
-
-	private void cacheEnabled(boolean enable) {
-		setCacheHint(enable ? CacheHint.SPEED : CacheHint.QUALITY);
-	}
 
 	Timeline timeline = new Timeline();
-
 	private void animateValue(double from,
 	                          double to,
 	                          Duration duration,
@@ -455,12 +378,39 @@ public class GesturePane extends Region {
 
 	}
 
-	public ScrollMode getScrollMode() {
-		return scrollMode.get();
+	//@formatter:off
+	public boolean isVerticalScrollBarEnabled() { return verticalScrollBarEnabled.get(); }
+	public BooleanProperty verticalScrollBarEnabledProperty() { return verticalScrollBarEnabled; }
+
+	public boolean isHorizontalScrollBarEnabled() { return horizontalScrollBarEnabled.get(); }
+	public BooleanProperty horizontalScrollBarEnabledProperty() { return horizontalScrollBarEnabled; }
+	//@formatter:on
+
+	public boolean isGesture() { return gesture.get(); }
+	public BooleanProperty gestureProperty() { return gesture; }
+
+	public double getMinScale() { return minScale.get(); }
+	public DoubleProperty minScaleProperty() { return minScale; }
+
+	public double getMaxScale() { return maxScale.get(); }
+	public DoubleProperty maxScaleProperty() { return maxScale; }
+
+	public double getCurrentScale() { return currentScale.get(); }
+	public ReadOnlyDoubleProperty currentScaleProperty() { return currentScale; }
+
+	public ScrollMode getScrollMode() { return scrollMode.get(); }
+	public ObjectProperty<ScrollMode> scrollModeProperty() { return scrollMode; }
+
+	public FitMode getFitMode() { return fitMode.get(); }
+	public ObjectProperty<FitMode> fitModeProperty() { return fitMode; }
+
+
+	private static double clamp(double min, double max, double value) {
+		return Math.max(min, Math.min(max, value));
 	}
 
-	public ObjectProperty<ScrollMode> scrollModeProperty() {
-		return scrollMode;
+	private static Point2D fromGesture(GestureEvent event) {
+		return new Point2D(event.getX(), event.getY());
 	}
 
 }

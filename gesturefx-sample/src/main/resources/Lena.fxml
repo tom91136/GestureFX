@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.CheckBox?>
+<?import javafx.scene.control.ComboBox?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.layout.ColumnConstraints?>
+<?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.RowConstraints?>
+<?import javafx.scene.layout.StackPane?>
+
+
+<HBox xmlns="http://javafx.com/javafx/8.0.111" xmlns:fx="http://javafx.com/fxml/1" fx:controller="net.kurobako.gesturefx.LenaSample$GesturePropertyController">
+   <children>
+      <StackPane fx:id="viewport" style="-fx-background-color: #333;" HBox.hgrow="ALWAYS" />
+      <GridPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" HBox.hgrow="SOMETIMES">
+        <columnConstraints>
+          <ColumnConstraints hgrow="NEVER" />
+            <ColumnConstraints hgrow="NEVER" minWidth="8.0" />
+          <ColumnConstraints hgrow="ALWAYS" />
+        </columnConstraints>
+        <rowConstraints>
+          <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+          <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+          <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+            <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+            <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+            <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+            <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+            <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+            <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+            <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+        </rowConstraints>
+         <children>
+            <Label text="FitMode" />
+            <Label text="ScrollMode" GridPane.rowIndex="1" />
+            <Label text="Gesture" GridPane.rowIndex="2" />
+            <Label text="VerticalScrollBar" GridPane.rowIndex="3" />
+            <Label text="HorizontalScrollBar" GridPane.rowIndex="4" />
+            <ComboBox fx:id="fitMode" prefWidth="150.0" GridPane.columnIndex="2" />
+            <ComboBox fx:id="scrollMode" prefWidth="150.0" GridPane.columnIndex="2" GridPane.rowIndex="1" />
+            <CheckBox fx:id="gesture" mnemonicParsing="false" selected="true" GridPane.columnIndex="2" GridPane.rowIndex="2" />
+            <CheckBox fx:id="verticalScrollBar" mnemonicParsing="false" selected="true" GridPane.columnIndex="2" GridPane.rowIndex="3" />
+            <CheckBox fx:id="horizontalScrollBar" mnemonicParsing="false" selected="true" GridPane.columnIndex="2" GridPane.rowIndex="4" />
+            <Label text="MinSacle" GridPane.rowIndex="5" />
+            <Label text="MaxScale" GridPane.rowIndex="7" />
+            <Label text="CurrentScale" GridPane.rowIndex="8" />
+            <Label text="Label" GridPane.rowIndex="9" />
+            <Label fx:id="minScale" text="0" GridPane.columnIndex="2" GridPane.rowIndex="5" />
+            <Label fx:id="maxScale" text="0" GridPane.columnIndex="2" GridPane.rowIndex="7" />
+            <Label fx:id="currentScale" text="0" GridPane.columnIndex="2" GridPane.rowIndex="8" />
+            <Label text="0" GridPane.columnIndex="2" GridPane.rowIndex="9" />
+            <Label text="Ops" GridPane.rowIndex="6" />
+            <Button fx:id="reset" mnemonicParsing="false" text="Reset viewport" GridPane.columnIndex="2" GridPane.rowIndex="6" />
+         </children>
+         <padding>
+            <Insets bottom="8.0" left="8.0" right="8.0" top="8.0" />
+         </padding>
+      </GridPane>
+   </children>
+</HBox>
