@@ -1,12 +1,18 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import javafx.scene.control.ListView?>
-<?import javafx.scene.control.SplitPane?>
-<?import javafx.scene.control.TitledPane?>
+<?import javafx.scene.control.Hyperlink?>
+<?import javafx.scene.control.TabPane?>
+<?import javafx.scene.control.ToolBar?>
+<?import javafx.scene.layout.VBox?>
 
-<SplitPane fx:id="root" dividerPositions="0.25" prefHeight="700.0" prefWidth="800.0" xmlns="http://javafx.com/javafx/8.0.111" xmlns:fx="http://javafx.com/fxml/1" fx:controller="net.kurobako.gesturefx.SamplerController">
-   <items>
-      <ListView fx:id="samples" maxWidth="200.0" minWidth="200.0" prefWidth="200.0" />
-      <TitledPane fx:id="samplePane" collapsible="false" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" minWidth="400.0" />
-   </items>
-</SplitPane>
+
+<VBox fx:id="root" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="800.0" prefWidth="1000.0" xmlns="http://javafx.com/javafx/8.0.111" xmlns:fx="http://javafx.com/fxml/1" fx:controller="net.kurobako.gesturefx.SamplerController">
+   <children>
+      <ToolBar prefHeight="40.0" prefWidth="200.0">
+        <items>
+            <Hyperlink fx:id="link" text="Hyperlink" />
+        </items>
+      </ToolBar>
+      <TabPane fx:id="tabs" tabClosingPolicy="UNAVAILABLE" VBox.vgrow="ALWAYS" />
+   </children>
+</VBox>

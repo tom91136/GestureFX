@@ -19,6 +19,6 @@ public class WebViewSample implements Sample {
 		webview.setPickOnBounds(true);
 		webview.setMouseTransparent(true);
 		webview.getEngine().load("http://purecss3.net/wind/Wind_Electricity.html");
-		return new GesturePane(webview, ScrollMode.ZOOM);
+		return new GesturePane(webview);
 	}
 }

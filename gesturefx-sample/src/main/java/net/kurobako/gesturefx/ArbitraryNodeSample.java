@@ -21,7 +21,7 @@ public class ArbitraryNodeSample implements Sample{
 			if(webview != null){
 				webview.getEngine().load("http://purecss3.net/doraemon/doraemon_css3.html");
 			}
-			return new GesturePane(node, ScrollMode.ZOOM);
+			return new GesturePane(node);
 
 		} catch (IOException e) {
 			throw new RuntimeException(e);

@@ -6,27 +6,26 @@ import javafx.animation.Interpolator;
 import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
 import javafx.animation.Timeline;
+import javafx.beans.binding.DoubleBinding;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.ObjectProperty;
-import javafx.beans.property.ReadOnlyDoubleProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.beans.property.SimpleObjectProperty;
-import javafx.beans.value.ChangeListener;
-import javafx.beans.value.ObservableValue;
+import javafx.beans.value.ObservableDoubleValue;
 import javafx.beans.value.WritableValue;
-import javafx.geometry.Bounds;
 import javafx.geometry.HPos;
 import javafx.geometry.Orientation;
 import javafx.geometry.Point2D;
 import javafx.geometry.VPos;
 import javafx.scene.CacheHint;
-import javafx.scene.DepthTest;
 import javafx.scene.Node;
 import javafx.scene.control.ScrollBar;
 import javafx.scene.input.GestureEvent;
 import javafx.scene.input.KeyCode;
+import javafx.scene.input.ScrollEvent;
+import javafx.scene.input.ZoomEvent;
 import javafx.scene.layout.Region;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.transform.Affine;
@@ -66,26 +65,26 @@ public class GesturePane extends Region {
 
 
 	private final Affine affine = new Affine();
-	private final ScrollBar horizontal = new ScrollBar();
-	private final ScrollBar vertical = new ScrollBar();
+	private final ScrollBar hBar = new ScrollBar();
+	private final ScrollBar vBar = new ScrollBar();
 
-	private final BooleanProperty gesture = new SimpleBooleanProperty(true);
-	private final BooleanProperty verticalScrollBarEnabled = new SimpleBooleanProperty(true);
-	private final BooleanProperty horizontalScrollBarEnabled = new SimpleBooleanProperty(true);
-	private final ObjectProperty<FitMode> fitMode = new SimpleObjectProperty<>(COVER);
-	private final ObjectProperty<ScrollMode> scrollMode = new SimpleObjectProperty<>(ZOOM);
+	private final BooleanProperty gestureEnabled = new SimpleBooleanProperty(true);
+	private final BooleanProperty vBarEnabled = new SimpleBooleanProperty(true);
+	private final BooleanProperty hBarEnabled = new SimpleBooleanProperty(true);
+	private final ObjectProperty<FitMode> fitMode = new SimpleObjectProperty<>(FIT);
+	private final ObjectProperty<ScrollMode> scrollMode = new SimpleObjectProperty<>(PAN);
 
 	private final SimpleDoubleProperty minScale = new SimpleDoubleProperty(0.55);
 	private final SimpleDoubleProperty maxScale = new SimpleDoubleProperty(10);
-	private final SimpleDoubleProperty currentScale = new SimpleDoubleProperty(1);
+
+	private final SimpleDoubleProperty scrollZoomFactor = new SimpleDoubleProperty(1);
 
 
 	private Point2D lastPosition;
 
 
-	public GesturePane(Node target, ScrollMode mode) {
+	public GesturePane(Node target) {
 		this.target = target;
-		this.scrollMode.setValue(mode);
 		getChildren().add(target);
 		setMaxSize(Double.MAX_VALUE, Double.MAX_VALUE);
 		setMinSize(0, 0);
@@ -99,35 +98,69 @@ public class GesturePane extends Region {
 		setClip(rectangle);
 
 
-		gesture.addListener(o -> setupGestures());
+		gestureEnabled.addListener(o -> setupGestures());
 		setupGestures();
 
 		target.getTransforms().add(affine);
 
-		horizontal.setOrientation(Orientation.HORIZONTAL);
-		horizontal.prefWidthProperty().bind(widthProperty());
-		vertical.prefHeightProperty().bind(heightProperty());
-		vertical.setOrientation(Orientation.VERTICAL);
-		getChildren().addAll(vertical, horizontal);
+		hBar.setOrientation(Orientation.HORIZONTAL);
+		hBar.prefWidthProperty().bind(widthProperty());
+		vBar.prefHeightProperty().bind(heightProperty());
+		vBar.setOrientation(Orientation.VERTICAL);
+		getChildren().addAll(vBar, hBar);
 
 
-		//TODO finish me
-//		vertical.setMin(0);
-//		horizontal.setMin(0);
-//		vertical.setMax(512);
-//		horizontal.setMax(512);
 
-		horizontal.managedProperty().bind(horizontalScrollBarEnabled);
-		vertical.managedProperty().bind(verticalScrollBarEnabled);
 
-		vertical.valueProperty().bindBidirectional(affine.txProperty());
-		horizontal.valueProperty().bindBidirectional(affine.tyProperty());
+
+		hBar.visibleProperty().bind(hBar.managedProperty());
+		hBar.managedProperty().bind(hBarEnabled);
+		vBar.visibleProperty().bind(vBar.managedProperty());
+		vBar.managedProperty().bind(vBarEnabled);
+
+
+		target.layoutBoundsProperty().addListener(o -> {
+			vBar.setMin(0);
+			hBar.setMin(0);
+			vBar.setMax(target.getLayoutBounds().getWidth() * affine.getMxx());
+			hBar.setMax(target.getLayoutBounds().getHeight() * affine.getMyy());
+
+			System.out.println(vBar.getMax() +" <> "+ hBar.getMax());
+
+		});
+
+
+
+
+		vBar.setMin(0);
+		hBar.setMin(0);
+
+
+		vBar.maxProperty().bind(affine.mxxProperty().multiply(new DoubleBinding() {
+			@Override
+			protected double computeValue() { return target.getLayoutBounds().getWidth(); }
+		}));
+
+		hBar.maxProperty().bind(affine.myyProperty().multiply(new DoubleBinding() {
+			@Override
+			protected double computeValue() { return target.getLayoutBounds().getHeight(); }
+		}));
+
+
+		vBar.valueProperty().addListener(o -> {
+			affine.setTy(-vBar.getValue());
+			System.out.println(vBar.getValue());
+		});
+		hBar.valueProperty().addListener(o -> affine.setTx(-hBar.getValue()));
+
+//		affine.txProperty().addListener(System.out::println);
+//		affine.tyProperty().addListener(System.out::println);
 
 	}
 
 
 	private void setupGestures() {
-		boolean disabled = !gesture.get();
+		boolean disabled = !gestureEnabled.get();
 
 		setOnMousePressed(disabled ? null : e -> {
 			lastPosition = new Point2D(e.getX(), e.getY());
@@ -160,24 +193,41 @@ public class GesturePane extends Region {
 		setOnScrollStarted(disabled ? null : e -> {
 			cache(true);
 		});
-		setOnScroll(disabled ? null : e -> {
+
+
+		addEventHandler(ZoomEvent.ZOOM, (ZoomEvent event) -> {
+			scale(event.getZoomFactor(), mapPoint(fromGesture(event)));
+			event.consume();
+		});
+
+
+		setEventHandler(ScrollEvent.SCROLL, e -> {
+
+			// mouse scroll events only
+			if (e.getTouchCount() > 0) return;
+
+
+			// TODO might be driver and platform specific
+			// TODO test on macOS
+			// TODO test on Linux
+			// TODO test on different Windows versions
+			// TODO test on machines with different touchpad vendor
+
+			// pinch to zoom on trackpad
+			if (e.isShortcutDown()) {
+				// TODO test for different deltaY values, value could be bad
+				double zoomFactor = 0.095* getScrollZoomFactor();
+				if (e.getDeltaY() < 0) zoomFactor *= -1;
+				scale(1 + zoomFactor, mapPoint(fromGesture(e)));
+				return;
+			}
+
 			switch (scrollMode.get()) {
 				case ZOOM:
-					double zoomFactor = minScale.divide(maxScale).get();
+					double zoomFactor = 0.095 * getScrollZoomFactor();
 					if (e.getDeltaY() < 0) zoomFactor *= -1;
-					double oldScale = currentScale.get();
-					currentScale.set(currentScale.add(zoomFactor).get());
-					// no delta
-					if (currentScale.isEqualTo(oldScale, 0.01).get()) return;
-					double delta = 1 + (currentScale.subtract(oldScale).get());
-					double scale = affine.getMxx() * delta;
-					// out of bound
-					if ((scale <= minScale.get() && zoomFactor < 0) ||
-							    (scale >= maxScale.get() && zoomFactor > 0)) {
-						return;
-					}
-					scale(delta, mapPoint(fromGesture(e)));
-					break;
+					scale(1 + zoomFactor, mapPoint(fromGesture(e)));
+					return;
 				case PAN:
 					translate(e.getDeltaX(), e.getDeltaY());
 					break;
@@ -208,16 +258,19 @@ public class GesturePane extends Region {
 		super.layoutChildren();
 		clampAtBound(false);
 
-		if (vertical.isManaged())
-			layoutInArea(vertical, 0, 0,
+		if (vBar.isManaged())
+			layoutInArea(vBar, 0, 0,
 			             getWidth(),
-			             getHeight() - horizontal.getHeight(),
+			             getHeight() - (hBar.isVisible() ? hBar.getHeight() : 0),
 			             0, HPos.RIGHT, VPos.CENTER);
-		if (horizontal.isManaged())
-			layoutInArea(horizontal, 0, 0,
-			             getWidth() - vertical.getWidth(),
+		if (hBar.isManaged())
+			layoutInArea(hBar, 0, 0,
+			             getWidth() - (vBar.isVisible() ? vBar.getWidth() : 0),
 			             getHeight(),
 			             0, HPos.CENTER, VPos.BOTTOM);
+
+
+
 	}
 
 	public void zoomTo(double scale) {
@@ -378,32 +431,24 @@ public class GesturePane extends Region {
 
 	}
 
-	//@formatter:off
-	public boolean isVerticalScrollBarEnabled() { return verticalScrollBarEnabled.get(); }
-	public BooleanProperty verticalScrollBarEnabledProperty() { return verticalScrollBarEnabled; }
-
-	public boolean isHorizontalScrollBarEnabled() { return horizontalScrollBarEnabled.get(); }
-	public BooleanProperty horizontalScrollBarEnabledProperty() { return horizontalScrollBarEnabled; }
-	//@formatter:on
-
-	public boolean isGesture() { return gesture.get(); }
-	public BooleanProperty gestureProperty() { return gesture; }
-
+	public boolean isVBarEnabled() { return vBarEnabled.get(); }
+	public BooleanProperty vBarEnabledProperty() { return vBarEnabled; }
+	public boolean isHBarEnabled() { return hBarEnabled.get(); }
+	public BooleanProperty hBarEnabledProperty() { return hBarEnabled; }
+	public boolean isGestureEnabled() { return gestureEnabled.get(); }
+	public BooleanProperty gestureEnabledProperty() { return gestureEnabled; }
 	public double getMinScale() { return minScale.get(); }
 	public DoubleProperty minScaleProperty() { return minScale; }
-
 	public double getMaxScale() { return maxScale.get(); }
 	public DoubleProperty maxScaleProperty() { return maxScale; }
-
-	public double getCurrentScale() { return currentScale.get(); }
-	public ReadOnlyDoubleProperty currentScaleProperty() { return currentScale; }
-
+	public double getCurrentScale() { return affine.getMxx(); }
+	public DoubleProperty currentScaleProperty() { return affine.mxxProperty(); }
+	public double getScrollZoomFactor() { return scrollZoomFactor.get(); }
+	public SimpleDoubleProperty scrollZoomFactorProperty() { return scrollZoomFactor; }
 	public ScrollMode getScrollMode() { return scrollMode.get(); }
 	public ObjectProperty<ScrollMode> scrollModeProperty() { return scrollMode; }
-
 	public FitMode getFitMode() { return fitMode.get(); }
 	public ObjectProperty<FitMode> fitModeProperty() { return fitMode; }
-
 
 	private static double clamp(double min, double max, double value) {
 		return Math.max(min, Math.min(max, value));
