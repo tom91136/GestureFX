@@ -11,10 +11,8 @@
 
     <modules>
         <module>gesturefx</module>
-        <module>gesturefx-demo</module>
+        <module>gesturefx-sample</module>
     </modules>
-
-
 
     <build>
         <plugins>
@@ -28,6 +26,5 @@
             </plugin>
         </plugins>
     </build>
-
 
 </project>

@@ -6,7 +6,7 @@ A lightweight gesture enabled pane for JavaFX
  
 Features
 
- * Accepts any `Node`
+ * Accepts any `Node` or implementations of `Transformable`
  * Pinch-to-zoom
  * Configurable behavior for trackpad events
  * Works with touch screen devices

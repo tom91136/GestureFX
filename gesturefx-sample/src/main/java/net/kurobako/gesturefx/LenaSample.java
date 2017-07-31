@@ -77,6 +77,8 @@ public class LenaSample implements Sample {
 			ImageView view = new ImageView(LENA);
 			GesturePane gesturePane = new GesturePane(view);
 
+			gesturePane.addEventHandler(AffineEvent.CHANGED, e -> System.out.println(e.getAffine()));
+
 			viewport.getChildren().add(gesturePane);
 
 
@@ -85,8 +87,9 @@ public class LenaSample implements Sample {
 				FileChooser chooser = new FileChooser();
 				chooser.setTitle("Select image");
 				chooser.setSelectedExtensionFilter(new ExtensionFilter("JavaFX supported image",
-				                                                       "*.png", "*.jpg", "*.gif"));
+						                                                      "*.png", "*.jpg", "*.gif"));
 				File selected = chooser.showOpenDialog(root.getScene().getWindow());
+				if (selected == null) return;
 				try {
 					view.setImage(new Image(new FileInputStream(selected)));
 				} catch (FileNotFoundException ex) {
@@ -120,7 +123,8 @@ public class LenaSample implements Sample {
 			minScale.textProperty().bind(gesturePane.minScaleProperty().asString(FORMAT));
 			maxScale.textProperty().bind(gesturePane.maxScaleProperty().asString(FORMAT));
 			currentScale.textProperty().bind(gesturePane.currentScaleProperty().asString(FORMAT));
-			zoomFactor.textProperty().bind(gesturePane.scrollZoomFactorProperty().asString(FORMAT));
+			zoomFactor.textProperty().bind(gesturePane.scrollZoomFactorProperty().asString
+					                                                                      (FORMAT));
 
 			minScaleSlider.setValue(gesturePane.getMinScale());
 			gesturePane.minScaleProperty().bind(minScaleSlider.valueProperty());

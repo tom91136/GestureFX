@@ -46,7 +46,8 @@ public class SamplerController implements Initializable {
 	public void initialize(URL location, ResourceBundle resources) {
 
 		List<SampleEntry> samples = Arrays.asList(
-				new SampleEntry("Lena(ImageView)", LenaSample::new)
+				new SampleEntry("MandelbrotSet(Canvas)", MandelbrotSetSample::new),
+		new SampleEntry("Lena(ImageView)", LenaSample::new)
 //				new SampleEntry("Arbitrary Node", ArbitraryNodeSample::new),
 //				new SampleEntry("WebView", WebViewSample::new)
 		                                               );
