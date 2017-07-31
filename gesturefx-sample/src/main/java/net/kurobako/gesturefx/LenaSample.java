@@ -35,7 +35,9 @@ import static javafx.collections.FXCollections.*;
 
 public class LenaSample implements Sample {
 
-	public static final String FORMAT = "%.5f";
+	static final String FORMAT = "%.5f";
+	static final String LENA = LenaSample.class.getResource("/lena.png").toExternalForm();
+
 	@Override
 	public Node mkRoot() {
 		try {
@@ -69,15 +71,11 @@ public class LenaSample implements Sample {
 		@FXML private Button reset;
 
 
-		private static final String LENA = LenaSample.class.getResource("/lena.png")
-				                                   .toExternalForm();
-
 		@Override
 		public void initialize(URL location, ResourceBundle resources) {
 			ImageView view = new ImageView(LENA);
 			GesturePane gesturePane = new GesturePane(view);
 
-			gesturePane.addEventHandler(AffineEvent.CHANGED, e -> System.out.println(e.getAffine()));
 
 			viewport.getChildren().add(gesturePane);
 
@@ -93,8 +91,7 @@ public class LenaSample implements Sample {
 				try {
 					view.setImage(new Image(new FileInputStream(selected)));
 				} catch (FileNotFoundException ex) {
-					new Alert(
-							         AlertType.ERROR,
+					new Alert(AlertType.ERROR,
 							         "Unable to open image file: " + ex.getMessage(),
 							         ButtonType.OK)
 							.showAndWait();

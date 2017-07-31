@@ -6,6 +6,8 @@ import java.util.List;
 import java.util.ResourceBundle;
 import java.util.function.Supplier;
 
+import javax.swing.text.View;
+
 import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
@@ -46,17 +48,15 @@ public class SamplerController implements Initializable {
 	public void initialize(URL location, ResourceBundle resources) {
 
 		List<SampleEntry> samples = Arrays.asList(
-				new SampleEntry("MandelbrotSet(Canvas)", MandelbrotSetSample::new),
-		new SampleEntry("Lena(ImageView)", LenaSample::new)
-//				new SampleEntry("Arbitrary Node", ArbitraryNodeSample::new),
-//				new SampleEntry("WebView", WebViewSample::new)
-		                                               );
+				new SampleEntry("Lena(ImageView)", LenaSample::new),
+				new SampleEntry("ViewportRect(ImageView)", ViewportRectSample::new),
+				new SampleEntry("Arbitrary Node", ArbitraryNodeSample::new),
+				new SampleEntry("WebView", WebViewSample::new));
 
 
 		samples.forEach(s -> {
 			tabs.getTabs().add(new Tab(s.name, s.sampleFactory.get().mkRoot()));
 		});
-
 
 
 	}

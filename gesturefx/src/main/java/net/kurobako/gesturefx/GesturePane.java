@@ -40,12 +40,18 @@ import static net.kurobako.gesturefx.GesturePane.FitMode.*;
 import static net.kurobako.gesturefx.GesturePane.ScrollMode.*;
 
 /**
- * Pane that transforms children when a gesture is applied
+ * Pane that applies transformations to some implementation of {@link Transformable} when a
+ * gesture is applied
  */
 @SuppressWarnings({"unused", "WeakerAccess"})
 public class GesturePane extends Region {
 
 
+	static final double DEFAULT_SCROLL_FACTOR = 0.095;
+
+	/**
+	 * Modes for different minimum scales
+	 */
 	public enum FitMode {
 		/**
 		 * Node will be scaled to cover the entire pane
@@ -62,12 +68,21 @@ public class GesturePane extends Region {
 	}
 
 
+	/**
+	 * Modes for interpreting scroll events
+	 */
 	public enum ScrollMode {
-		ZOOM, PAN
+		/**
+		 * Treat scroll as zoom
+		 */
+		ZOOM,
+		/**
+		 * Treat scroll as pan
+		 */
+		PAN
 	}
 
 	private Transformable target;
-
 
 	private final Affine affine = new Affine();
 	private final ScrollBar hBar = new ScrollBar();
@@ -85,9 +100,23 @@ public class GesturePane extends Region {
 
 	private Point2D lastPosition;
 
+	/**
+	 * A target that can be transformed
+	 */
 	public interface Transformable {
+		/**
+		 * @return the target width, must not be negative
+		 */
 		double width();
+		/**
+		 * @return the target height, must no be negative
+		 */
 		double height();
+		/**
+		 * Sets the transformation for the target, only happens once
+		 *
+		 * @param affine the transformation; never null
+		 */
 		void setTransform(Affine affine);
 	}
 
@@ -102,11 +131,22 @@ public class GesturePane extends Region {
 		public void setTransform(Affine affine) { node.getTransforms().add(affine); }
 	}
 
+	/**
+	 * Creates a new {@link GesturePane} with the specified node as children(i.e the node gets
+	 * added to the pane)
+	 *
+	 * @param node the node to apply transforms to
+	 */
 	public GesturePane(Node node) {
 		this(new NodeTransformable(node));
 		getChildren().add(0, node);
 	}
 
+	/**
+	 * Create a new {@link GesturePane} with the specified {@link Transformable}
+	 *
+	 * @param target the transformable to apply the transforms to
+	 */
 	public GesturePane(Transformable target) {
 		this.target = target;
 //		getChildren().add(target);
@@ -165,6 +205,11 @@ public class GesturePane extends Region {
 
 		hBar.valueProperty().bindBidirectional(affine.txProperty());
 		vBar.valueProperty().bindBidirectional(affine.tyProperty());
+
+
+		affine.setOnTransformChanged(e -> fireAffineEvent(AffineEvent.CHANGED));
+//		affine.txProperty().addListener(o -> System.out.println(o));
+
 	}
 
 
@@ -175,12 +220,6 @@ public class GesturePane extends Region {
 		};
 	}
 
-	private abstract class EventHandler2<T extends Event> implements EventHandler<T> {
-		@Override
-		public void handle(T event) {
-
-		}
-	}
 
 	private void setupGestures() {
 		boolean disabled = !gestureEnabled.get();
@@ -238,7 +277,7 @@ public class GesturePane extends Region {
 			// pinch to zoom on trackpad
 			if (e.isShortcutDown()) {
 				// TODO test for different deltaY values, value could be bad
-				double zoomFactor = 0.095 * getScrollZoomFactor();
+				double zoomFactor = DEFAULT_SCROLL_FACTOR * getScrollZoomFactor();
 				if (e.getDeltaY() < 0) zoomFactor *= -1;
 				scale(1 + zoomFactor, fromGesture(e));
 				fireAffineEvent(CHANGED);
@@ -247,7 +286,7 @@ public class GesturePane extends Region {
 
 			switch (scrollMode.get()) {
 				case ZOOM:
-					double zoomFactor = 0.095 * getScrollZoomFactor();
+					double zoomFactor = DEFAULT_SCROLL_FACTOR * getScrollZoomFactor();
 					if (e.getDeltaY() < 0) zoomFactor *= -1;
 					scale(1 + zoomFactor, fromGesture(e));
 					return;
@@ -277,23 +316,29 @@ public class GesturePane extends Region {
 		setCacheHint(enable ? CacheHint.SPEED : CacheHint.QUALITY);
 	}
 
+	public double getTargetWidth() { return target.width(); }
+	public double getTargetHeight() { return target.height(); }
+
+	public double getViewportWidth() { return getTargetWidth() - vBarWidth(); }
+	public double getViewportHeight() { return getTargetHeight() - hBarHeight(); }
+
+	private double hBarHeight() { return hBar.isVisible() ? hBar.getHeight() : 0; }
+	private double vBarWidth() { return vBar.isVisible() ? vBar.getWidth() : 0; }
 
 	@Override
-	protected void layoutChildren() {
+	protected final void layoutChildren() {
 		super.layoutChildren();
 		clampAtBound(false);
-
-//		layoutInArea(target, 0, 0, viewportWidthProperty.get(), viewportHeightProperty.get(), 0,
-// HPos.LEFT, VPos.TOP);
+		fireAffineEvent(AffineEvent.CHANGED);
 
 		if (vBar.isManaged())
 			layoutInArea(vBar, 0, 0,
 					getWidth(),
-					getHeight() - (hBar.isVisible() ? hBar.getHeight() : 0),
+					getHeight() - hBarHeight(),
 					0, HPos.RIGHT, VPos.CENTER);
 		if (hBar.isManaged())
 			layoutInArea(hBar, 0, 0,
-					getWidth() - (vBar.isVisible() ? vBar.getWidth() : 0),
+					getWidth() - vBarWidth(),
 					getHeight(),
 					0, HPos.CENTER, VPos.BOTTOM);
 	}
@@ -313,8 +358,11 @@ public class GesturePane extends Region {
 		double mxx = affine.getMxx();
 		double s = minScale.multiply(scale).get();
 		double step = mxx + (s - mxx);
-		affine.setMxx(step);
-		affine.setMyy(step);
+
+		// TODO fix to centre
+
+		affine.setMxx(scale);
+		affine.setMyy(scale);
 	}
 
 	public void zoomTo(double scale, Duration duration, Runnable callback) {
@@ -368,14 +416,23 @@ public class GesturePane extends Region {
 //	}
 
 
-	// TODO set to FitMode with proper size
-	public void reset() {
+	/**
+	 * Resets scale to {@code 1.0} and conditionally centres the image depending on the current
+	 * {@link FitMode}
+	 */
+	public final void reset() {
 		zoomTo(1);
+		clampAtBound(false);
 	}
 
 
 	private void scale(double factor, Point2D origin) {
-		affine.prependScale(factor, factor, origin);
+		double delta = factor;
+		double scale = affine.getMxx() * factor;
+		// clamp at min and max
+		if (scale > getMaxScale()) delta = getMaxScale() / affine.getMxx();
+		if (scale < getMinScale()) delta = getMinScale() / affine.getMxx();
+		affine.prependScale(delta, delta, origin);
 		clampAtBound(factor >= 1);
 	}
 
@@ -385,14 +442,15 @@ public class GesturePane extends Region {
 	}
 
 	@Override
-	protected double computePrefWidth(double height) {
-		return getInsets().getLeft() + 0 + getInsets().getRight();
+	protected final double computePrefWidth(double height) {
+		return getInsets().getLeft() + target.width() + getInsets().getRight();
 	}
 
 	@Override
-	protected double computePrefHeight(double width) {
-		return getInsets().getTop() + 0 + getInsets().getBottom();
+	protected final double computePrefHeight(double width) {
+		return getInsets().getTop() + target.height() + getInsets().getBottom();
 	}
+
 
 	private void clampAtBound(boolean zoomPositive) {
 		double targetWidth = target.width();

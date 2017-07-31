@@ -37,15 +37,29 @@ Alternatively, you can download the following jar and add it to your classpath:
 
 // TODO add jar path
 
+You can download the samples [here]() or clone the project and run:
+
+    
+
 ## Quick start
 
-Pass the node you want to the constructor:
 
 ```java
     Node node = new ImageView(getClass().getResource("/lena.png").toExternalForm());
-    GesturePane page = new GesturePane(node , ScrollMode.ZOOM);
+    GesturePane page = new GesturePane(node);
 ```
- 
+
+Take a look at the [samples](TODO) for more interesting examples
+
+## Samples
+
+Several samples have been included demoing several uses of the gesture pane.
+
+You can download the sample jar [here](TODO) or clone the project and run:
+
+    ./mvnw install
+    ./mvnw exec:java -pl gesturefx-sample
+
 ## How to build
 
 Prerequisites:

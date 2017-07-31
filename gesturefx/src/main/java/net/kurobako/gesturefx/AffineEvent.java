@@ -28,14 +28,8 @@ public final class AffineEvent extends Event {
 		this.affine = affine;
 		this.targetDimension = targetDimension;
 	}
-	public AffineEvent(Object source, EventTarget target,
-	                   EventType<? extends Event> eventType,
-	                   Affine affine,
-	                   Dimension2D targetDimension) {
-		super(source, target, eventType);
-		this.affine = affine;
-		this.targetDimension = targetDimension;
-	}
+
+
 	public Affine getAffine() { return affine; }
 
 	public Dimension2D getTargetDimension() { return targetDimension; }
@@ -50,5 +44,10 @@ public final class AffineEvent extends Event {
 	private static Point2D centreOf(Dimension2D d) {
 		return new Point2D(d.getWidth() / 2d, d.getHeight() / 2d);
 	}
+
+	public double translateX() { return affine.getTx(); }
+	public double translateY() { return affine.getTy(); }
+	public double scaleX() { return affine.getMxx(); }
+	public double scaleY() { return affine.getMyy(); }
 
 }
