@@ -16,24 +16,24 @@ import org.testfx.matcher.base.NodeMatchers;
 import javafx.geometry.VerticalDirection;
 import javafx.scene.Scene;
 import javafx.scene.image.ImageView;
+import javafx.scene.input.PickResult;
 import javafx.scene.input.ZoomEvent;
 import javafx.stage.Stage;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 
-public class GesturePaneTest  {
+public class GesturePaneTest {
 
 	private static final String ID = "target";
 	private GesturePane pane;
 	private ImageView imageView;
 
 
-
 	@Before
 	public void setup() throws Exception {
 		FxToolkit.registerPrimaryStage();
-		FxToolkit.setupSceneRoot(() ->{
+		FxToolkit.setupSceneRoot(() -> {
 			imageView = new ImageView(getClass().getResource("/lena_512.jpg")
 					                          .toExternalForm());
 			pane = new GesturePane(imageView);
@@ -42,7 +42,6 @@ public class GesturePaneTest  {
 		});
 		FxToolkit.showStage();
 	}
-
 
 
 	//	@Override
@@ -70,8 +69,10 @@ public class GesturePaneTest  {
 
 	@Test
 	public void testSaleByTouch() throws Exception {
-		throw new RuntimeException();
-
+		double factor = 4.2;
+		pane.fireEvent(new ZoomEvent(ZoomEvent.ZOOM, 0, 0, 0, 0, false, false, false, false,
+				                            false, false, factor, factor, null));
+		assertThat(pane.getCurrentScale()).isEqualTo(factor);
 	}
 
 	@Test

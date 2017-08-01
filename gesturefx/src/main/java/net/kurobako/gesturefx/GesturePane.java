@@ -15,6 +15,7 @@ import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.value.WritableValue;
+import javafx.event.ActionEvent;
 import javafx.event.Event;
 import javafx.event.EventHandler;
 import javafx.event.EventType;
@@ -33,6 +34,7 @@ import javafx.scene.input.ZoomEvent;
 import javafx.scene.layout.Region;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.transform.Affine;
+import javafx.scene.transform.NonInvertibleTransformException;
 import javafx.util.Duration;
 
 import static net.kurobako.gesturefx.AffineEvent.*;
@@ -67,7 +69,6 @@ public class GesturePane extends Region {
 		CENTER
 	}
 
-
 	/**
 	 * Modes for interpreting scroll events
 	 */
@@ -96,7 +97,6 @@ public class GesturePane extends Region {
 	private final SimpleDoubleProperty maxScale = new SimpleDoubleProperty(10);
 
 	private final SimpleDoubleProperty scrollZoomFactor = new SimpleDoubleProperty(1);
-
 
 	private Point2D lastPosition;
 
@@ -359,13 +359,14 @@ public class GesturePane extends Region {
 		double s = minScale.multiply(scale).get();
 		double step = mxx + (s - mxx);
 
+		scale(scale, new Point2D(target.width() / 2, target.height() / 2));
 		// TODO fix to centre
 
 		affine.setMxx(scale);
 		affine.setMyy(scale);
 	}
 
-	public void zoomTo(double scale, Duration duration, Runnable callback) {
+	public void zoomTo(double scale, Duration duration, EventHandler<ActionEvent> l) {
 		double mxx = affine.getMxx();
 		double s = minScale.multiply(scale).get();
 		double delta = s - mxx;
@@ -373,40 +374,41 @@ public class GesturePane extends Region {
 			double step = mxx + (delta * v);
 			affine.setMxx(step);
 			affine.setMyy(step);
-		}, callback);
+		}, l);
 
 	}
 
-//	public Point2D centrePoint() {
-//		return target.parentToLocal(new Point2D(
-//				                                       viewportWidthProperty.get() / 2,
-//				                                       viewportHeightProperty.get() / 2));
-//	}
-//
-//	public void translateTo(Point2D point2D) {
-//
-//
-//		Point2D centrePoint = centrePoint();
-//		// move to centre point and apply scale
-//		Point2D newPoint = centrePoint.subtract(point2D);
-//		affine.setTx(affine.getTx() + newPoint.getX() * affine.getMxx());
-//		affine.setTy(affine.getTy() + newPoint.getY() * affine.getMxx());
-//	}
-//
-//	public void translateTo(Point2D point2D, Duration duration, Runnable callback) {
-//		// get current centre point
-//		Point2D centrePoint = centrePoint();
-//		// move to centre point and apply scale
-//		Point2D newPoint = centrePoint.subtract(point2D);
-//		double ttx = newPoint.getX() * affine.getMxx();
-//		double tty = newPoint.getY() * affine.getMxx();
-//		double tx = affine.getTx();
-//		double ty = affine.getTy();
-//		animateValue(0, 1, duration, v -> {
-//			affine.setTx(tx + ttx * v);
-//			affine.setTy(ty + tty * v);
-//		}, callback);
-//	}
+	public Point2D centrePoint() {
+		try {
+			return affine.inverseTransform(new Point2D(viewportWidthProperty.get() / 2,
+					                                          viewportHeightProperty.get() / 2));
+		} catch (NonInvertibleTransformException e) {
+			// TODO what can be done?
+			throw new RuntimeException(e);
+		}
+	}
+
+	// TODO incomplete
+	public void translateTo(Point2D point2D) {
+		// move to centre point and apply scale
+		Point2D delta = centrePoint().subtract(point2D);
+		affine.setTx(affine.getTx() + delta.getX() * affine.getMxx());
+		affine.setTy(affine.getTy() + delta.getY() * affine.getMyy());
+	}
+	// TODO incomplete
+	public void translateTo(Point2D point2D, Duration duration, EventHandler<ActionEvent> l) {
+		// move to centre point and apply scale
+		Point2D delta = centrePoint().subtract(point2D);
+		double ttx = delta.getX() * affine.getMxx();
+		double tty = delta.getY() * affine.getMxx();
+		double tx = affine.getTx();
+		double ty = affine.getTy();
+		animateValue(0, 1, duration, v -> {
+			affine.setTx(tx + ttx * v);
+			affine.setTy(ty + tty * v);
+			clampAtBound(true);
+		}, l);
+	}
 
 //	public void zoomTo(double zoom, boolean animate) {
 //		if (zoom < 1) throw new IllegalArgumentException("Zoom range must >= 1");
@@ -453,6 +455,7 @@ public class GesturePane extends Region {
 
 
 	private void clampAtBound(boolean zoomPositive) {
+		System.out.println(centrePoint());
 		double targetWidth = target.width();
 		double targetHeight = target.height();
 
@@ -509,7 +512,7 @@ public class GesturePane extends Region {
 	                          double to,
 	                          Duration duration,
 	                          DoubleConsumer consumer,
-	                          Runnable callback) {
+	                          EventHandler<ActionEvent> l) {
 		timeline.stop();
 		timeline.getKeyFrames().clear();
 		KeyValue keyValue = new KeyValue(new WritableValue<Double>() {
@@ -526,9 +529,8 @@ public class GesturePane extends Region {
 
 		}, to, Interpolator.EASE_BOTH);
 		timeline.getKeyFrames().add(new KeyFrame(duration, keyValue));
-		if (callback != null) timeline.setOnFinished(e -> callback.run());
+		timeline.setOnFinished(l);
 		timeline.play();
-
 	}
 
 	public boolean isVBarEnabled() { return vBar.isManaged(); }

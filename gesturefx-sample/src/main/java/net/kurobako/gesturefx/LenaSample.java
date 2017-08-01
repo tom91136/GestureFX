@@ -14,6 +14,7 @@ import java.util.ResourceBundle;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
+import javafx.geometry.Point2D;
 import javafx.scene.Node;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
@@ -23,20 +24,29 @@ import javafx.scene.control.CheckBox;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.MenuItem;
+import javafx.scene.control.RadioButton;
 import javafx.scene.control.Slider;
+import javafx.scene.control.Spinner;
+import javafx.scene.control.SpinnerValueFactory;
+import javafx.scene.control.Toggle;
+import javafx.scene.control.ToggleGroup;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.stage.FileChooser;
 import javafx.stage.FileChooser.ExtensionFilter;
+import javafx.util.Duration;
 
 import static javafx.collections.FXCollections.*;
+import static javafx.scene.control.SpinnerValueFactory.*;
 
 public class LenaSample implements Sample {
 
 	static final String FORMAT = "%.5f";
 	static final String LENA = LenaSample.class.getResource("/lena.png").toExternalForm();
+	public static final Duration DURATION = Duration
+			                                        .millis(300);
 
 	@Override
 	public Node mkRoot() {
@@ -67,8 +77,22 @@ public class LenaSample implements Sample {
 		@FXML private Slider minScaleSlider;
 		@FXML private Slider maxScaleSlider;
 		@FXML private Slider currentScaleSlider;
+		@FXML private Slider currentXSlider;
+		@FXML private Slider currentYSlider;
+		@FXML private Label currentX;
+		@FXML private Label currentY;
 
 		@FXML private Button reset;
+
+		@FXML private Spinner<Double> x;
+		@FXML private Spinner<Double> y;
+		@FXML private Button apply;
+		@FXML private Spinner<Double> scale;
+		@FXML private ToggleGroup type;
+		@FXML private RadioButton translate;
+		@FXML private RadioButton zoom;
+		@FXML private CheckBox relative;
+		@FXML private CheckBox animated;
 
 
 		@Override
@@ -125,7 +149,7 @@ public class LenaSample implements Sample {
 
 			minScaleSlider.setValue(gesturePane.getMinScale());
 			gesturePane.minScaleProperty().bind(minScaleSlider.valueProperty());
-			maxScaleSlider.setValue(gesturePane.getMinScale());
+			maxScaleSlider.setValue(gesturePane.getMaxScale());
 			gesturePane.maxScaleProperty().bind(maxScaleSlider.valueProperty());
 //			currentScaleSlider.setValue(gesturePane.getCurrentScale());
 //			gesturePane.currentScaleProperty().bind(currentScaleSlider.valueProperty());
@@ -133,6 +157,49 @@ public class LenaSample implements Sample {
 			gesturePane.scrollZoomFactorProperty().bind(zoomFactorSlider.valueProperty());
 
 			reset.setOnAction(e -> gesturePane.reset());
+
+
+//			view.fitWidthProperty().addListener((o, p, n) -> {
+//				double v = n.doubleValue();
+//			});
+//			view.fitHeightProperty().addListener((o, p, n) -> {
+//				double v = n.doubleValue();
+//			});
+
+
+			DoubleSpinnerValueFactory xFactory = new DoubleSpinnerValueFactory(0, 1);
+			xFactory.maxProperty().bind(view.getImage().widthProperty());
+			xFactory.setWrapAround(true);
+			xFactory.setAmountToStepBy(1);
+			x.setValueFactory(xFactory);
+
+			DoubleSpinnerValueFactory yFactory = new DoubleSpinnerValueFactory(0, 1);
+			yFactory.maxProperty().bind(view.getImage().heightProperty());
+			yFactory.setWrapAround(true);
+			yFactory.setAmountToStepBy(1);
+			y.setValueFactory(yFactory);
+
+			DoubleSpinnerValueFactory zoomFactory = new DoubleSpinnerValueFactory(1, 1);
+			zoomFactory.maxProperty().bind(gesturePane.maxScaleProperty());
+			zoomFactory.setWrapAround(true);
+			zoomFactory.setAmountToStepBy(0.25);
+			scale.setValueFactory(zoomFactory);
+
+
+			scale.disableProperty().bind(translate.selectedProperty());
+
+			apply.setOnAction(e -> {
+				Toggle toggle = type.getSelectedToggle();
+				Point2D d = new Point2D(x.getValue(), y.getValue());
+				if (toggle == translate) {
+					gesturePane.translateTo(d, DURATION, null);
+				} else if (toggle == zoom) {
+					gesturePane.zoomTo(scale.getValue(), DURATION, null);
+				}
+			});
+
+
+			// TODO wire up x and y translation
 
 		}
 

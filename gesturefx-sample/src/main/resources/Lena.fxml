@@ -7,8 +7,12 @@
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.MenuButton?>
 <?import javafx.scene.control.MenuItem?>
+<?import javafx.scene.control.RadioButton?>
 <?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.control.Separator?>
 <?import javafx.scene.control.Slider?>
+<?import javafx.scene.control.Spinner?>
+<?import javafx.scene.control.ToggleGroup?>
 <?import javafx.scene.layout.ColumnConstraints?>
 <?import javafx.scene.layout.GridPane?>
 <?import javafx.scene.layout.HBox?>
@@ -16,67 +20,102 @@
 <?import javafx.scene.layout.StackPane?>
 
 <HBox fx:id="root" xmlns="http://javafx.com/javafx/8.0.111" xmlns:fx="http://javafx.com/fxml/1" fx:controller="net.kurobako.gesturefx.LenaSample$GesturePropertyController">
-   <children>
-      <StackPane fx:id="viewport" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" minHeight="-Infinity" minWidth="-Infinity" style="-fx-background-color: #333;" HBox.hgrow="ALWAYS" />
-      <ScrollPane>
-         <content>
-            <GridPane hgap="6.0" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" vgap="6.0">
-              <columnConstraints>
-                <ColumnConstraints hgrow="NEVER" />
-                <ColumnConstraints hgrow="ALWAYS" />
-                  <ColumnConstraints hgrow="ALWAYS" />
-              </columnConstraints>
-              <rowConstraints>
-                  <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
-                <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
-                <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
-                <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
-                  <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
-                  <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
-                  <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
-                  <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
-                  <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
-                  <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
-                  <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
-              </rowConstraints>
-               <children>
-                  <Label text="FitMode" GridPane.rowIndex="1" />
-                  <Label text="ScrollMode" GridPane.rowIndex="2" />
-                  <Label text="Gesture" GridPane.rowIndex="3" />
-                  <Label text="VerticalScrollBar" GridPane.rowIndex="4" />
-                  <Label text="HorizontalScrollBar" GridPane.rowIndex="5" />
-                  <ComboBox fx:id="fitMode" prefWidth="150.0" GridPane.columnIndex="1" GridPane.rowIndex="1" />
-                  <ComboBox fx:id="scrollMode" prefWidth="150.0" GridPane.columnIndex="1" GridPane.rowIndex="2" />
-                  <CheckBox fx:id="gesture" mnemonicParsing="false" selected="true" GridPane.columnIndex="1" GridPane.rowIndex="3" />
-                  <CheckBox fx:id="verticalScrollBar" mnemonicParsing="false" selected="true" GridPane.columnIndex="1" GridPane.rowIndex="4" />
-                  <CheckBox fx:id="horizontalScrollBar" mnemonicParsing="false" selected="true" GridPane.columnIndex="1" GridPane.rowIndex="5" />
-                  <Label text="MinSacle" GridPane.rowIndex="7" />
-                  <Label text="MaxScale" GridPane.rowIndex="8" />
-                  <Label text="CurrentScale" GridPane.rowIndex="9" />
-                  <Label text="ScrollZoomFactor" GridPane.rowIndex="10" />
-                  <Label fx:id="minScale" text="0" GridPane.columnIndex="2" GridPane.rowIndex="7" />
-                  <Label fx:id="maxScale" text="0" GridPane.columnIndex="2" GridPane.rowIndex="8" />
-                  <Label fx:id="currentScale" text="0" GridPane.columnIndex="2" GridPane.rowIndex="9" />
-                  <Label text="Ops" GridPane.rowIndex="6" />
-                  <Button fx:id="reset" mnemonicParsing="false" text="Reset viewport" GridPane.columnIndex="1" GridPane.rowIndex="6" />
-                  <Label text="Image" />
-                  <MenuButton mnemonicParsing="false" text="Select image" GridPane.columnIndex="1">
-                    <items>
-                      <MenuItem fx:id="lena" mnemonicParsing="false" text="Lena" />
-                      <MenuItem fx:id="selectFile" mnemonicParsing="false" text="Choose file" />
-                    </items>
-                  </MenuButton>
-                  <Slider fx:id="zoomFactorSlider" blockIncrement="0.1" majorTickUnit="0.5" max="2.0" showTickLabels="true" showTickMarks="true" value="1.0" GridPane.columnIndex="1" GridPane.rowIndex="10" />
-                  <Label fx:id="zoomFactor" text="Label" GridPane.columnIndex="2" GridPane.rowIndex="10" />
-                  <Slider fx:id="minScaleSlider" blockIncrement="0.1" majorTickUnit="0.5" max="2.0" minWidth="200.0" showTickLabels="true" showTickMarks="true" value="1.0" GridPane.columnIndex="1" GridPane.rowIndex="7" />
-                  <Slider fx:id="maxScaleSlider" blockIncrement="1.0" majorTickUnit="10.0" minWidth="200.0" showTickLabels="true" showTickMarks="true" value="10.0" GridPane.columnIndex="1" GridPane.rowIndex="8" />
-                  <Slider fx:id="currentScaleSlider" blockIncrement="1.0" majorTickUnit="10.0" showTickLabels="true" showTickMarks="true" value="10.0" GridPane.columnIndex="1" GridPane.rowIndex="9" />
-               </children>
-               <padding>
-                  <Insets bottom="8.0" left="8.0" right="8.0" top="8.0" />
-               </padding>
-            </GridPane>
-         </content>
-      </ScrollPane>
-   </children>
+    <children>
+        <StackPane fx:id="viewport" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" minHeight="-Infinity" minWidth="-Infinity" style="-fx-background-color: #333;" HBox.hgrow="ALWAYS" />
+        <ScrollPane>
+            <content>
+                <GridPane hgap="6.0" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" vgap="6.0">
+                    <columnConstraints>
+                        <ColumnConstraints hgrow="NEVER" />
+                        <ColumnConstraints hgrow="ALWAYS" />
+                        <ColumnConstraints halignment="RIGHT" hgrow="ALWAYS" />
+                        <ColumnConstraints hgrow="ALWAYS" />
+                    </columnConstraints>
+                    <rowConstraints>
+                        <RowConstraints />
+                        <RowConstraints />
+                        <RowConstraints />
+                        <RowConstraints />
+                        <RowConstraints />
+                        <RowConstraints />
+                        <RowConstraints />
+                        <RowConstraints />
+                        <RowConstraints />
+                        <RowConstraints />
+                        <RowConstraints />
+                        <RowConstraints />
+                        <RowConstraints />
+                        <RowConstraints />
+                  <RowConstraints minHeight="-Infinity" />
+                  <RowConstraints />
+                    </rowConstraints>
+                    <children>
+                        <Label text="FitMode" GridPane.rowIndex="1" />
+                        <Label text="ScrollMode" GridPane.rowIndex="2" />
+                        <ComboBox fx:id="fitMode" prefWidth="150.0" GridPane.columnIndex="1" GridPane.columnSpan="2147483647" GridPane.rowIndex="1" />
+                        <ComboBox fx:id="scrollMode" prefWidth="150.0" GridPane.columnIndex="1" GridPane.columnSpan="2147483647" GridPane.rowIndex="2" />
+                        <CheckBox fx:id="gesture" mnemonicParsing="false" selected="true" text="Gesture" GridPane.columnSpan="2147483647" GridPane.rowIndex="3" />
+                        <CheckBox fx:id="verticalScrollBar" mnemonicParsing="false" selected="true" text="V.ScrollBar" GridPane.columnIndex="1" GridPane.rowIndex="3" />
+                        <CheckBox fx:id="horizontalScrollBar" mnemonicParsing="false" selected="true" text="H.ScrollBar" GridPane.columnIndex="2" GridPane.columnSpan="2147483647" GridPane.halignment="LEFT" GridPane.rowIndex="3" />
+                        <Label text="MinSacle" GridPane.rowIndex="10" />
+                        <Label text="MaxScale" GridPane.rowIndex="11" />
+                        <Label text="CurrentScale" GridPane.rowIndex="12" />
+                        <Label text="ScrollFactor" GridPane.rowIndex="13" />
+                        <Label fx:id="minScale" text="0" GridPane.columnIndex="3" GridPane.rowIndex="10" />
+                        <Label fx:id="maxScale" text="0" GridPane.columnIndex="3" GridPane.rowIndex="11" />
+                        <Label fx:id="currentScale" text="0" GridPane.columnIndex="3" GridPane.rowIndex="12" />
+                        <Label text="Ops" GridPane.rowIndex="5" />
+                        <Button fx:id="reset" mnemonicParsing="false" text="Reset viewport" GridPane.columnIndex="1" GridPane.columnSpan="2147483647" GridPane.rowIndex="5" />
+                        <Label text="Image" />
+                        <MenuButton mnemonicParsing="false" text="Select image" GridPane.columnIndex="1" GridPane.columnSpan="2147483647">
+                            <items>
+                                <MenuItem fx:id="lena" mnemonicParsing="false" text="Lena" />
+                                <MenuItem fx:id="selectFile" mnemonicParsing="false" text="Choose file" />
+                            </items>
+                        </MenuButton>
+                        <Slider fx:id="zoomFactorSlider" blockIncrement="0.1" majorTickUnit="0.5" max="2.0" showTickLabels="true" showTickMarks="true" value="1.0" GridPane.columnIndex="1" GridPane.columnSpan="2" GridPane.rowIndex="13" />
+                        <Label fx:id="zoomFactor" text="000" GridPane.columnIndex="3" GridPane.rowIndex="13" />
+                        <Slider fx:id="minScaleSlider" blockIncrement="0.1" majorTickUnit="0.5" max="2.0" showTickLabels="true" showTickMarks="true" value="1.0" GridPane.columnIndex="1" GridPane.columnSpan="2" GridPane.rowIndex="10" />
+                        <Slider fx:id="maxScaleSlider" blockIncrement="1.0" majorTickUnit="10.0" showTickLabels="true" showTickMarks="true" value="10.0" GridPane.columnIndex="1" GridPane.columnSpan="2" GridPane.rowIndex="11" />
+                        <Slider fx:id="currentScaleSlider" blockIncrement="1.0" majorTickUnit="10.0" showTickLabels="true" showTickMarks="true" value="10.0" GridPane.columnIndex="1" GridPane.columnSpan="2" GridPane.rowIndex="12" />
+                        <Label contentDisplay="RIGHT" text="X" GridPane.rowIndex="7">
+                            <graphic>
+                                <Spinner editable="true" prefWidth="60.0" fx:id="x" />
+                            </graphic>
+                        </Label>
+                        <Label contentDisplay="RIGHT" text="Y" GridPane.columnIndex="1" GridPane.rowIndex="7">
+                            <graphic>
+                                <Spinner fx:id="y" editable="true" prefWidth="60.0" />
+                            </graphic>
+                        </Label>
+                        <Button fx:id="apply" mnemonicParsing="false" text="Apply" GridPane.columnIndex="2" GridPane.rowIndex="8" />
+                        <Label contentDisplay="RIGHT" text="Scale" GridPane.columnIndex="2" GridPane.rowIndex="7">
+                            <graphic>
+                                <Spinner fx:id="scale" editable="true" prefWidth="60.0" />
+                            </graphic>
+                        </Label>
+                        <RadioButton fx:id="translate" mnemonicParsing="false" selected="true" text="Translate" GridPane.rowIndex="6">
+                            <toggleGroup>
+                                <ToggleGroup fx:id="type" />
+                            </toggleGroup>
+                        </RadioButton>
+                        <RadioButton fx:id="zoom" mnemonicParsing="false" text="Zoom" toggleGroup="$type" GridPane.columnIndex="1" GridPane.rowIndex="6" />
+                        <Separator prefWidth="200.0" GridPane.columnSpan="2147483647" GridPane.rowIndex="4" />
+                        <Separator prefWidth="200.0" GridPane.columnSpan="2147483647" GridPane.rowIndex="9" />
+                        <CheckBox fx:id="relative" mnemonicParsing="false" text="Relative" GridPane.rowIndex="8" />
+                        <CheckBox fx:id="animated" mnemonicParsing="false" text="Animated" GridPane.columnIndex="1" GridPane.rowIndex="8" />
+                  <Slider fx:id="currentXSlider" blockIncrement="1.0" majorTickUnit="10.0" max="2.0" minorTickCount="5" showTickLabels="true" showTickMarks="true" value="1.0" GridPane.columnIndex="1" GridPane.columnSpan="2" GridPane.rowIndex="14" />
+                  <Slider fx:id="currentYSlider" blockIncrement="1.0" majorTickUnit="10.0" max="2.0" minorTickCount="5" showTickLabels="true" showTickMarks="true" value="1.0" GridPane.columnIndex="1" GridPane.columnSpan="2" GridPane.rowIndex="15" />
+                  <Label text="TranslateX" GridPane.rowIndex="14" />
+                  <Label text="TranslateY" GridPane.rowIndex="15" />
+                  <Label fx:id="currentX" text="000" GridPane.columnIndex="3" GridPane.rowIndex="14" />
+                  <Label fx:id="currentY" text="000" GridPane.columnIndex="3" GridPane.rowIndex="15" />
+                    </children>
+                    <padding>
+                        <Insets bottom="8.0" left="8.0" right="8.0" top="8.0" />
+                    </padding>
+                </GridPane>
+            </content>
+        </ScrollPane>
+    </children>
 </HBox>
