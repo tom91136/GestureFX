@@ -354,7 +354,6 @@ public class GesturePane extends Control {
 			case CENTER:
 				break;
 		}
-		System.out.println(affine);
 	}
 
 	private final Timeline timeline = new Timeline();
