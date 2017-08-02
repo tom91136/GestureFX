@@ -1,7 +1,7 @@
-package net.kurobako.gesturefx;
+package net.kurobako.gesturefx.sample;
 
-import net.kurobako.gesturefx.GesturePane.ScrollMode;
-import net.kurobako.gesturefx.SamplerController.Sample;
+import net.kurobako.gesturefx.GesturePane;
+import net.kurobako.gesturefx.sample.SamplerController.Sample;
 
 import java.io.IOException;
 

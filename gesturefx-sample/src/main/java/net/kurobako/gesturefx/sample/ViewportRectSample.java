@@ -1,6 +1,7 @@
-package net.kurobako.gesturefx;
+package net.kurobako.gesturefx.sample;
 
-import net.kurobako.gesturefx.SamplerController.Sample;
+import net.kurobako.gesturefx.GesturePane;
+import net.kurobako.gesturefx.sample.SamplerController.Sample;
 
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -45,12 +46,19 @@ public class ViewportRectSample implements Sample {
 		viewportSim.maxHeightProperty().bind(background.fitHeightProperty());
 
 
-		gesturePane.addEventHandler(AffineEvent.CHANGED, e -> {
-			viewRect.setTranslateX(-e.translateX() / e.scaleX());
-			viewRect.setTranslateY(-e.translateY() / e.scaleY());
-			viewRect.setWidth(gesturePane.getViewportWidth() / e.scaleY());
-			viewRect.setHeight(gesturePane.getViewportHeight() / e.scaleY());
+		gesturePane.targetViewportProperty().addListener((o, p, n) ->{
+			viewRect.setTranslateX(n.getMinX());
+			viewRect.setTranslateY(n.getMinY());
+			viewRect.setWidth(n.getWidth());
+			viewRect.setHeight(n.getHeight());
 		});
+
+//		gesturePane.addEventHandler(AffineEvent.CHANGED, e -> {
+//			viewRect.setTranslateX(-e.translateX() / e.scaleX());
+//			viewRect.setTranslateY(-e.translateY() / e.scaleY());
+//			viewRect.setWidth(gesturePane.getViewportWidth() / e.scaleY());
+//			viewRect.setHeight(gesturePane.getViewportHeight() / e.scaleY());
+//		});
 
 
 		HBox box = new HBox(gesturePane, viewportSim);

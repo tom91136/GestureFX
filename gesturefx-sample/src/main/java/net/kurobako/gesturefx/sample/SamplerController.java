@@ -1,4 +1,4 @@
-package net.kurobako.gesturefx;
+package net.kurobako.gesturefx.sample;
 
 import java.net.URL;
 import java.util.Arrays;
@@ -6,21 +6,12 @@ import java.util.List;
 import java.util.ResourceBundle;
 import java.util.function.Supplier;
 
-import javax.swing.text.View;
-
-import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.Node;
 import javafx.scene.control.Hyperlink;
-import javafx.scene.control.ListCell;
-import javafx.scene.control.ListView;
-import javafx.scene.control.MultipleSelectionModel;
-import javafx.scene.control.SelectionMode;
-import javafx.scene.control.SplitPane;
 import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
-import javafx.scene.control.TitledPane;
 import javafx.scene.layout.VBox;
 
 public class SamplerController implements Initializable {
@@ -51,7 +42,8 @@ public class SamplerController implements Initializable {
 				new SampleEntry("Lena(ImageView)", LenaSample::new),
 				new SampleEntry("ViewportRect(ImageView)", ViewportRectSample::new),
 				new SampleEntry("Arbitrary Node", ArbitraryNodeSample::new),
-				new SampleEntry("WebView", WebViewSample::new));
+				new SampleEntry("WebView", WebViewSample::new)
+        );
 
 
 		samples.forEach(s -> {

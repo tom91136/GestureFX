@@ -1,6 +1,6 @@
-package net.kurobako.gesturefx;
+package net.kurobako.gesturefx.sample;
 
-import net.kurobako.gesturefx.SamplerController.Sample;
+import net.kurobako.gesturefx.sample.SamplerController.Sample;
 
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Node;

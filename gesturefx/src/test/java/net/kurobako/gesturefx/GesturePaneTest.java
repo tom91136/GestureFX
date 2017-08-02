@@ -15,6 +15,7 @@ import javafx.geometry.VerticalDirection;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.ZoomEvent;
 
+import static net.kurobako.gesturefx.GesturePaneSkin.DEFAULT_SCROLL_FACTOR;
 import static org.assertj.core.api.Assertions.assertThat;
 
 
@@ -77,7 +78,7 @@ public class GesturePaneTest {
 		assertThat(pane.getCurrentScale()).isEqualTo(1d);
 		robot.moveTo(pane);
 		robot.scroll(5, VerticalDirection.UP);
-		double expected = Math.pow(1 + GesturePane.DEFAULT_SCROLL_FACTOR, 5);
+		double expected = Math.pow(1 + DEFAULT_SCROLL_FACTOR, 5);
 		assertThat(pane.getCurrentScale())
 				.isCloseTo(expected, Offset.offset(0.0001));
 		assertThat(imageView.getTransforms()).hasOnlyOneElementSatisfying(t -> {

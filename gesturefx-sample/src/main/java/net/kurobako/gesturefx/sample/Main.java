@@ -1,4 +1,4 @@
-package net.kurobako.gesturefx;
+package net.kurobako.gesturefx.sample;
 
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;

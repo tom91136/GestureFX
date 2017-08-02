@@ -26,7 +26,7 @@
                 <artifactId>exec-maven-plugin</artifactId>
                 <version>1.6.0</version>
                 <configuration>
-                    <mainClass>net.kurobako.gesturefx.Main</mainClass>
+                    <mainClass>net.kurobako.gesturefx.sample.Main</mainClass>
                 </configuration>
             </plugin>
             <plugin>

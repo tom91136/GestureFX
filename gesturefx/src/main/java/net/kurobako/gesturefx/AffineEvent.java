@@ -1,7 +1,6 @@
 package net.kurobako.gesturefx;
 
 import javafx.event.Event;
-import javafx.event.EventTarget;
 import javafx.event.EventType;
 import javafx.geometry.Dimension2D;
 import javafx.geometry.Point2D;
@@ -13,6 +12,8 @@ import javafx.scene.transform.Affine;
  */
 @SuppressWarnings("WeakerAccess")
 public final class AffineEvent extends Event {
+
+	private static final long serialVersionUID = 1437008082899813504L;
 
 	/**
 	 * Fired when the transformation has just started
@@ -30,6 +31,7 @@ public final class AffineEvent extends Event {
 	public static final EventType<AffineEvent> CHANGE_FINISHED =
 			new EventType<>(Event.ANY, "CHANGE_FINISHED");
 
+
 	private final Affine affine;
 	private final Dimension2D targetDimension;
 
@@ -41,9 +43,6 @@ public final class AffineEvent extends Event {
 		this.affine = affine;
 		this.targetDimension = targetDimension;
 	}
-
-
-
 
 	public Dimension2D getTargetDimension() { return targetDimension; }
 	public Point2D getTargetCentre() { return centreOf(targetDimension); }

@@ -21,7 +21,7 @@
 <?import javafx.scene.shape.Sphere?>
 <?import javafx.scene.text.Font?>
 
-<VBox fx:id="root" prefHeight="500.0" prefWidth="600.0" style="-fx-background-color: #111;" xmlns="http://javafx.com/javafx/8.0.111" xmlns:fx="http://javafx.com/fxml/1">
+<VBox fx:id="root" prefHeight="500.0" prefWidth="600.0" style="-fx-background-color: #111;" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1">
    <children>
       <MenuBar VBox.vgrow="NEVER">
          <menus>
