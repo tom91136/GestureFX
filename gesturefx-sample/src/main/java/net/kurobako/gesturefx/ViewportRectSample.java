@@ -2,14 +2,18 @@ package net.kurobako.gesturefx;
 
 import net.kurobako.gesturefx.SamplerController.Sample;
 
+import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Group;
 import javafx.scene.Node;
+import javafx.scene.control.Label;
 import javafx.scene.effect.BlendMode;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
+import javafx.scene.layout.Priority;
+import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
 
@@ -51,6 +55,11 @@ public class ViewportRectSample implements Sample {
 
 		HBox box = new HBox(gesturePane, viewportSim);
 		box.setAlignment(Pos.CENTER);
-		return box;
+		VBox.setVgrow(box, Priority.ALWAYS);
+		Label description = new Label("Zoom and scroll on the left image(wrapped in a GesturePane); " +
+				                        "the right image will reflect the actual viewport of the" +
+				                        " current transformation");
+		description.setPadding(new Insets(16));
+		return new VBox(description, box);
 	}
 }

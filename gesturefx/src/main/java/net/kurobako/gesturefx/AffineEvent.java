@@ -7,13 +7,26 @@ import javafx.geometry.Dimension2D;
 import javafx.geometry.Point2D;
 import javafx.scene.transform.Affine;
 
+/**
+ * An event that would be fired when the target within a {@link GesturePane} is transformed in
+ * anyway
+ */
 @SuppressWarnings("WeakerAccess")
 public final class AffineEvent extends Event {
 
+	/**
+	 * Fired when the transformation has just started
+	 */
 	public static final EventType<AffineEvent> CHANGE_STARTED =
 			new EventType<>(Event.ANY, "CHANGE_STARTED");
+	/**
+	 * Fired when the transformation in progress produced a change(not necessarily visible)
+	 */
 	public static final EventType<AffineEvent> CHANGED =
 			new EventType<>(Event.ANY, "CHANGED");
+	/**
+	 * Fired when the transformation has finished
+	 */
 	public static final EventType<AffineEvent> CHANGE_FINISHED =
 			new EventType<>(Event.ANY, "CHANGE_FINISHED");
 
@@ -30,7 +43,7 @@ public final class AffineEvent extends Event {
 	}
 
 
-	public Affine getAffine() { return affine; }
+
 
 	public Dimension2D getTargetDimension() { return targetDimension; }
 	public Point2D getTargetCentre() { return centreOf(targetDimension); }
@@ -45,9 +58,25 @@ public final class AffineEvent extends Event {
 		return new Point2D(d.getWidth() / 2d, d.getHeight() / 2d);
 	}
 
+	/**
+	 * @return a copy of the current affine transformation
+	 */
+	public Affine getAffine() { return new Affine(affine); }
+	/**
+	 * @return the current translation(non delta) on the X axis
+	 */
 	public double translateX() { return affine.getTx(); }
+	/**
+	 * @return the current translation(non delta) on the Y axis
+	 */
 	public double translateY() { return affine.getTy(); }
+	/**
+	 * @return the current scale(non delta) on the X axis
+	 */
 	public double scaleX() { return affine.getMxx(); }
+	/**
+	 * @return the current scale(non delta) on the Y axis
+	 */
 	public double scaleY() { return affine.getMyy(); }
 
 }
