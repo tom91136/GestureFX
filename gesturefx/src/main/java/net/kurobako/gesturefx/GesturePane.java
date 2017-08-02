@@ -1,5 +1,6 @@
 package net.kurobako.gesturefx;
 
+import java.util.Optional;
 import java.util.function.DoubleConsumer;
 
 import javafx.animation.Interpolator;
@@ -97,6 +98,16 @@ public class GesturePane extends Region {
 	private final SimpleDoubleProperty maxScale = new SimpleDoubleProperty(10);
 
 	private final SimpleDoubleProperty scrollZoomFactor = new SimpleDoubleProperty(1);
+
+	private final DoubleBinding viewportWidthProperty = widthProperty().subtract(
+			new When(vBar.managedProperty())
+					.then(vBar.widthProperty())
+					.otherwise(0));
+
+	private final DoubleBinding viewportHeightProperty = heightProperty().subtract(
+			new When(hBar.managedProperty())
+					.then(hBar.heightProperty())
+					.otherwise(0));
 
 	private Point2D lastPosition;
 
@@ -269,14 +280,12 @@ public class GesturePane extends Region {
 			if (e.getTouchCount() > 0) return;
 
 			// TODO might be driver and platform specific
-			// TODO test on macOS
 			// TODO test on Linux
 			// TODO test on different Windows versions
 			// TODO test on machines with different touchpad vendor
 
 			// pinch to zoom on trackpad
 			if (e.isShortcutDown()) {
-				// TODO test for different deltaY values, value could be bad
 				double zoomFactor = DEFAULT_SCROLL_FACTOR * getScrollZoomFactor();
 				if (e.getDeltaY() < 0) zoomFactor *= -1;
 				scale(1 + zoomFactor, fromGesture(e));
@@ -296,15 +305,6 @@ public class GesturePane extends Region {
 			}
 			fireAffineEvent(CHANGED);
 		}));
-
-
-//		setOnKeyPressed(e -> {
-//			if (e.getCode() == KeyCode.ESCAPE) {
-//				System.out.println("ESC");
-//				affine.setToIdentity();
-//				e.consume();
-//			}
-//		});
 
 	}
 	private void fireAffineEvent(EventType<AffineEvent> type) {
@@ -343,79 +343,77 @@ public class GesturePane extends Region {
 					0, HPos.CENTER, VPos.BOTTOM);
 	}
 
-	final DoubleBinding viewportWidthProperty = widthProperty().subtract(
-			new When(vBar.managedProperty())
-					.then(vBar.widthProperty())
-					.otherwise(0));
-
-	final DoubleBinding viewportHeightProperty = heightProperty().subtract(
-			new When(hBar.managedProperty())
-					.then(hBar.heightProperty())
-					.otherwise(0));
-
-
-	public void zoomTo(double scale) {
-		double mxx = affine.getMxx();
-		double s = minScale.multiply(scale).get();
-		double step = mxx + (s - mxx);
-
-		scale(scale, new Point2D(target.width() / 2, target.height() / 2));
-		// TODO fix to centre
-
-		affine.setMxx(scale);
-		affine.setMyy(scale);
+	public Point2D viewportCentre() {
+		return new Point2D(viewportWidthProperty.get() / 2, viewportHeightProperty.get() / 2);
 	}
 
-	public void zoomTo(double scale, Duration duration, EventHandler<ActionEvent> l) {
-		double mxx = affine.getMxx();
-		double s = minScale.multiply(scale).get();
-		double delta = s - mxx;
-		animateValue(0, 1, duration, v -> {
-			double step = mxx + (delta * v);
-			affine.setMxx(step);
-			affine.setMyy(step);
-		}, l);
-
-	}
-
-	public Point2D centrePoint() {
+	public Point2D targetPointAtViewportCentre() {
 		try {
-			return affine.inverseTransform(new Point2D(viewportWidthProperty.get() / 2,
-					                                          viewportHeightProperty.get() / 2));
+			return affine.inverseTransform(viewportCentre());
 		} catch (NonInvertibleTransformException e) {
 			// TODO what can be done?
 			throw new RuntimeException(e);
 		}
 	}
 
-	// TODO incomplete
-	public void translateTo(Point2D point2D) {
+	public Optional<Point2D> targetPointAt(Point2D viewportPoint) {
+		try {
+			return Optional.of(affine.inverseTransform(viewportPoint));
+		} catch (NonInvertibleTransformException e) {
+			// TODO does this ever happen with just translate and scale?
+			return Optional.empty();
+		}
+	}
+
+
+	public void zoomTarget(double scale, boolean relative) {
+		scale(scale / affine.getMxx(), viewportCentre());
+	}
+
+	public void zoomTarget(double scale, Duration duration, EventHandler<ActionEvent> handler) {
+		double mxx = affine.getMxx();
+		Point2D offset = targetPointAtViewportCentre().subtract(affine.getTx(), affine.getTy());
+		double delta = scale - mxx;
+
+
+		animateValue(0, 1, duration, v -> {
+//			double step = mxx + (delta * v);
+
+
+//			affine.setTx(affine.getTx() + offset.getX() * affine.getMxx() * v);
+//			affine.setTy(affine.getTy() + offset.getY() * affine.getMyy() * v);
+//			affine.setMxx(step);
+//			affine.setMyy(step);
+		}, handler);
+
+	}
+
+	public void translateTarget(Point2D pointOnTarget, boolean relative) {
 		// move to centre point and apply scale
-		Point2D delta = centrePoint().subtract(point2D);
+		Point2D delta = relative ? targetPointAtViewportCentre().add(pointOnTarget) :
+				                targetPointAtViewportCentre().subtract(pointOnTarget);
 		affine.setTx(affine.getTx() + delta.getX() * affine.getMxx());
 		affine.setTy(affine.getTy() + delta.getY() * affine.getMyy());
+		clampAtBound(true);
 	}
+
+
 	// TODO incomplete
-	public void translateTo(Point2D point2D, Duration duration, EventHandler<ActionEvent> l) {
+	public void translateTarget(Point2D pointOnTarget,
+	                            Duration duration,
+	                            EventHandler<ActionEvent> handler) {
 		// move to centre point and apply scale
-		Point2D delta = centrePoint().subtract(point2D);
+		Point2D delta = targetPointAtViewportCentre().subtract(pointOnTarget);
 		double ttx = delta.getX() * affine.getMxx();
-		double tty = delta.getY() * affine.getMxx();
+		double tty = delta.getY() * affine.getMyy();
 		double tx = affine.getTx();
 		double ty = affine.getTy();
 		animateValue(0, 1, duration, v -> {
 			affine.setTx(tx + ttx * v);
 			affine.setTy(ty + tty * v);
 			clampAtBound(true);
-		}, l);
+		}, handler);
 	}
-
-//	public void zoomTo(double zoom, boolean animate) {
-//		if (zoom < 1) throw new IllegalArgumentException("Zoom range must >= 1");
-//		Point2D centrePoint = centrePoint();
-//		affine.setMxx(minScale.multiply(zoom).get());
-//		affine.setMyy(minScale.multiply(zoom).get());
-//	}
 
 
 	/**
@@ -423,8 +421,7 @@ public class GesturePane extends Region {
 	 * {@link FitMode}
 	 */
 	public final void reset() {
-		zoomTo(1);
-		clampAtBound(false);
+		zoomTarget(1, false);
 	}
 
 
@@ -455,7 +452,7 @@ public class GesturePane extends Region {
 
 
 	private void clampAtBound(boolean zoomPositive) {
-		System.out.println(centrePoint());
+		System.out.println(targetPointAtViewportCentre());
 		double targetWidth = target.width();
 		double targetHeight = target.height();
 
@@ -507,7 +504,7 @@ public class GesturePane extends Region {
 	}
 
 
-	Timeline timeline = new Timeline();
+	private final Timeline timeline = new Timeline();
 	private void animateValue(double from,
 	                          double to,
 	                          Duration duration,

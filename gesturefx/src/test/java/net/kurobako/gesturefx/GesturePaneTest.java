@@ -4,21 +4,16 @@ package net.kurobako.gesturefx;
 import net.kurobako.gesturefx.GesturePane.ScrollMode;
 
 import org.assertj.core.data.Offset;
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.testfx.api.FxAssert;
 import org.testfx.api.FxRobot;
 import org.testfx.api.FxToolkit;
-import org.testfx.framework.junit.ApplicationTest;
 import org.testfx.matcher.base.NodeMatchers;
 
 import javafx.geometry.VerticalDirection;
-import javafx.scene.Scene;
 import javafx.scene.image.ImageView;
-import javafx.scene.input.PickResult;
 import javafx.scene.input.ZoomEvent;
-import javafx.stage.Stage;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -63,7 +58,7 @@ public class GesturePaneTest {
 
 	@Test
 	public void testScale() throws Exception {
-		pane.zoomTo(2);
+		pane.zoomTarget(2, false);
 		assertThat(pane.getCurrentScale()).isEqualTo(2d);
 	}
 
@@ -94,7 +89,7 @@ public class GesturePaneTest {
 
 	@Test
 	public void testTranslateX() throws Exception {
-		pane.zoomTo(2);
+		pane.zoomTarget(2, false);
 	}
 
 	@Test

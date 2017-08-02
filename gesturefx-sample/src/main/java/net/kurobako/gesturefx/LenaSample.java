@@ -27,7 +27,6 @@ import javafx.scene.control.MenuItem;
 import javafx.scene.control.RadioButton;
 import javafx.scene.control.Slider;
 import javafx.scene.control.Spinner;
-import javafx.scene.control.SpinnerValueFactory;
 import javafx.scene.control.Toggle;
 import javafx.scene.control.ToggleGroup;
 import javafx.scene.image.Image;
@@ -76,6 +75,7 @@ public class LenaSample implements Sample {
 		@FXML private Slider zoomFactorSlider;
 		@FXML private Slider minScaleSlider;
 		@FXML private Slider maxScaleSlider;
+		// TODO wire up
 		@FXML private Slider currentScaleSlider;
 		@FXML private Slider currentXSlider;
 		@FXML private Slider currentYSlider;
@@ -98,10 +98,10 @@ public class LenaSample implements Sample {
 		@Override
 		public void initialize(URL location, ResourceBundle resources) {
 			ImageView view = new ImageView(LENA);
-			GesturePane gesturePane = new GesturePane(view);
+			GesturePane pane = new GesturePane(view);
 
 
-			viewport.getChildren().add(gesturePane);
+			viewport.getChildren().add(pane);
 
 
 			lena.setOnAction(e -> view.setImage(new Image(LENA)));
@@ -125,38 +125,38 @@ public class LenaSample implements Sample {
 			});
 
 			fitMode.setItems(observableArrayList(FitMode.values()));
-			fitMode.setValue(gesturePane.getFitMode());
-			gesturePane.fitModeProperty().bind(fitMode.valueProperty());
+			fitMode.setValue(pane.getFitMode());
+			pane.fitModeProperty().bind(fitMode.valueProperty());
 
 			scrollMode.setItems(observableArrayList(ScrollMode.values()));
-			scrollMode.setValue(gesturePane.getScrollMode());
-			gesturePane.scrollModeProperty().bind(scrollMode.valueProperty());
+			scrollMode.setValue(pane.getScrollMode());
+			pane.scrollModeProperty().bind(scrollMode.valueProperty());
 
-			gesture.setSelected(gesturePane.isGestureEnabled());
-			gesturePane.gestureEnabledProperty().bind(gesture.selectedProperty());
+			gesture.setSelected(pane.isGestureEnabled());
+			pane.gestureEnabledProperty().bind(gesture.selectedProperty());
 
-			verticalScrollBar.setSelected(gesturePane.isVBarEnabled());
-			gesturePane.vBarEnabledProperty().bind(verticalScrollBar.selectedProperty());
+			verticalScrollBar.setSelected(pane.isVBarEnabled());
+			pane.vBarEnabledProperty().bind(verticalScrollBar.selectedProperty());
 
-			horizontalScrollBar.setSelected(gesturePane.isHBarEnabled());
-			gesturePane.hBarEnabledProperty().bind(horizontalScrollBar.selectedProperty());
+			horizontalScrollBar.setSelected(pane.isHBarEnabled());
+			pane.hBarEnabledProperty().bind(horizontalScrollBar.selectedProperty());
 
-			minScale.textProperty().bind(gesturePane.minScaleProperty().asString(FORMAT));
-			maxScale.textProperty().bind(gesturePane.maxScaleProperty().asString(FORMAT));
-			currentScale.textProperty().bind(gesturePane.currentScaleProperty().asString(FORMAT));
-			zoomFactor.textProperty().bind(gesturePane.scrollZoomFactorProperty().asString
-					                                                                      (FORMAT));
+			minScale.textProperty().bind(pane.minScaleProperty().asString(FORMAT));
+			maxScale.textProperty().bind(pane.maxScaleProperty().asString(FORMAT));
+			currentScale.textProperty().bind(pane.currentScaleProperty().asString(FORMAT));
+			zoomFactor.textProperty().bind(pane.scrollZoomFactorProperty().asString
+					                                                               (FORMAT));
 
-			minScaleSlider.setValue(gesturePane.getMinScale());
-			gesturePane.minScaleProperty().bind(minScaleSlider.valueProperty());
-			maxScaleSlider.setValue(gesturePane.getMaxScale());
-			gesturePane.maxScaleProperty().bind(maxScaleSlider.valueProperty());
+			minScaleSlider.setValue(pane.getMinScale());
+			pane.minScaleProperty().bind(minScaleSlider.valueProperty());
+			maxScaleSlider.setValue(pane.getMaxScale());
+			pane.maxScaleProperty().bind(maxScaleSlider.valueProperty());
 //			currentScaleSlider.setValue(gesturePane.getCurrentScale());
 //			gesturePane.currentScaleProperty().bind(currentScaleSlider.valueProperty());
-			zoomFactorSlider.setValue(gesturePane.getScrollZoomFactor());
-			gesturePane.scrollZoomFactorProperty().bind(zoomFactorSlider.valueProperty());
+			zoomFactorSlider.setValue(pane.getScrollZoomFactor());
+			pane.scrollZoomFactorProperty().bind(zoomFactorSlider.valueProperty());
 
-			reset.setOnAction(e -> gesturePane.reset());
+			reset.setOnAction(e -> pane.reset());
 
 
 //			view.fitWidthProperty().addListener((o, p, n) -> {
@@ -180,7 +180,7 @@ public class LenaSample implements Sample {
 			y.setValueFactory(yFactory);
 
 			DoubleSpinnerValueFactory zoomFactory = new DoubleSpinnerValueFactory(1, 1);
-			zoomFactory.maxProperty().bind(gesturePane.maxScaleProperty());
+			zoomFactory.maxProperty().bind(pane.maxScaleProperty());
 			zoomFactory.setWrapAround(true);
 			zoomFactory.setAmountToStepBy(0.25);
 			scale.setValueFactory(zoomFactory);
@@ -192,9 +192,11 @@ public class LenaSample implements Sample {
 				Toggle toggle = type.getSelectedToggle();
 				Point2D d = new Point2D(x.getValue(), y.getValue());
 				if (toggle == translate) {
-					gesturePane.translateTo(d, DURATION, null);
+					if (animated.isSelected()) pane.translateTarget(d, DURATION, null);
+					else pane.translateTarget(d, relative.isSelected());
 				} else if (toggle == zoom) {
-					gesturePane.zoomTo(scale.getValue(), DURATION, null);
+					if (animated.isSelected()) pane.zoomTarget(scale.getValue(), DURATION, null);
+					else pane.zoomTarget(scale.getValue(), relative.isSelected());
 				}
 			});
 
