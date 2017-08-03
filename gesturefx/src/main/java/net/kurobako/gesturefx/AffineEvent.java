@@ -19,17 +19,17 @@ public final class AffineEvent extends Event {
 	 * Fired when the transformation has just started
 	 */
 	public static final EventType<AffineEvent> CHANGE_STARTED =
-			new EventType<>(Event.ANY, "CHANGE_STARTED");
+			new EventType<>(Event.ANY, "AFFINE_CHANGE_STARTED");
 	/**
 	 * Fired when the transformation in progress produced a change(not necessarily visible)
 	 */
 	public static final EventType<AffineEvent> CHANGED =
-			new EventType<>(Event.ANY, "CHANGED");
+			new EventType<>(Event.ANY, "AFFINE_CHANGED");
 	/**
 	 * Fired when the transformation has finished
 	 */
 	public static final EventType<AffineEvent> CHANGE_FINISHED =
-			new EventType<>(Event.ANY, "CHANGE_FINISHED");
+			new EventType<>(Event.ANY, "AFFINE_CHANGE_FINISHED");
 
 
 	private final Affine affine;

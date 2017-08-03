@@ -40,6 +40,7 @@ public class SamplerController implements Initializable {
 
 		List<SampleEntry> samples = Arrays.asList(
 				new SampleEntry("Lena(ImageView)", LenaSample::new),
+				new SampleEntry("FXML(ImageView)", FXMLSample::new),
 				new SampleEntry("ViewportRect(ImageView)", ViewportRectSample::new),
 				new SampleEntry("Arbitrary Node", ArbitraryNodeSample::new),
 				new SampleEntry("WebView", WebViewSample::new)
