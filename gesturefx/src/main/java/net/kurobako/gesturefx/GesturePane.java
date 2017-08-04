@@ -7,6 +7,7 @@ import javafx.animation.Interpolator;
 import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
 import javafx.animation.Timeline;
+import javafx.application.Platform;
 import javafx.beans.DefaultProperty;
 import javafx.beans.binding.DoubleBinding;
 import javafx.beans.property.BooleanProperty;
@@ -123,10 +124,13 @@ public class GesturePane extends Control {
 		target.addListener((o, p, n) -> {
 			if (n == null) return;
 			content.set(null);
-			getChildren().removeIf(x -> !(x instanceof ScrollBar));
-			n.setTransform(affine);
-			targetWidth.set(n.width());
-			targetHeight.set(n.height());
+			runLaterOrNowIfOnFXThread(() -> {
+				// TODO what if n is null?
+				getChildren().removeIf(x -> !(x instanceof ScrollBar));
+				n.setTransform(affine);
+				targetWidth.set(n.width());
+				targetHeight.set(n.height());
+			});
 		});
 
 		final ChangeListener<Bounds> layoutBoundsListener = (o, p, n) -> {
@@ -138,12 +142,20 @@ public class GesturePane extends Control {
 				p.layoutBoundsProperty().removeListener(layoutBoundsListener);
 			if (n == null) return;
 			target.set(null);
-			getChildren().add(0, n);
-			n.getTransforms().add(affine);
-			n.layoutBoundsProperty().addListener(layoutBoundsListener);
-			targetWidth.set(n.getLayoutBounds().getWidth());
-			targetHeight.set(n.getLayoutBounds().getHeight());
+			runLaterOrNowIfOnFXThread(() -> {
+				// TODO what if n is null?
+				getChildren().add(0, n);
+				n.getTransforms().add(affine);
+				n.layoutBoundsProperty().addListener(layoutBoundsListener);
+				targetWidth.set(n.getLayoutBounds().getWidth());
+				targetHeight.set(n.getLayoutBounds().getHeight());
+			});
 		});
+	}
+
+	private static void runLaterOrNowIfOnFXThread(Runnable r) {
+		if (Platform.isFxApplicationThread()) r.run();
+		else Platform.runLater(r);
 	}
 
 	@Override
@@ -247,30 +259,31 @@ public class GesturePane extends Control {
 	}
 
 	/**
-	 * Translates the target to some point, , the actual effect is dependent on
+	 * Centre the target within the viewport to a point, the actual effect is dependent on
 	 * {@link #getFitMode()}
 	 *
 	 * @param pointOnTarget a point on the target using the target's coordinate system
-	 * @param relative if relative, the {@code pointOnTarget} parameter becomes a delta value
+	 * @param relative if relative, the {@code pointOnTarget} parameter becomes a delta value that
+	 * is added to the current translation
 	 */
-	public void translateTarget(Point2D pointOnTarget, boolean relative) {
-		System.out.println(pointOnTarget + " REL:" + relative +"TVPS:"+ targetPointAtViewportCentre());
-		System.out.println("?"+affine);
+	public void centreOn(Point2D pointOnTarget, boolean relative) {
+		System.out.println(pointOnTarget + " REL:" + relative + "TVPS:" +
+				                   targetPointAtViewportCentre());
+		System.out.println("?" + affine);
 		// move to centre point and apply scale
 		Point2D delta = relative ? targetPointAtViewportCentre().add(pointOnTarget) :
 				                targetPointAtViewportCentre().subtract(pointOnTarget);
 
-
-		affine.setTx( affine.getTx()  + delta.getX() * affine.getMxx());
-		affine.setTy( affine.getTy()  + delta.getY() * affine.getMyy());
+		affine.setTx(affine.getTx() + delta.getX() * affine.getMxx());
+		affine.setTy(affine.getTy() + delta.getY() * affine.getMyy());
 		System.out.println(affine);
 		clampAtBound(true);
 	}
 
 	// TODO incomplete
-	public void translateTarget(Point2D pointOnTarget,
-	                            Duration duration,
-	                            EventHandler<ActionEvent> handler) {
+	public void centreOn(Point2D pointOnTarget,
+	                     Duration duration,
+	                     EventHandler<ActionEvent> handler) {
 		// move to centre point and apply scale
 		Point2D delta = targetPointAtViewportCentre().subtract(pointOnTarget);
 		double ttx = delta.getX() * affine.getMxx();
@@ -404,6 +417,11 @@ public class GesturePane extends Control {
 	public BooleanProperty hBarEnabledProperty() { return hBarEnabled; }
 	public void setHBarEnabled(boolean enable) { this.hBarEnabled.set(enable); }
 
+	public void setScrollBarEnabled(boolean enabled) {
+		setHBarEnabled(enabled);
+		setVBarEnabled(enabled);
+	}
+
 	public boolean isGestureEnabled() { return gestureEnabled.get(); }
 	public BooleanProperty gestureEnabledProperty() { return gestureEnabled; }
 	public void setGestureEnabled(boolean enable) { this.gestureEnabled.set(enable); }
@@ -439,10 +457,14 @@ public class GesturePane extends Control {
 	public double getCurrentScale() { return affine.getMxx(); }
 	public DoubleProperty currentScaleProperty() { return affine.mxxProperty(); }
 
-	public double getCurrentX() { return affine.getTx()/affine.getMxx(); }
-	public DoubleBinding currentXProperty() { return affine.txProperty().divide(affine.mxxProperty()); }
-	public double getCurrentY() { return affine.getTy()/affine.getMyy(); }
-	public DoubleBinding currentYProperty() { return affine.tyProperty().divide(affine.myyProperty()); }
+	public double getCurrentX() { return affine.getTx() / affine.getMxx(); }
+	public DoubleBinding currentXProperty() {
+		return affine.txProperty().divide(affine.mxxProperty());
+	}
+	public double getCurrentY() { return affine.getTy() / affine.getMyy(); }
+	public DoubleBinding currentYProperty() {
+		return affine.tyProperty().divide(affine.myyProperty());
+	}
 
 	public double getScrollZoomFactor() { return scrollZoomFactor.get(); }
 	public DoubleProperty scrollZoomFactorProperty() { return scrollZoomFactor; }

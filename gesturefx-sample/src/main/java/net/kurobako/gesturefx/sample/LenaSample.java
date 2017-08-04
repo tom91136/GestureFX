@@ -5,20 +5,20 @@ import net.kurobako.gesturefx.GesturePane.FitMode;
 import net.kurobako.gesturefx.GesturePane.ScrollMode;
 import net.kurobako.gesturefx.sample.SamplerController.Sample;
 
-import java.awt.image.VolatileImage;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.URL;
+import java.text.DecimalFormat;
+import java.text.ParsePosition;
+import java.util.OptionalDouble;
 import java.util.ResourceBundle;
 
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
-import javafx.geometry.HPos;
 import javafx.geometry.Point2D;
-import javafx.geometry.VPos;
 import javafx.scene.Node;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
@@ -31,21 +31,19 @@ import javafx.scene.control.MenuItem;
 import javafx.scene.control.ProgressBar;
 import javafx.scene.control.RadioButton;
 import javafx.scene.control.Slider;
-import javafx.scene.control.Spinner;
+import javafx.scene.control.TextField;
+import javafx.scene.control.TextFormatter;
 import javafx.scene.control.Toggle;
 import javafx.scene.control.ToggleGroup;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
-import javafx.scene.layout.Pane;
-import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 import javafx.stage.FileChooser;
 import javafx.stage.FileChooser.ExtensionFilter;
 import javafx.util.Duration;
 
 import static javafx.collections.FXCollections.*;
-import static javafx.scene.control.SpinnerValueFactory.*;
 
 public class LenaSample implements Sample {
 
@@ -88,10 +86,10 @@ public class LenaSample implements Sample {
 
 		@FXML private Button reset;
 
-		@FXML private Spinner<Double> x;
-		@FXML private Spinner<Double> y;
+		@FXML private TextField x;
+		@FXML private TextField y;
+		@FXML private TextField scale;
 		@FXML private Button apply;
-		@FXML private Spinner<Double> scale;
 		@FXML private ToggleGroup type;
 		@FXML private RadioButton translate;
 		@FXML private RadioButton zoom;
@@ -189,39 +187,27 @@ public class LenaSample implements Sample {
 
 			reset.setOnAction(e -> pane.reset());
 
-
-			DoubleSpinnerValueFactory xFactory = new DoubleSpinnerValueFactory(0, 1);
-			xFactory.maxProperty().bind(view.getImage().widthProperty());
-			xFactory.setWrapAround(true);
-			xFactory.setAmountToStepBy(1);
-			x.focusedProperty().addListener((o, p, n) -> {if (!n) x.increment(0);});
-			x.setValueFactory(xFactory);
-
-			DoubleSpinnerValueFactory yFactory = new DoubleSpinnerValueFactory(0, 1);
-			yFactory.maxProperty().bind(view.getImage().heightProperty());
-			yFactory.setWrapAround(true);
-			yFactory.setAmountToStepBy(1);
-			y.focusedProperty().addListener((o, p, n) -> {if (!n) y.increment(0);});
-			y.setValueFactory(yFactory);
-
-			DoubleSpinnerValueFactory zoomFactory = new DoubleSpinnerValueFactory(1, 1);
-			zoomFactory.maxProperty().bind(pane.maxScaleProperty());
-			zoomFactory.setWrapAround(true);
-			zoomFactory.setAmountToStepBy(0.25);
-			scale.setValueFactory(zoomFactory);
-
+			x.setTextFormatter(createDecimalFormatter(new DecimalFormat("#.0")));
+			y.setTextFormatter(createDecimalFormatter(new DecimalFormat("#.0")));
+			scale.setTextFormatter(createDecimalFormatter(new DecimalFormat("#.0")));
 
 			scale.disableProperty().bind(translate.selectedProperty());
 
 			apply.setOnAction(e -> {
 				Toggle toggle = type.getSelectedToggle();
-				Point2D d = new Point2D(x.getValue(), y.getValue());
+
+				OptionalDouble xOp = parseDouble(x.getText());
+				OptionalDouble yOp = parseDouble(y.getText());
+
+
+				Point2D d = new Point2D(xOp.orElse(0), yOp.orElse(0));
 				if (toggle == translate) {
-					if (animated.isSelected()) pane.translateTarget(d, DURATION, null);
-					else pane.translateTarget(d, relative.isSelected());
+					if (animated.isSelected()) pane.centreOn(d, DURATION, null);
+					else pane.centreOn(d, relative.isSelected());
 				} else if (toggle == zoom) {
-					if (animated.isSelected()) pane.zoomTarget(scale.getValue(), DURATION, null);
-					else pane.zoomTarget(scale.getValue(), relative.isSelected());
+					OptionalDouble _zoom = parseDouble(zoom.getText());
+					if (animated.isSelected()) pane.zoomTarget(_zoom.orElse(1), DURATION, null);
+					else pane.zoomTarget(_zoom.orElse(1), relative.isSelected());
 				}
 			});
 
@@ -234,6 +220,26 @@ public class LenaSample implements Sample {
 		}
 
 
+	}
+
+
+	private static TextFormatter<String> createDecimalFormatter(DecimalFormat format) {
+		return new TextFormatter<String>(c -> {
+			if (c.getControlNewText().isEmpty()) return c;
+			ParsePosition pos = new ParsePosition(0);
+			Number result = format.parse(c.getControlNewText(), pos);
+			if (result == null || pos.getIndex() < c.getControlNewText().length()) {
+				return null;
+			} else return c;
+		});
+	}
+
+	private static OptionalDouble parseDouble(String text) {
+		try {
+			return OptionalDouble.of(Double.parseDouble(text));
+		} catch (NumberFormatException e) {
+			return OptionalDouble.empty();
+		}
 	}
 
 }

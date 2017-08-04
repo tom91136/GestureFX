@@ -12,7 +12,7 @@
 <?import javafx.scene.control.ScrollPane?>
 <?import javafx.scene.control.Separator?>
 <?import javafx.scene.control.Slider?>
-<?import javafx.scene.control.Spinner?>
+<?import javafx.scene.control.TextField?>
 <?import javafx.scene.control.ToggleGroup?>
 <?import javafx.scene.layout.ColumnConstraints?>
 <?import javafx.scene.layout.GridPane?>
@@ -82,20 +82,20 @@
                         <Slider fx:id="maxScaleSlider" blockIncrement="1.0" majorTickUnit="10.0" showTickLabels="true" showTickMarks="true" value="10.0" GridPane.columnIndex="1" GridPane.columnSpan="2" GridPane.rowIndex="12" />
                         <Slider fx:id="currentScaleSlider" blockIncrement="1.0" majorTickUnit="10.0" showTickLabels="true" showTickMarks="true" value="10.0" GridPane.columnIndex="1" GridPane.columnSpan="2" GridPane.rowIndex="13" />
                         <Label contentDisplay="RIGHT" text="X" GridPane.rowIndex="8">
-                            <graphic>
-                                <Spinner editable="true" prefWidth="60.0" fx:id="x" />
-                            </graphic>
+                     <graphic>
+                        <TextField prefColumnCount="4" fx:id="x" />
+                     </graphic>
                         </Label>
                         <Label contentDisplay="RIGHT" text="Y" GridPane.columnIndex="1" GridPane.rowIndex="8">
-                            <graphic>
-                                <Spinner fx:id="y" editable="true" prefWidth="60.0" />
-                            </graphic>
+                     <graphic>
+                        <TextField fx:id="y" prefColumnCount="4" />
+                     </graphic>
                         </Label>
                         <Button fx:id="apply" mnemonicParsing="false" text="Apply" GridPane.columnIndex="2" GridPane.rowIndex="9" />
                         <Label contentDisplay="RIGHT" text="Scale" GridPane.columnIndex="2" GridPane.rowIndex="8">
-                            <graphic>
-                                <Spinner fx:id="scale" editable="true" prefWidth="60.0" />
-                            </graphic>
+                     <graphic>
+                        <TextField fx:id="scale" prefColumnCount="4" />
+                     </graphic>
                         </Label>
                         <RadioButton fx:id="translate" mnemonicParsing="false" selected="true" text="Translate" GridPane.rowIndex="7">
                             <toggleGroup>
