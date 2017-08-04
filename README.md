@@ -16,10 +16,10 @@ Features
 For comparison, this library is similar to [PhotoView](https://github.com/chrisbanes/PhotoView) 
 for Android but supports gestures on any `Node` subclass.
 
-*SceneBuilder renders the control properly and all the exposed properties are all editable in the 
-property sheet in the sidebar. Unfortunately, I have no idea how to make SceneBuilder treat this 
-control as a container/control so the only way to add `GesturePane` to your FXML is to add it in 
-code and then open it SceneBuilder. Pull requests welcome on solving this.
+*SceneBuilder renders the control properly and all the exposed properties are editable in the 
+sidebar. Unfortunately, I have no idea how to make SceneBuilder treat this control as a 
+container/control so the only way to add `GesturePane` to your FXML is to add it in XML and then 
+open it in SceneBuilder. Pull requests welcome on solving this.
 
 ## How to use
 
@@ -43,8 +43,8 @@ Alternatively, you can download the jar [here]() and add it to your classpath.
 Adding an `ImageView` to `GesturePane`:
 
 ```java
-    Node node = new ImageView(getClass().getResource("/lena.png").toExternalForm());
-    GesturePane pane = new GesturePane(node);
+Node node = new ImageView(getClass().getResource("/lena.png").toExternalForm());
+GesturePane pane = new GesturePane(node);
 ```
 
 For more interesting examples, take a look at the [samples](TODO).
