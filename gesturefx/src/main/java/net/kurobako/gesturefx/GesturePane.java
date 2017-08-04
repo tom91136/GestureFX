@@ -8,6 +8,7 @@ import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
 import javafx.animation.Timeline;
 import javafx.beans.DefaultProperty;
+import javafx.beans.binding.DoubleBinding;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.ObjectProperty;
@@ -253,11 +254,16 @@ public class GesturePane extends Control {
 	 * @param relative if relative, the {@code pointOnTarget} parameter becomes a delta value
 	 */
 	public void translateTarget(Point2D pointOnTarget, boolean relative) {
+		System.out.println(pointOnTarget + " REL:" + relative +"TVPS:"+ targetPointAtViewportCentre());
+		System.out.println("?"+affine);
 		// move to centre point and apply scale
 		Point2D delta = relative ? targetPointAtViewportCentre().add(pointOnTarget) :
 				                targetPointAtViewportCentre().subtract(pointOnTarget);
-		affine.setTx(affine.getTx() + delta.getX() * affine.getMxx());
-		affine.setTy(affine.getTy() + delta.getY() * affine.getMyy());
+
+
+		affine.setTx( affine.getTx()  + delta.getX() * affine.getMxx());
+		affine.setTy( affine.getTy()  + delta.getY() * affine.getMyy());
+		System.out.println(affine);
 		clampAtBound(true);
 	}
 
@@ -432,10 +438,11 @@ public class GesturePane extends Control {
 
 	public double getCurrentScale() { return affine.getMxx(); }
 	public DoubleProperty currentScaleProperty() { return affine.mxxProperty(); }
-	public double getCurrentX() { return affine.getTx(); }
-	public DoubleProperty currentXProperty() { return affine.txProperty(); }
-	public double getCurrentY() { return affine.getTy(); }
-	public DoubleProperty currentYProperty() { return affine.tyProperty(); }
+
+	public double getCurrentX() { return affine.getTx()/affine.getMxx(); }
+	public DoubleBinding currentXProperty() { return affine.txProperty().divide(affine.mxxProperty()); }
+	public double getCurrentY() { return affine.getTy()/affine.getMyy(); }
+	public DoubleBinding currentYProperty() { return affine.tyProperty().divide(affine.myyProperty()); }
 
 	public double getScrollZoomFactor() { return scrollZoomFactor.get(); }
 	public DoubleProperty scrollZoomFactorProperty() { return scrollZoomFactor; }

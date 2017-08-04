@@ -121,6 +121,7 @@ public class LenaSample implements Sample {
 			pane.setFitWidth(false);
 			pane.setFitHeight(false);
 
+			pane.zoomTarget(2, false);
 			viewport.getChildren().add(pane);
 
 
@@ -144,7 +145,7 @@ public class LenaSample implements Sample {
 							         "Unable to open image file: " + ex.getMessage(),
 							         ButtonType.OK)
 							.showAndWait();
-					view.setImage(new Image(LENA,true));
+					view.setImage(new Image(LENA, true));
 				}
 
 			});
@@ -193,12 +194,14 @@ public class LenaSample implements Sample {
 			xFactory.maxProperty().bind(view.getImage().widthProperty());
 			xFactory.setWrapAround(true);
 			xFactory.setAmountToStepBy(1);
+			x.focusedProperty().addListener((o, p, n) -> {if (!n) x.increment(0);});
 			x.setValueFactory(xFactory);
 
 			DoubleSpinnerValueFactory yFactory = new DoubleSpinnerValueFactory(0, 1);
 			yFactory.maxProperty().bind(view.getImage().heightProperty());
 			yFactory.setWrapAround(true);
 			yFactory.setAmountToStepBy(1);
+			y.focusedProperty().addListener((o, p, n) -> {if (!n) y.increment(0);});
 			y.setValueFactory(yFactory);
 
 			DoubleSpinnerValueFactory zoomFactory = new DoubleSpinnerValueFactory(1, 1);
