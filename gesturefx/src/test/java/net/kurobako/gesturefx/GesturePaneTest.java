@@ -37,7 +37,6 @@ import javafx.scene.input.ZoomEvent;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.transform.Affine;
 import javafx.scene.transform.Transform;
-import javafx.util.Duration;
 
 import static javafx.geometry.Orientation.HORIZONTAL;
 import static javafx.geometry.Orientation.VERTICAL;
@@ -83,7 +82,7 @@ public class GesturePaneTest {
 			}
 		}
 		abstract class EmptyTest extends TestTarget {
-			Affine transform;
+			private Affine transform;
 			EmptyTest(String name) { super(name); }
 			Transformable mkTransformable() {
 				return new Transformable() {
@@ -178,7 +177,7 @@ public class GesturePaneTest {
 
 	@Test
 	public void testScrollBarEnabled() throws Exception {
-		// by default enabled
+		// enabled by default
 		assertThat(pane.lookupAll("*"))
 				.haveExactly(1, createBarCondition(HORIZONTAL, true))
 				.haveExactly(1, createBarCondition(VERTICAL, true));
@@ -210,6 +209,34 @@ public class GesturePaneTest {
 				.haveExactly(1, createBarCondition(VERTICAL, true));
 	}
 
+	@Test
+	public void testViewportCentre() throws Exception {
+		pane.setScrollBarEnabled(false);
+		//  we got a 512*512 image
+		assertThat(pane.viewportCentre()).isEqualTo(new Point2D(256, 256));
+	}
+
+	@Test
+	public void testTargetPointAtViewportPoint() throws Exception {
+		pane.setScrollBarEnabled(false);
+		//  we got an 512*512 image and the window is exactly 512*512
+		final int d = 512;
+		SoftAssertions softly = new SoftAssertions();
+		softly.assertThat(pane.targetPointAt(Point2D.ZERO)).contains(Point2D.ZERO);
+		softly.assertThat(pane.targetPointAt(new Point2D(d, d))).contains(new Point2D(d, d));
+		softly.assertThat(pane.targetPointAt(new Point2D(-1, -1))).isEmpty();
+		softly.assertThat(pane.targetPointAt(new Point2D(1000, 1000))).isEmpty();
+		softly.assertAll();
+	}
+
+	@Test
+	public void testTargetPointAtViewportCentre() throws Exception {
+		pane.setScrollBarEnabled(false);
+		// a completely valid point in viewport
+		Point2D expected = pane.targetPointAt(pane.viewportCentre())
+				                   .orElseThrow(AssertionError::new);
+		assertThat(pane.targetPointAtViewportCentre()).isEqualTo(expected);
+	}
 
 	@Test
 	public void testScale() throws Exception {
@@ -222,7 +249,6 @@ public class GesturePaneTest {
 		pane.zoomTarget(2, true);
 		assertThat(pane.getCurrentScale()).isEqualTo(3d);
 	}
-
 
 	@Test
 	public void testScaleByTouch() throws Exception {
@@ -274,16 +300,15 @@ public class GesturePaneTest {
 		assertThat(pane.getCurrentScale()).isEqualTo(2d);
 	}
 
-
 	@Test
 	public void testAnimatedScale() throws Exception {
-
+		throw new RuntimeException();
 //		pane.zoomTarget(2, Duration.millis(100), );
 	}
 
 	@Test
-	public void testAnimatedScaleClamp() throws Exception {
-
+	public void testAnimatedScaleClamps() throws Exception {
+		throw new RuntimeException();
 	}
 
 	@Test
@@ -310,6 +335,16 @@ public class GesturePaneTest {
 	}
 
 	@Test
+	public void testAnimatedTranslate() throws Exception {
+		throw new RuntimeException();
+	}
+
+	@Test
+	public void testAnimatedTranslateClamps() throws Exception {
+		throw new RuntimeException();
+	}
+
+	@Test
 	public void testHorizontalTranslateClamp() throws Exception {
 		throw new RuntimeException();
 	}
@@ -326,22 +361,24 @@ public class GesturePaneTest {
 		SoftAssertions softly = new SoftAssertions();
 
 		// for some general read-write properties
-		class PropertyAssertion<R> {
+		class Prop<R> {
 
 			private final Supplier<R> getter;
 			private final Consumer<? super R> setter;
 			private final Supplier<Property<? super R>> property;
 			private final R expected;
 
-			private PropertyAssertion(Supplier<R> getter,
-			                          Consumer<? super R> setter,
-			                          Supplier<Property<? super R>> property,
-			                          R expected) {
+			private Prop(Supplier<R> getter,
+			             Consumer<? super R> setter,
+			             Supplier<Property<? super R>> property,
+			             R expected) {
 				this.getter = getter;
 				this.setter = setter;
 				this.property = property;
 				this.expected = expected;
 			}
+
+
 			private void assertProperty() {
 				try {
 					setter.accept(expected);
@@ -352,39 +389,44 @@ public class GesturePaneTest {
 				}
 			}
 		}
+		GesturePane p = this.pane;
 		Arrays.asList(
-				new PropertyAssertion<>(pane::getContent, pane::setContent,
-						                       pane::contentProperty, new Rectangle()),
-				new PropertyAssertion<>(pane::isVBarEnabled, pane::setVBarEnabled,
-						                       pane::vBarEnabledProperty, false),
-				new PropertyAssertion<>(pane::isHBarEnabled, pane::setHBarEnabled,
-						                       pane::hBarEnabledProperty, false),
-				new PropertyAssertion<>(pane::isGestureEnabled, pane::setGestureEnabled,
-						                       pane::gestureEnabledProperty, false),
-				new PropertyAssertion<>(pane::isClipEnabled, pane::setClipEnabled,
-						                       pane::clipEnabledProperty, false),
-				new PropertyAssertion<>(pane::isFitWidth, pane::setFitWidth,
-						                       pane::fitWidthProperty, false),
-				new PropertyAssertion<>(pane::isFitHeight, pane::setFitHeight,
-						                       pane::fitHeightProperty, false),
-				new PropertyAssertion<>(pane::getFitMode, pane::setFitMode,
-						                       pane::fitModeProperty, FitMode.CENTER),
-				new PropertyAssertion<>(pane::getScrollMode, pane::setScrollMode,
-						                       pane::scrollModeProperty, ScrollMode.ZOOM),
-				new PropertyAssertion<>(pane::getMinScale, pane::setMinScale,
-						                       pane::minScaleProperty, 42d),
-				new PropertyAssertion<>(pane::getMaxScale, pane::setMaxScale,
-						                       pane::maxScaleProperty, 42d),
-				new PropertyAssertion<>(pane::getScrollZoomFactor, pane::setScrollZoomFactor,
-						                       pane::scrollZoomFactorProperty, 42d))
-				.forEach(PropertyAssertion::assertProperty);
+				new Prop<>(p::getTarget, this.pane::setTarget, this.pane::targetProperty,
+						          new Transformable() {
+							          @Override
+							          public double width() { return 0; }
+							          @Override
+							          public double height() { return 0; }
+							          @Override
+							          public void setTransform(Affine affine) { }
+						          }),
+				new Prop<>(p::getContent, p::setContent, p::contentProperty,
+						          new Rectangle(512, 512)),
+				new Prop<>(p::isVBarEnabled, p::setVBarEnabled, p::vBarEnabledProperty, false),
+				new Prop<>(p::isHBarEnabled, p::setHBarEnabled, p::hBarEnabledProperty, false),
+				new Prop<>(p::isGestureEnabled, p::setGestureEnabled, p::gestureEnabledProperty,
+						          false),
+				new Prop<>(p::isClipEnabled, p::setClipEnabled, p::clipEnabledProperty, false),
+				new Prop<>(p::isFitWidth, p::setFitWidth, p::fitWidthProperty, false),
+				new Prop<>(p::isFitHeight, p::setFitHeight, p::fitHeightProperty, false),
+				new Prop<>(p::getFitMode, p::setFitMode, p::fitModeProperty,
+						          FitMode.CENTER),
+				new Prop<>(p::getScrollMode, p::setScrollMode, p::scrollModeProperty,
+						          ScrollMode.ZOOM),
+				new Prop<>(p::getMinScale, p::setMinScale, p::minScaleProperty, 42d),
+				new Prop<>(p::getMaxScale, p::setMaxScale, p::maxScaleProperty, 42d),
+				new Prop<>(p::getScrollZoomFactor, p::setScrollZoomFactor,
+						          p::scrollZoomFactorProperty, 42d))
+				.forEach(Prop::assertProperty);
 
 		// for read-only properties
-		softly.assertThat(pane.getCurrentScale()).isEqualTo(pane.currentScaleProperty().get());
-		softly.assertThat(pane.getCurrentX()).isEqualTo(pane.currentXProperty().get());
-		softly.assertThat(pane.getCurrentY()).isEqualTo(pane.currentYProperty().get());
-		softly.assertThat(pane.getTargetViewport()).isEqualTo(pane.targetViewportProperty().get());
-
+		softly.assertThat(p.getCurrentScale()).isEqualTo(p.currentScaleProperty().get());
+		softly.assertThat(p.getCurrentX()).isEqualTo(p.currentXProperty().get());
+		softly.assertThat(p.getCurrentY()).isEqualTo(p.currentYProperty().get());
+		softly.assertThat(p.getTargetViewport()).isEqualTo(p.targetViewportProperty().get());
+		softly.assertThat(p.getViewportBound()).isEqualTo(p.viewportBoundProperty().get());
+		softly.assertThat(p.getViewportWidth()).isEqualTo(p.getViewportBound().getWidth());
+		softly.assertThat(p.getViewportHeight()).isEqualTo(p.getViewportBound().getHeight());
 
 		softly.assertAll();
 	}

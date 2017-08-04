@@ -1,6 +1,7 @@
 package net.kurobako.gesturefx;
 
-import javafx.beans.InvalidationListener;
+import java.util.Arrays;
+
 import javafx.beans.binding.DoubleBinding;
 import javafx.beans.binding.When;
 import javafx.beans.property.SimpleObjectProperty;
@@ -67,6 +68,10 @@ final class GesturePaneSkin extends SkinBase<GesturePane> {
 				                         .then(rectangle)
 				                         .otherwise(new SimpleObjectProperty<>(null)));
 
+		// bind visibility to managed prop
+		hBar.managedProperty().bind(pane.hBarEnabled);
+		vBar.managedProperty().bind(pane.vBarEnabled);
+
 		// setup scrollbars
 		getChildren().addAll(vBar, hBar);
 		hBar.setOrientation(Orientation.HORIZONTAL);
@@ -82,6 +87,15 @@ final class GesturePaneSkin extends SkinBase<GesturePane> {
 		vBar.minProperty().bind(scaledHeight.subtract(pane.heightProperty()).negate());
 		hBar.setMax(0);
 		vBar.setMax(0);
+
+		// bind scrollbars to translation
+		Runnable setHBarX = () -> hBar.setValue(hBar.getMin() - affine.getTx());
+		Runnable setVBarY = () -> vBar.setValue(vBar.getMin() - affine.getTy());
+		affine.txProperty().addListener(o -> setHBarX.run());
+		affine.tyProperty().addListener(o -> setVBarY.run());
+		hBar.valueProperty().addListener(o -> affine.setTx(hBar.getMin() - hBar.getValue()));
+		vBar.valueProperty().addListener(o -> affine.setTy(vBar.getMin() - vBar.getValue()));
+
 		// (barMax - barMin) * (bound/targetBound)
 		hBar.visibleAmountProperty().bind(
 				hBar.maxProperty().subtract(hBar.minProperty())
@@ -89,59 +103,43 @@ final class GesturePaneSkin extends SkinBase<GesturePane> {
 		vBar.visibleAmountProperty().bind(
 				vBar.maxProperty().subtract(vBar.minProperty())
 						.multiply(pane.heightProperty().divide(scaledHeight)));
-		// bind scrollbars to translation
-		affine.txProperty().addListener(o -> {
-			hBar.setValue(hBar.getMin() - affine.getTx());
-		});
-		affine.tyProperty().addListener(o -> {
-			vBar.setValue(vBar.getMin() - affine.getTy());
-		});
-		hBar.valueProperty().addListener(o -> {
-//			if(!Double.isFinite(hBar.getValue())) return;
-			affine.setTx(hBar.getMin() - hBar.getValue());});
-		vBar.valueProperty().addListener(o -> {
-//			if(!Double.isFinite(vBar.getValue())) return;
-			affine.setTy(vBar.getMin() - vBar.getValue());});
 
-		// bind visibility to managed prop
-		hBar.managedProperty().bind(pane.hBarEnabled);
-		vBar.managedProperty().bind(pane.vBarEnabled);
+		// bind viewport to target dimension
+		Arrays.asList(
+				pane.widthProperty(),
+				pane.heightProperty(),
+				hBar.layoutBoundsProperty(),
+				vBar.layoutBoundsProperty(),
+				vBar.managedProperty(),
+				hBar.managedProperty(),
+				pane.target,
+				pane.content).forEach(p -> p.addListener(o -> {
+			double width = pane.getWidth() - (vBar.isManaged() ? vBar.getWidth() : 0);
+			double height = pane.getHeight() - (hBar.isManaged() ? hBar.getHeight() : 0);
+			pane.viewport.set(new BoundingBox(0, 0, width, height));
+		}));
 
-		affine.setOnTransformChanged(e -> fireAffineEvent(CHANGED));
-
-		// bind bounds to target dimension
-		InvalidationListener l = o -> {
-			double width = pane.getWidth() - (vBar.isVisible() ? vBar.getWidth() : 0);
-			double height = pane.getHeight() - (hBar.isVisible() ? hBar.getHeight() : 0);
-			pane.bounds.set(new BoundingBox(0, 0, width, height));
-		};
-		pane.widthProperty().addListener(l);
-		pane.heightProperty().addListener(l);
-		vBar.layoutBoundsProperty().addListener(l);
-		hBar.layoutBoundsProperty().addListener(l);
-		pane.target.addListener(l);
-		pane.content.addListener(l);
-
-		InvalidationListener targetVPL = o -> {
+		// bind affine/bound changes to viewport
+		Arrays.asList(pane.viewport,
+				pane.affine.txProperty(),
+				pane.affine.tyProperty(),
+				pane.affine.mxxProperty(),
+				pane.affine.myyProperty()).forEach(p -> p.addListener(o -> {
 			double mxx = affine.getMxx();
 			double myy = affine.getMyy();
-			pane.targetViewport.set(new BoundingBox(-affine.getTx() / mxx,
+			pane.targetRect.set(new BoundingBox(-affine.getTx() / mxx,
 					                                       -affine.getTy() / myy,
 					                                       pane.getViewportWidth() / mxx,
 					                                       pane.getViewportHeight() / myy));
-		};
-
-		pane.bounds.addListener(targetVPL);
-		pane.affine.txProperty().addListener(targetVPL);
-		pane.affine.tyProperty().addListener(targetVPL);
-		pane.affine.mxxProperty().addListener(targetVPL);
-		pane.affine.myyProperty().addListener(targetVPL);
+		}));
 
 		pane.fitWidth.addListener(o -> pane.requestLayout());
 		pane.fitHeight.addListener(o -> pane.requestLayout());
-
-		setupGestures();
 		pane.scrollMode.addListener(o -> pane.clampAtBound(false));
+		affine.setOnTransformChanged(e -> fireAffineEvent(CHANGED));
+		setHBarX.run();
+		setVBarY.run();
+		setupGestures();
 	}
 
 	private <T extends Event> EventHandler<T> consumeThenFireIfEnabled(EventHandler<T> handler) {

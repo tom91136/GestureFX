@@ -13,6 +13,7 @@ import javafx.beans.binding.DoubleBinding;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.beans.property.SimpleObjectProperty;
@@ -91,12 +92,12 @@ public class GesturePane extends Control {
 
 	final ObjectProperty<Transformable> target = new SimpleObjectProperty<>();
 	final ObjectProperty<Node> content = new SimpleObjectProperty<>();
-	final ObjectProperty<Bounds> targetViewport = new SimpleObjectProperty<>(ZERO_BOX);
+	final ObjectProperty<Bounds> targetRect = new SimpleObjectProperty<>(ZERO_BOX);
 
 	// internal properties
 	final DoubleProperty targetWidth = new SimpleDoubleProperty();
 	final DoubleProperty targetHeight = new SimpleDoubleProperty();
-	final ObjectProperty<Bounds> bounds = new SimpleObjectProperty<>(ZERO_BOX);
+	final ObjectProperty<Bounds> viewport = new SimpleObjectProperty<>(ZERO_BOX);
 
 	/**
 	 * Create a new {@link GesturePane} with the specified {@link Transformable}
@@ -161,19 +162,6 @@ public class GesturePane extends Control {
 	@Override
 	protected Skin<?> createDefaultSkin() { return new GesturePaneSkin(this); }
 
-	public double getTargetWidth() {
-		if (target.get() != null) return target.get().width();
-		else if (content.get() != null) return content.get().getLayoutBounds().getWidth();
-		else return 0;
-	}
-	public double getTargetHeight() {
-		if (target.get() != null) return target.get().height();
-		else if (content.get() != null) return content.get().getLayoutBounds().getHeight();
-		else return 0;
-	}
-
-	public double getViewportWidth() { return bounds.get().getWidth(); }
-	public double getViewportHeight() { return bounds.get().getHeight(); }
 
 	/**
 	 * Centre of the current viewport.
@@ -207,9 +195,11 @@ public class GesturePane extends Control {
 	 * Computes the point on the target at the given viewport point.
 	 *
 	 * @param viewportPoint a point on the viewport
-	 * @return a point on the target that corresponds to the viewport point
+	 * @return a point on the target that corresponds to the viewport point or empty if the point
+	 * is not within the the bound returned by {@link #getViewportBound()}
 	 */
 	public Optional<Point2D> targetPointAt(Point2D viewportPoint) {
+		if(!getViewportBound().contains(viewportPoint)) return Optional.empty();
 		try {
 			return Optional.of(affine.inverseTransform(viewportPoint));
 		} catch (NonInvertibleTransformException e) {
@@ -401,6 +391,23 @@ public class GesturePane extends Control {
 		timeline.play();
 	}
 
+
+	public double getTargetWidth() {
+		if (target.get() != null) return target.get().width();
+		else if (content.get() != null) return content.get().getLayoutBounds().getWidth();
+		else return 0;
+	}
+	public double getTargetHeight() {
+		if (target.get() != null) return target.get().height();
+		else if (content.get() != null) return content.get().getLayoutBounds().getHeight();
+		else return 0;
+	}
+
+	public double getViewportWidth() { return viewport.get().getWidth(); }
+	public double getViewportHeight() { return viewport.get().getHeight(); }
+	public Bounds getViewportBound() { return viewport.get(); }
+	public ReadOnlyObjectProperty<Bounds> viewportBoundProperty() { return viewport; }
+
 	public Transformable getTarget() { return target.get(); }
 	public ObjectProperty<Transformable> targetProperty() { return target; }
 	public void setTarget(Transformable target) { this.target.set(target); }
@@ -470,8 +477,8 @@ public class GesturePane extends Control {
 	public DoubleProperty scrollZoomFactorProperty() { return scrollZoomFactor; }
 	public void setScrollZoomFactor(double factor) { this.scrollZoomFactor.set(factor); }
 
-	public Bounds getTargetViewport() { return targetViewport.get(); }
-	public ObjectProperty<Bounds> targetViewportProperty() { return targetViewport; }
+	public Bounds getTargetViewport() { return targetRect.get(); }
+	public ObjectProperty<Bounds> targetViewportProperty() { return targetRect; }
 
 	/**
 	 * Modes for different minimum scales
