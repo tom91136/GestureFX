@@ -210,10 +210,20 @@ public class GesturePane extends Control implements GesturePaneOps {
 		}
 	}
 
+	/**
+	 * Computes the point on the viewport at the given target point.
+	 *
+	 * @param targetPoint a point on the target
+	 * @return a point on the viewport that corresponds to the target point
+	 */
+	public Point2D viewportPointAt(Point2D targetPoint) {
+		return affine.transform(targetPoint);
+	}
+
 	@Override
 	public void translateBy(Dimension2D targetAmount) {
 		// target coordinate, so append; origin is top left so we we flip signs
-		affine.appendTranslation(-targetAmount.getWidth(), -targetAmount.getHeight() );
+		affine.appendTranslation(-targetAmount.getWidth(), -targetAmount.getHeight());
 		clampAtBound(true);
 
 	}
@@ -226,13 +236,13 @@ public class GesturePane extends Control implements GesturePaneOps {
 	}
 
 	@Override
-	public void zoomTo(double scale) {
-		scale(scale / affine.getMxx(), viewportCentre());
+	public void zoomTo(double scale, Point2D pivotOnTarget) {
+		scale(scale / affine.getMxx(), viewportPointAt(pivotOnTarget));
 	}
 
 	@Override
-	public void zoomBy(double amount) {
-		scale(amount + affine.getMxx() / affine.getMxx(), viewportCentre());
+	public void zoomBy(double amount, Point2D pivotOnTarget) {
+		scale((amount + affine.getMxx()) / affine.getMxx(), viewportPointAt(pivotOnTarget));
 	}
 
 	/**
@@ -301,21 +311,36 @@ public class GesturePane extends Control implements GesturePaneOps {
 				}, afterFinished != null ? e -> afterFinished.run() : null);
 			}
 			@Override
-			public void zoomTo(double scale) {
+			public void zoomTo(double scale, Point2D pivotOnTarget) {
 				double mxx = affine.getMxx(); // fixed point
 				double myy = affine.getMyy(); // fixed point
 				double dmx = scale - mxx; // delta
 				double dmy = scale - myy; // delta
+				Point2D pv = viewportPointAt(pivotOnTarget);
+				System.out.println(pv);
 				if (beforeStart != null) beforeStart.run();
 				animateValue(0d, 1d, duration, interpolator, v -> {
-					affine.setTx(mxx + dmx * v);
-					affine.setTy(myy + dmy * v);
+					// so, prependScale with pivot is:
+					// prependTranslate->prependScale->prependTranslate
+					// 1. prependTranslate
+					affine.setTx(affine.getTx() - pv.getX());
+					affine.setTy(affine.getTy() - pv.getY());
+					// 2. prependScale, but extract the coefficient to scale the translation first
+					double txx = mxx + dmx * v;
+					double tyy = myy + dmy * v;
+					affine.setTx(affine.getTx() * (txx / affine.getMxx()));
+					affine.setTy(affine.getTy() * (tyy / affine.getMyy()));
+					affine.setMxx(txx);
+					affine.setMyy(tyy);
+					// 3. prependTranslate
+					affine.setTx(affine.getTx() + pv.getX());
+					affine.setTy(affine.getTy() + pv.getY());
 					clampAtBound(true);
 				}, afterFinished != null ? e -> afterFinished.run() : null);
 			}
 			@Override
-			public void zoomBy(double scale) {
-				zoomTo(getCurrentScale() + scale);
+			public void zoomBy(double scale, Point2D pivotOnTarget) {
+				zoomTo(getCurrentScale() + scale, pivotOnTarget);
 			}
 		};
 	}
@@ -348,7 +373,7 @@ public class GesturePane extends Control implements GesturePaneOps {
 	 * Resets scale to {@code 1.0} and conditionally centres the image depending on the current
 	 * {@link FitMode}
 	 */
-	public final void reset() { zoomTo(1); }
+	public final void reset() { zoomTo(1, targetPointAtViewportCentre()); }
 
 	void scale(double factor, Point2D origin) {
 		double delta = factor;

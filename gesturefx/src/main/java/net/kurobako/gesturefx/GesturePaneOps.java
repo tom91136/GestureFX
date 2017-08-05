@@ -30,16 +30,17 @@ public interface GesturePaneOps {
 	 *
 	 * @param scale the scale, invalid values will be clamped by various properties of
 	 * {@link GesturePane}
+	 * @param pivotOnTarget a pivot point on the target using the target's coordinate system
 	 */
-	void zoomTo(double scale);
+	void zoomTo(double scale, Point2D pivotOnTarget);
 	/**
 	 * Changes the scale of the target by some amount, this is equivalent to calling
-	 * {@link #zoomTo(double)} with {@link GesturePane#getCurrentScale()} plus the amount
+	 * {@link #zoomTo(double, Point2D)} with {@link GesturePane#getCurrentScale()} plus the amount
 	 *
 	 * @param amount the amount, invalid values will be clamped by various properties of
 	 * {@link GesturePane}
+	 * @param pivotOnTarget a pivot point on the target using the target's coordinate system
 	 */
-	void zoomBy(double amount);
+	void zoomBy(double amount, Point2D pivotOnTarget);
 
-	//TODO zooming ops should allow for setting a pivot point
 }

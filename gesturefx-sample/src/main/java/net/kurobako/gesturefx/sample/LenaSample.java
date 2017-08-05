@@ -157,7 +157,7 @@ public class LenaSample implements Sample {
 					.afterFinished(() -> System.out.println("Done!"))
 					.centreOn(new Point2D(42, 42));
 
-			pane.animate(Duration.millis(200)).zoomTo(1);
+			pane.animate(Duration.millis(200)).zoomTo(1,pane.targetPointAtViewportCentre());
 
 			fitMode.setItems(observableArrayList(FitMode.values()));
 			fitMode.setValue(pane.getFitMode());
@@ -198,9 +198,9 @@ public class LenaSample implements Sample {
 
 			reset.setOnAction(e -> pane.reset());
 
-			x.setTextFormatter(createDecimalFormatter(new DecimalFormat("#.0")));
-			y.setTextFormatter(createDecimalFormatter(new DecimalFormat("#.0")));
-			scale.setTextFormatter(createDecimalFormatter(new DecimalFormat("#.0")));
+			x.setTextFormatter(createDecimalFormatter());
+			y.setTextFormatter(createDecimalFormatter());
+			scale.setTextFormatter(createDecimalFormatter());
 
 			scale.disableProperty().bind(translate.selectedProperty());
 
@@ -217,13 +217,17 @@ public class LenaSample implements Sample {
 								                     .interpolateWith(Interpolator.EASE_BOTH);
 
 				Point2D d = new Point2D(xOp.orElse(0), yOp.orElse(0));
+				double _zoom = parseDouble(scale.getText()).orElse(1);
+
+				x.setText(String.valueOf(d.getX()));
+				y.setText(String.valueOf(d.getY()));
+				scale.setText(String.valueOf(_zoom));
 				if (toggle == translate) {
 					if (!relative.isSelected()) ops.centreOn(d);
 					else ops.translateBy(new Dimension2D(d.getX(), d.getY()));
 				} else if (toggle == zoom) {
-					double _zoom = parseDouble(zoom.getText()).orElse(1);
-					if (!relative.isSelected()) ops.zoomTo(_zoom);
-					else ops.zoomBy(_zoom);
+					if (!relative.isSelected()) ops.zoomTo(_zoom,d);
+					else ops.zoomBy(_zoom,d);
 				}
 			});
 
@@ -239,8 +243,10 @@ public class LenaSample implements Sample {
 	}
 
 
-	private static TextFormatter<String> createDecimalFormatter(DecimalFormat format) {
-		return new TextFormatter<String>(c -> {
+	private static TextFormatter<String> createDecimalFormatter() {
+		DecimalFormat format = new DecimalFormat("#.0");
+		format.setNegativePrefix("-");
+		return new TextFormatter<>(c -> {
 			if (c.getControlNewText().isEmpty()) return c;
 			ParsePosition pos = new ParsePosition(0);
 			Number result = format.parse(c.getControlNewText(), pos);
