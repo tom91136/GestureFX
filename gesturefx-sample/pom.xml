@@ -11,6 +11,10 @@
 
     <artifactId>gesturefx-sample</artifactId>
 
+    <properties>
+        <mainClass>net.kurobako.gesturefx.sample.Main</mainClass>
+    </properties>
+
     <dependencies>
         <dependency>
             <groupId>net.kurobako.gesturefx</groupId>
@@ -26,7 +30,7 @@
                 <artifactId>exec-maven-plugin</artifactId>
                 <version>1.6.0</version>
                 <configuration>
-                    <mainClass>net.kurobako.gesturefx.sample.Main</mainClass>
+                    <mainClass>${mainClass}</mainClass>
                 </configuration>
             </plugin>
             <plugin>
@@ -36,7 +40,21 @@
                     <descriptorRefs>
                         <descriptorRef>jar-with-dependencies</descriptorRef>
                     </descriptorRefs>
+                    <archive>
+                        <manifest>
+                            <mainClass>${mainClass}</mainClass>
+                        </manifest>
+                    </archive>
                 </configuration>
+                <executions>
+                    <execution>
+                        <id>make-assembly</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>single</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
     </build>
