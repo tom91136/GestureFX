@@ -1,5 +1,6 @@
 package net.kurobako.gesturefx;
 
+import java.util.Objects;
 import java.util.Optional;
 import java.util.function.DoubleConsumer;
 
@@ -23,6 +24,7 @@ import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.geometry.BoundingBox;
 import javafx.geometry.Bounds;
+import javafx.geometry.Dimension2D;
 import javafx.geometry.Point2D;
 import javafx.scene.Node;
 import javafx.scene.control.Control;
@@ -67,7 +69,7 @@ import static net.kurobako.gesturefx.GesturePane.ScrollMode.*;
  */
 @SuppressWarnings({"unused", "WeakerAccess"})
 @DefaultProperty("content")
-public class GesturePane extends Control {
+public class GesturePane extends Control implements GesturePaneOps {
 
 	private static final BoundingBox ZERO_BOX = new BoundingBox(0, 0, 0, 0);
 
@@ -199,7 +201,7 @@ public class GesturePane extends Control {
 	 * is not within the the bound returned by {@link #getViewportBound()}
 	 */
 	public Optional<Point2D> targetPointAt(Point2D viewportPoint) {
-		if(!getViewportBound().contains(viewportPoint)) return Optional.empty();
+		if (!getViewportBound().contains(viewportPoint)) return Optional.empty();
 		try {
 			return Optional.of(affine.inverseTransform(viewportPoint));
 		} catch (NonInvertibleTransformException e) {
@@ -208,92 +210,147 @@ public class GesturePane extends Control {
 		}
 	}
 
-	/**
-	 * Zooms the target to some scale, the actual effect is bounded by {@link #getMinScale()},
-	 * {@link #getMaxScale()}, and dependent on {@link #getFitMode()}
-	 *
-	 * @param scale the scale
-	 * @param relative whether the amount is relative; false means the target will be zoomed to
-	 * the specified scale, true means the target will be scaled to the current zoom + the given
-	 * scale
-	 */
-	public void zoomTarget(double scale, boolean relative) {
-		scale((relative ? scale + affine.getMxx() : scale) / affine.getMxx(), viewportCentre());
-	}
-
-	/**
-	 * Zooms the target to the specified scale while animating the scale steps, the actual effect
-	 * is bounded by {@link #getMinScale()}, {@link #getMaxScale()}, and dependent on
-	 * {@link #getFitMode()}
-	 *
-	 * @param scale the scale
-	 * @param duration the duration of the animation
-	 * @param endAction action handler when the animation is finished
-	 */
-	public void zoomTarget(double scale, Duration duration, EventHandler<ActionEvent> endAction) {
-		double mxx = affine.getMxx();
-		Point2D offset = targetPointAtViewportCentre().subtract(affine.getTx(), affine.getTy());
-		double delta = scale - mxx;
-
-
-		animateValue(0, 1, duration, v -> {
-//			double step = mxx + (delta * v);
-
-
-//			affine.setTx(affine.getTx() + offset.getX() * affine.getMxx() * v);
-//			affine.setTy(affine.getTy() + offset.getY() * affine.getMyy() * v);
-//			affine.setMxx(step);
-//			affine.setMyy(step);
-		}, endAction);
-
-	}
-
-	/**
-	 * Centre the target within the viewport to a point, the actual effect is dependent on
-	 * {@link #getFitMode()}
-	 *
-	 * @param pointOnTarget a point on the target using the target's coordinate system
-	 * @param relative if relative, the {@code pointOnTarget} parameter becomes a delta value that
-	 * is added to the current translation
-	 */
-	public void centreOn(Point2D pointOnTarget, boolean relative) {
-		System.out.println(pointOnTarget + " REL:" + relative + "TVPS:" +
-				                   targetPointAtViewportCentre());
-		System.out.println("?" + affine);
-		// move to centre point and apply scale
-		Point2D delta = relative ? targetPointAtViewportCentre().add(pointOnTarget) :
-				                targetPointAtViewportCentre().subtract(pointOnTarget);
-
-		affine.setTx(affine.getTx() + delta.getX() * affine.getMxx());
-		affine.setTy(affine.getTy() + delta.getY() * affine.getMyy());
-		System.out.println(affine);
+	@Override
+	public void translateBy(Dimension2D targetAmount) {
+		// target coordinate, so prepend
+		translate(targetAmount.getWidth(), targetAmount.getHeight());
 		clampAtBound(true);
 	}
 
-	// TODO incomplete
-	public void centreOn(Point2D pointOnTarget,
-	                     Duration duration,
-	                     EventHandler<ActionEvent> handler) {
+	@Override
+	public void centreOn(Point2D pointOnTarget) {
 		// move to centre point and apply scale
+//		affine.setTx(affine.getTx() + delta.getX() * affine.getMxx());
+//		affine.setTy(affine.getTy() + delta.getY() * affine.getMyy());
 		Point2D delta = targetPointAtViewportCentre().subtract(pointOnTarget);
-		double ttx = delta.getX() * affine.getMxx();
-		double tty = delta.getY() * affine.getMyy();
-		double tx = affine.getTx();
-		double ty = affine.getTy();
-		animateValue(0, 1, duration, v -> {
-			affine.setTx(tx + ttx * v);
-			affine.setTy(ty + tty * v);
-			clampAtBound(true);
-		}, handler);
+		translateBy(new Dimension2D(delta.getX(), delta.getY()));
+		clampAtBound(true);
+	}
+
+	@Override
+	public void zoomTo(double scale) {
+		scale(scale / affine.getMxx(), viewportCentre());
+	}
+
+	@Override
+	public void zoomBy(double amount) {
+		scale(amount + affine.getMxx() / affine.getMxx(), viewportCentre());
+	}
+
+	/**
+	 * Animate changes for all operations supported in {@link GesturePaneOps}.
+	 * <p>
+	 * Animations does not compose so starting an new animation while one is already running will
+	 * result in the first animation being stopped arbitrary for the second animation to start.
+	 * <p>
+	 * The method returns
+	 * a type-safe builder
+	 * that will limit access to only the available builder methods, for example:
+	 * <p>
+	 * <pre><code>
+	 * animate(Duration.millis(300))
+	 * 	.interpolateWith(Interpolator.EASE_IN)
+	 * 	.afterFinished(() -> System.out.println("Done!"))
+	 * 	.zoomTo(2f);
+	 * </code></pre>
+	 * </p>
+	 *
+	 * @param duration the duration of the animation; must not be null
+	 * @return a type-safe builder that will allow various options to be set
+	 */
+	public AnimationInterpolatorBuilder animate(Duration duration) {
+		Objects.requireNonNull(duration);
+		// keep the builder to one object instantiation
+		return new AnimationInterpolatorBuilder() {
+
+			private Runnable afterFinished;
+			private Runnable beforeStart;
+			private Interpolator interpolator;
+
+			@Override
+			public AnimationStartBuilder interpolateWith(Interpolator interpolator) {
+				this.interpolator = Objects.requireNonNull(interpolator);
+				return this;
+			}
+			@Override
+			public AnimationEndBuilder beforeStart(Runnable action) {
+				this.beforeStart = Objects.requireNonNull(action);
+				return this;
+			}
+			@Override
+			public GesturePaneOps afterFinished(Runnable action) {
+				this.afterFinished = Objects.requireNonNull(action);
+				return this;
+			}
+			@Override
+			public void centreOn(Point2D pointOnTarget) {
+				// find the delta between current centre and the point and then animate the delta
+				Point2D delta = targetPointAtViewportCentre().subtract(pointOnTarget);
+				translateBy(new Dimension2D(delta.getX(), delta.getY()));
+			}
+			@Override
+			public void translateBy(Dimension2D targetAmount) {
+				// target coordinate so we will be setting tx and ty manually(append) so manually
+				// scale the target amount first
+				double vx = targetAmount.getWidth() * affine.getMxx();
+				double vy = targetAmount.getHeight() * affine.getMyy();
+				double tx = affine.getTx(); // fixed point
+				double ty = affine.getTy(); // fixed point
+				animateValue(0d, 1d, duration, interpolator, v -> {
+					affine.setTx(tx + vx * v);
+					affine.setTy(ty + vy * v);
+					clampAtBound(true);
+				}, afterFinished != null ? e -> afterFinished.run() : null);
+			}
+			@Override
+			public void zoomTo(double scale) {
+				double mxx = affine.getMxx(); // fixed point
+				double myy = affine.getMyy(); // fixed point
+				double dmx = scale - mxx; // delta
+				double dmy = scale - myy; // delta
+				if (beforeStart != null) beforeStart.run();
+				animateValue(0d, 1d, duration, interpolator, v -> {
+					affine.setTx(mxx + dmx * v);
+					affine.setTy(myy + dmy * v);
+					clampAtBound(true);
+				}, afterFinished != null ? e -> afterFinished.run() : null);
+			}
+			@Override
+			public void zoomBy(double scale) {
+				zoomTo(getCurrentScale() + scale);
+			}
+		};
+	}
+
+	public interface AnimationInterpolatorBuilder extends AnimationStartBuilder {
+		/**
+		 * @param interpolator the interpolator to use for the animation
+		 * @return the next group of configurable options in a type-safe builder
+		 */
+		AnimationStartBuilder interpolateWith(Interpolator interpolator);
+	}
+
+	public interface AnimationStartBuilder extends AnimationEndBuilder {
+		/**
+		 * @param action the action to execute <b>before</b> the animation starts
+		 * @return the next group of configurable options in a type-safe builder
+		 */
+		AnimationEndBuilder beforeStart(Runnable action);
+	}
+
+	public interface AnimationEndBuilder extends GesturePaneOps {
+		/**
+		 * @param action the action to execute <b>after</b> the animation finishes
+		 * @return the next group of configurable options in a type-safe builder
+		 */
+		GesturePaneOps afterFinished(Runnable action);
 	}
 
 	/**
 	 * Resets scale to {@code 1.0} and conditionally centres the image depending on the current
 	 * {@link FitMode}
 	 */
-	public final void reset() {
-		zoomTarget(1, false);
-	}
+	public final void reset() { zoomTo(1); }
 
 	void scale(double factor, Point2D origin) {
 		double delta = factor;
@@ -317,7 +374,6 @@ public class GesturePane extends Control {
 		double scaledHeight = affine.getMyy() * targetHeight;
 		double width = getViewportWidth();
 		double height = getViewportHeight();
-
 
 		// clamp translation
 		double maxX = width - scaledWidth;
@@ -369,7 +425,7 @@ public class GesturePane extends Control {
 	private void animateValue(double from,
 	                          double to,
 	                          Duration duration,
-	                          DoubleConsumer consumer,
+	                          Interpolator interpolator, DoubleConsumer consumer,
 	                          EventHandler<ActionEvent> l) {
 		timeline.stop();
 		timeline.getKeyFrames().clear();
@@ -385,12 +441,11 @@ public class GesturePane extends Control {
 				consumer.accept(value);
 			}
 
-		}, to, Interpolator.EASE_BOTH);
+		}, to, interpolator);
 		timeline.getKeyFrames().add(new KeyFrame(duration, keyValue));
 		timeline.setOnFinished(l);
 		timeline.play();
 	}
-
 
 	public double getTargetWidth() {
 		if (target.get() != null) return target.get().width();

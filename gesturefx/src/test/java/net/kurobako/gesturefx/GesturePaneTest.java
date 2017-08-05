@@ -31,6 +31,7 @@ import javafx.application.Platform;
 import javafx.beans.property.Property;
 import javafx.fxml.FXMLLoader;
 import javafx.geometry.BoundingBox;
+import javafx.geometry.Dimension2D;
 import javafx.geometry.Orientation;
 import javafx.geometry.Point2D;
 import javafx.geometry.VerticalDirection;
@@ -267,13 +268,14 @@ public class GesturePaneTest {
 		pane.setScrollBarEnabled(false);
 		pane.getScene().getWindow().setWidth(256);
 		pane.getScene().getWindow().setHeight(256);
+		Thread.sleep(50); // wait for layout
 		assertThat(pane.getViewportBound()).isEqualTo(new BoundingBox(0, 0, 256, 256));
 		assertThat(pane.viewportCentre()).isEqualTo(new Point2D(128, 128));
 	}
 
 	@Test
 	public void testDragAndDrop() throws Exception {
-		pane.zoomTarget(2, false);
+		pane.zoomTo(2);
 		Transform expected = target.captureTransform();
 		FxRobot robot = new FxRobot();
 		robot.moveTo(pane)
@@ -285,7 +287,7 @@ public class GesturePaneTest {
 				"xx", "xy", "xz",
 				"yx", "yy", "yz",
 				"zx", "zy", "zz",
-				/* "xt", "yt", */ "zt");
+				/* "xt", "yt", */ "zt"); // x y will have delta
 		assertThat(actual.getTx()).isEqualTo(expected.getTx() + 100);
 		assertThat(actual.getTy()).isEqualTo(expected.getTy() + 100);
 	}
@@ -293,7 +295,7 @@ public class GesturePaneTest {
 	@Test
 	public void testGestureDisabling() throws Exception {
 		pane.setGestureEnabled(false);
-		pane.zoomTarget(2, false);
+		pane.zoomTo(2);
 		Transform expected = target.captureTransform();
 		FxRobot robot = new FxRobot();
 		robot.moveTo(pane)
@@ -338,13 +340,13 @@ public class GesturePaneTest {
 
 	@Test
 	public void testScale() throws Exception {
-		pane.zoomTarget(2, false);
+		pane.zoomTo(2);
 		assertThat(pane.getCurrentScale()).isEqualTo(2d);
 	}
 
 	@Test
 	public void testScaleRelative() throws Exception {
-		pane.zoomTarget(2, true);
+		pane.zoomBy(2);
 		assertThat(pane.getCurrentScale()).isEqualTo(3d);
 	}
 
@@ -361,7 +363,7 @@ public class GesturePaneTest {
 		pane.scrollModeProperty().set(ScrollMode.ZOOM);
 		FxRobot robot = new FxRobot();
 		assertThat(pane.getCurrentScale()).isEqualTo(1d);
-		Thread.sleep(50);
+		Thread.sleep(100);
 		robot.moveTo(pane);
 		robot.scroll(5, VerticalDirection.UP);
 		double expected = Math.pow(1 + DEFAULT_SCROLL_FACTOR, 5);
@@ -369,34 +371,33 @@ public class GesturePaneTest {
 		Transform t = target.captureTransform();
 		assertThat(t.getMxx()).isCloseTo(t.getMyy(), Offset.offset(0.00000001));
 		assertThat(t.getMxx()).isCloseTo(expected, Offset.offset(0.0001));
-
 	}
 
 	@Test
 	public void testMinScaleRespected() throws Exception {
 		pane.setMinScale(1);
-		pane.zoomTarget(0.1, false);
+		pane.zoomTo(0.1);
 		assertThat(pane.getCurrentScale()).isEqualTo(1d);
 	}
 
 	@Test
 	public void testMinScaleRelativeRespected() throws Exception {
 		pane.setMinScale(1);
-		pane.zoomTarget(-1, true);
+		pane.zoomBy(-1);
 		assertThat(pane.getCurrentScale()).isEqualTo(1d);
 	}
 
 	@Test
 	public void testMaxScaleRespected() throws Exception {
 		pane.setMaxScale(2);
-		pane.zoomTarget(10, false);
+		pane.zoomTo(10);
 		assertThat(pane.getCurrentScale()).isEqualTo(2d);
 	}
 
 	@Test
 	public void testMaxScaleRelativeRespected() throws Exception {
 		pane.setMaxScale(2);
-		pane.zoomTarget(2, true);
+		pane.zoomBy(2);
 		assertThat(pane.getCurrentScale()).isEqualTo(2d);
 	}
 
@@ -412,14 +413,14 @@ public class GesturePaneTest {
 	}
 
 	@Test
-	public void testTranslate() throws Exception {
+	public void testCentreOn() throws Exception {
 		final double zoom = 2d;
 		final double dx = 300d;
 		final double dy = 200d;
 		pane.setScrollBarEnabled(false);
-		pane.zoomTarget(zoom, false);
+		pane.zoomTo(zoom);
 		final Transform last = target.captureTransform();
-		pane.centreOn(new Point2D(dx, dy), false);
+		pane.centreOn(new Point2D(dx, dy));
 		final Transform now = target.captureTransform();
 		assertThat(now.getTx()).isEqualTo(-last.getTx() - dx * zoom);
 		assertThat(now.getTy()).isEqualTo(-last.getTy() - dy * zoom);
@@ -427,11 +428,14 @@ public class GesturePaneTest {
 
 	@Test
 	public void testTranslateRelative() throws Exception {
-		pane.centreOn(new Point2D(10, 10), false);
-		pane.centreOn(new Point2D(20, 20), true);
+		pane.setScrollBarEnabled(false);
+		pane.zoomTo(2d);
+		pane.centreOn(new Point2D(256, 256));
+		final Transform previous = target.captureTransform();
+		pane.translateBy(new Dimension2D(20, 20));
 		final Transform now = target.captureTransform();
-		assertThat(now.getTx()).isEqualTo(30d);
-		assertThat(now.getTy()).isEqualTo(30d);
+		assertThat(now.getTx() - previous.getTy()).isEqualTo(20d);
+		assertThat(now.getTy() - previous.getTy()).isEqualTo(20d);
 	}
 
 	@Test

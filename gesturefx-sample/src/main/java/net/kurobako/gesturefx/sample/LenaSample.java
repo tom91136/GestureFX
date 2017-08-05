@@ -3,6 +3,7 @@ package net.kurobako.gesturefx.sample;
 import net.kurobako.gesturefx.GesturePane;
 import net.kurobako.gesturefx.GesturePane.FitMode;
 import net.kurobako.gesturefx.GesturePane.ScrollMode;
+import net.kurobako.gesturefx.GesturePaneOps;
 import net.kurobako.gesturefx.sample.SamplerController.Sample;
 
 import java.io.File;
@@ -15,9 +16,11 @@ import java.text.ParsePosition;
 import java.util.OptionalDouble;
 import java.util.ResourceBundle;
 
+import javafx.animation.Interpolator;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
+import javafx.geometry.Dimension2D;
 import javafx.geometry.Point2D;
 import javafx.scene.Node;
 import javafx.scene.control.Alert;
@@ -42,6 +45,7 @@ import javafx.scene.layout.StackPane;
 import javafx.stage.FileChooser;
 import javafx.stage.FileChooser.ExtensionFilter;
 import javafx.util.Duration;
+import sun.security.krb5.internal.PAData;
 
 import static javafx.collections.FXCollections.*;
 
@@ -119,7 +123,6 @@ public class LenaSample implements Sample {
 			pane.setFitWidth(false);
 			pane.setFitHeight(false);
 
-			pane.zoomTarget(2, false);
 			viewport.getChildren().add(pane);
 
 
@@ -147,6 +150,14 @@ public class LenaSample implements Sample {
 				}
 
 			});
+
+			pane.animate(Duration.millis(200))
+					.interpolateWith(Interpolator.EASE_BOTH)
+					.beforeStart(() -> System.out.println("Starting..."))
+					.afterFinished(() -> System.out.println("Done!"))
+					.centreOn(new Point2D(42, 42));
+
+			pane.animate(Duration.millis(200)).zoomTo(1);
 
 			fitMode.setItems(observableArrayList(FitMode.values()));
 			fitMode.setValue(pane.getFitMode());
@@ -200,14 +211,19 @@ public class LenaSample implements Sample {
 				OptionalDouble yOp = parseDouble(y.getText());
 
 
+				GesturePaneOps ops = !animated.isSelected() ?
+						                     pane :
+						                     pane.animate(DURATION)
+								                     .interpolateWith(Interpolator.EASE_BOTH);
+
 				Point2D d = new Point2D(xOp.orElse(0), yOp.orElse(0));
 				if (toggle == translate) {
-					if (animated.isSelected()) pane.centreOn(d, DURATION, null);
-					else pane.centreOn(d, relative.isSelected());
+					if (!relative.isSelected()) ops.centreOn(d);
+					else ops.translateBy(new Dimension2D(d.getX(), d.getY()));
 				} else if (toggle == zoom) {
-					OptionalDouble _zoom = parseDouble(zoom.getText());
-					if (animated.isSelected()) pane.zoomTarget(_zoom.orElse(1), DURATION, null);
-					else pane.zoomTarget(_zoom.orElse(1), relative.isSelected());
+					double _zoom = parseDouble(zoom.getText()).orElse(1);
+					if (!relative.isSelected()) ops.zoomTo(_zoom);
+					else ops.zoomBy(_zoom);
 				}
 			});
 

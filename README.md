@@ -47,6 +47,31 @@ Node node = new ImageView(getClass().getResource("/lena.png").toExternalForm());
 GesturePane pane = new GesturePane(node);
 ```
 
+Translate or zoom:
+
+```java
+GesturePane pane = //...
+
+// zoom to 1x 
+pane.zoomTo(1);
+
+// centre on point [42,42] 
+pane.centreOn(new Point2D(42, 42));
+
+```
+And with animations:
+
+```java
+pane.animate(Duration.millis(200)).zoomTo(1);
+// animate with some options
+pane.animate(Duration.millis(200))
+		.interpolateWith(Interpolator.EASE_BOTH)
+		.beforeStart(() -> System.out.println("Starting..."))
+		.afterFinished(() -> System.out.println("Done!"))
+		.centreOn(new Point2D(42, 42));
+
+```
+
 For more interesting examples, take a look at the [samples](TODO).
 
 ## Samples
