@@ -212,19 +212,17 @@ public class GesturePane extends Control implements GesturePaneOps {
 
 	@Override
 	public void translateBy(Dimension2D targetAmount) {
-		// target coordinate, so prepend
-		translate(targetAmount.getWidth(), targetAmount.getHeight());
+		// target coordinate, so append; origin is top left so we we flip signs
+		affine.appendTranslation(-targetAmount.getWidth(), -targetAmount.getHeight() );
 		clampAtBound(true);
+
 	}
 
 	@Override
 	public void centreOn(Point2D pointOnTarget) {
 		// move to centre point and apply scale
-//		affine.setTx(affine.getTx() + delta.getX() * affine.getMxx());
-//		affine.setTy(affine.getTy() + delta.getY() * affine.getMyy());
-		Point2D delta = targetPointAtViewportCentre().subtract(pointOnTarget);
+		Point2D delta = pointOnTarget.subtract(targetPointAtViewportCentre());
 		translateBy(new Dimension2D(delta.getX(), delta.getY()));
-		clampAtBound(true);
 	}
 
 	@Override
@@ -430,18 +428,15 @@ public class GesturePane extends Control implements GesturePaneOps {
 		timeline.stop();
 		timeline.getKeyFrames().clear();
 		KeyValue keyValue = new KeyValue(new WritableValue<Double>() {
-
 			@Override
 			public Double getValue() {
 				return from;
 			}
-
 			@Override
 			public void setValue(Double value) {
 				consumer.accept(value);
 			}
-
-		}, to, interpolator);
+		}, to, interpolator == null ? Interpolator.LINEAR : interpolator);
 		timeline.getKeyFrames().add(new KeyFrame(duration, keyValue));
 		timeline.setOnFinished(l);
 		timeline.play();

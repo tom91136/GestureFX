@@ -19,7 +19,6 @@ import org.testfx.api.FxAssert;
 import org.testfx.api.FxRobot;
 import org.testfx.api.FxToolkit;
 import org.testfx.matcher.base.NodeMatchers;
-import org.testfx.service.query.impl.BoundsPointQuery;
 
 import java.lang.Thread.UncaughtExceptionHandler;
 import java.util.Arrays;
@@ -29,7 +28,6 @@ import java.util.function.Supplier;
 
 import javafx.application.Platform;
 import javafx.beans.property.Property;
-import javafx.fxml.FXMLLoader;
 import javafx.geometry.BoundingBox;
 import javafx.geometry.Dimension2D;
 import javafx.geometry.Orientation;
@@ -44,8 +42,6 @@ import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.transform.Affine;
 import javafx.scene.transform.Transform;
-import javafx.stage.Stage;
-import javafx.stage.StageStyle;
 import javafx.stage.Window;
 
 import static javafx.geometry.Orientation.HORIZONTAL;
@@ -422,20 +418,25 @@ public class GesturePaneTest {
 		final Transform last = target.captureTransform();
 		pane.centreOn(new Point2D(dx, dy));
 		final Transform now = target.captureTransform();
+		System.out.println(last);
+		System.out.println(now);
 		assertThat(now.getTx()).isEqualTo(-last.getTx() - dx * zoom);
 		assertThat(now.getTy()).isEqualTo(-last.getTy() - dy * zoom);
 	}
 
 	@Test
 	public void testTranslateRelative() throws Exception {
+		final double zoom = 2d;
+		final double dx = 30d;
+		final double dy = -40d;
 		pane.setScrollBarEnabled(false);
-		pane.zoomTo(2d);
+		pane.zoomTo(zoom);
 		pane.centreOn(new Point2D(256, 256));
 		final Transform previous = target.captureTransform();
-		pane.translateBy(new Dimension2D(20, 20));
+		pane.translateBy(new Dimension2D(dx, dy));
 		final Transform now = target.captureTransform();
-		assertThat(now.getTx() - previous.getTy()).isEqualTo(20d);
-		assertThat(now.getTy() - previous.getTy()).isEqualTo(20d);
+		assertThat(now.getTx() - previous.getTy()).isEqualTo(-dx * zoom);
+		assertThat(now.getTy() - previous.getTy()).isEqualTo(-dy * zoom);
 	}
 
 	@Test
