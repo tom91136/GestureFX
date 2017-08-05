@@ -8,6 +8,7 @@ import net.kurobako.gesturefx.GesturePane.Transformable;
 import org.assertj.core.api.Condition;
 import org.assertj.core.api.SoftAssertions;
 import org.assertj.core.data.Offset;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -18,6 +19,7 @@ import org.testfx.api.FxAssert;
 import org.testfx.api.FxRobot;
 import org.testfx.api.FxToolkit;
 import org.testfx.matcher.base.NodeMatchers;
+import org.testfx.service.query.impl.BoundsPointQuery;
 
 import java.lang.Thread.UncaughtExceptionHandler;
 import java.util.Arrays;
@@ -27,16 +29,23 @@ import java.util.function.Supplier;
 
 import javafx.application.Platform;
 import javafx.beans.property.Property;
+import javafx.fxml.FXMLLoader;
+import javafx.geometry.BoundingBox;
 import javafx.geometry.Orientation;
 import javafx.geometry.Point2D;
 import javafx.geometry.VerticalDirection;
 import javafx.scene.Node;
 import javafx.scene.control.ScrollBar;
 import javafx.scene.image.ImageView;
+import javafx.scene.input.MouseButton;
 import javafx.scene.input.ZoomEvent;
+import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.transform.Affine;
 import javafx.scene.transform.Transform;
+import javafx.stage.Stage;
+import javafx.stage.StageStyle;
+import javafx.stage.Window;
 
 import static javafx.geometry.Orientation.HORIZONTAL;
 import static javafx.geometry.Orientation.VERTICAL;
@@ -139,6 +148,7 @@ public class GesturePaneTest {
 		if (Platform.isFxApplicationThread()) throw new AssertionError("Invalid test state");
 		Thread.setDefaultUncaughtExceptionHandler(HANDLER);
 		FxToolkit.registerPrimaryStage();
+//		FxToolkit.registerStage(() -> new Stage(StageStyle.TRANSPARENT));
 		FxToolkit.setupSceneRoot(() -> {
 			if (!Platform.isFxApplicationThread()) throw new AssertionError("Invalid test state");
 			Thread.currentThread().setUncaughtExceptionHandler(HANDLER);
@@ -146,9 +156,14 @@ public class GesturePaneTest {
 			pane.setId(ID);
 			return pane;
 		});
+		FxToolkit.setupStage(Window::sizeToScene);
 		FxToolkit.showStage();
 	}
 
+	@After
+	public void tearDown() throws Exception {
+		FxToolkit.cleanupStages();
+	}
 	private static Condition<Node> createBarCondition(Orientation orientation, boolean visible) {
 		return new Condition<>(n -> {
 			if (n instanceof ScrollBar) {
@@ -210,6 +225,89 @@ public class GesturePaneTest {
 	}
 
 	@Test
+	public void testSetTarget() throws Exception {
+		pane.setTarget(new Transformable() {
+			@Override
+			public double width() { return 128; }
+			@Override
+			public double height() { return 128; }
+			@Override
+			public void setTransform(Affine affine) { }
+		});
+		pane.setTarget(new Transformable() {
+			@Override
+			public double width() { return 1014; }
+			@Override
+			public double height() { return 1024; }
+			@Override
+			public void setTransform(Affine affine) { }
+		});
+	}
+
+	@Test
+	public void testSetContent() throws Exception {
+		pane.setContent(new Rectangle(128, 128));
+		pane.setContent(new Rectangle(1024, 1024));
+	}
+
+	@Test
+	public void testContentBoundChanged() throws Exception {
+		Rectangle rect = new Rectangle(128, 128, Color.RED);
+		pane.setContent(rect);
+		Thread.sleep(50);
+		rect.setWidth(1000);
+		rect.setHeight(1000);
+		Thread.sleep(50);
+		rect.setHeight(0);
+		rect.setHeight(0);
+	}
+
+	@Test
+	public void testContainerBoundChanged() throws Exception {
+		pane.setScrollBarEnabled(false);
+		pane.getScene().getWindow().setWidth(256);
+		pane.getScene().getWindow().setHeight(256);
+		assertThat(pane.getViewportBound()).isEqualTo(new BoundingBox(0, 0, 256, 256));
+		assertThat(pane.viewportCentre()).isEqualTo(new Point2D(128, 128));
+	}
+
+	@Test
+	public void testDragAndDrop() throws Exception {
+		pane.zoomTarget(2, false);
+		Transform expected = target.captureTransform();
+		FxRobot robot = new FxRobot();
+		robot.moveTo(pane)
+				.scroll(2, VerticalDirection.UP)
+				.scroll(2, VerticalDirection.DOWN)
+				.drag(MouseButton.PRIMARY).dropBy(100, 100);
+		Transform actual = target.captureTransform();
+		assertThat(actual).isEqualToComparingOnlyGivenFields(expected,
+				"xx", "xy", "xz",
+				"yx", "yy", "yz",
+				"zx", "zy", "zz",
+				/* "xt", "yt", */ "zt");
+		assertThat(actual.getTx()).isEqualTo(expected.getTx() + 100);
+		assertThat(actual.getTy()).isEqualTo(expected.getTy() + 100);
+	}
+
+	@Test
+	public void testGestureDisabling() throws Exception {
+		pane.setGestureEnabled(false);
+		pane.zoomTarget(2, false);
+		Transform expected = target.captureTransform();
+		FxRobot robot = new FxRobot();
+		robot.moveTo(pane)
+				.scroll(2, VerticalDirection.UP)
+				.scroll(2, VerticalDirection.DOWN)
+				.drag(MouseButton.PRIMARY).dropBy(100, 100);
+		assertThat(target.captureTransform()).isEqualToComparingOnlyGivenFields(expected,
+				"xx", "xy", "xz",
+				"yx", "yy", "yz",
+				"zx", "zy", "zz",
+				"xt", "yt", "zt");
+	}
+
+	@Test
 	public void testViewportCentre() throws Exception {
 		pane.setScrollBarEnabled(false);
 		//  we got a 512*512 image
@@ -263,6 +361,7 @@ public class GesturePaneTest {
 		pane.scrollModeProperty().set(ScrollMode.ZOOM);
 		FxRobot robot = new FxRobot();
 		assertThat(pane.getCurrentScale()).isEqualTo(1d);
+		Thread.sleep(50);
 		robot.moveTo(pane);
 		robot.scroll(5, VerticalDirection.UP);
 		double expected = Math.pow(1 + DEFAULT_SCROLL_FACTOR, 5);
@@ -270,6 +369,7 @@ public class GesturePaneTest {
 		Transform t = target.captureTransform();
 		assertThat(t.getMxx()).isCloseTo(t.getMyy(), Offset.offset(0.00000001));
 		assertThat(t.getMxx()).isCloseTo(expected, Offset.offset(0.0001));
+
 	}
 
 	@Test
