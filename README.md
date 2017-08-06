@@ -1,6 +1,8 @@
 GestureFX
 ==========
 
+[![Build Status](https://travis-ci.org/tom91136/GestureFX.svg?branch=master)](https://travis-ci.org/tom91136/GestureFX)
+
 A lightweight gesture enabled pane for JavaFX
  
 Features
