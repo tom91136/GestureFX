@@ -15,7 +15,7 @@
         <github.user>tom91136</github.user>
         <github.repo>gesturefx</github.repo>
         <bintray.user>tom91136</bintray.user>
-        <bintray.repo>gesturefx</bintray.repo>
+        <bintray.repo>maven</bintray.repo>
         <bintray.package>gesturefx</bintray.package>
     </properties>
 
@@ -142,8 +142,11 @@
 
     <distributionManagement>
         <repository>
-            <id>bintray</id>
-            <url>https://api.bintray.com/maven/${bintray.user}/${bintray.repo}/{package}</url>
+            <id>bintray-tom91136-maven</id>
+            <name>tom91136-maven</name>
+            <url>
+                https://api.bintray.com/maven/${bintray.user}/${bintray.repo}/${bintray.package}/;publish=1
+            </url>
         </repository>
     </distributionManagement>
 
