@@ -117,7 +117,12 @@ Clone the project and then in project root:
 This project uses maven wrapper so you do not need to install maven
 beforehand.
 
-**NOTE: Be aware that running the tests will spawn actual windows and take over the mouse 
+For testing on new platforms, it is recommended to run tests headful. Add the headful flag to test
+with real window:
+
+    mvnw test -Dheadful
+
+**NOTE: Be aware that running the tests headful will spawn actual windows and take over the mouse 
 and keyboard; you will see the test window flicker while different unit tests are invoked.**
 
 ## Motivation

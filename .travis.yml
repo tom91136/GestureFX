@@ -5,10 +5,9 @@ matrix:
     - os: linux
       jdk: oraclejdk8
       addons: {apt: {packages: [oracle-java8-installer]}}
-      env: USE_FRAMEBUFFER=true
       before_install:
         - chmod +x mvnw
-        - if [ $USE_FRAMEBUFFER = "true" ]; then export DISPLAY=:99.0 && sh -e /etc/init.d/xvfb start; fi
+
 #    - os: osx
 #      osx_image: xcode8.2
 

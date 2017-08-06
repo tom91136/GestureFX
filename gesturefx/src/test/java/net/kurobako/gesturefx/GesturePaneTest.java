@@ -10,6 +10,7 @@ import org.assertj.core.api.SoftAssertions;
 import org.assertj.core.data.Offset;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -55,7 +56,6 @@ import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 
 
-// test will spawn actual window and take control of the mouse and keyboard!
 @RunWith(Parameterized.class)
 public class GesturePaneTest {
 
@@ -144,6 +144,22 @@ public class GesturePaneTest {
 	private GesturePane pane;
 
 	@Parameter public TestTarget target;
+
+	// headful test will spawn actual window and take control of the mouse and keyboard!
+	@BeforeClass
+	public static void setupClass() {
+		if (!Boolean.getBoolean("headful")) {
+			System.out.println("Testing using Monocle");
+			System.setProperty("testfx.robot", "glass");
+			System.setProperty("testfx.headless", "true");
+			System.setProperty("prism.order", "sw");
+			System.setProperty("prism.text", "t2k");
+		} else {
+			System.out.println("Testing headful with real windows, " +
+					                   "please do not touch keyboard or mouse until tests are " +
+					                   "complete.");
+		}
+	}
 
 	@Before
 	public void setup() throws Exception {
@@ -280,8 +296,6 @@ public class GesturePaneTest {
 		Transform expected = target.captureTransform();
 		FxRobot robot = new FxRobot();
 		robot.moveTo(pane)
-				.scroll(2, VerticalDirection.UP)
-				.scroll(2, VerticalDirection.DOWN)
 				.drag(MouseButton.PRIMARY).dropBy(100, 100);
 		Transform actual = target.captureTransform();
 		assertThat(actual).isEqualToComparingOnlyGivenFields(expected,
@@ -374,8 +388,8 @@ public class GesturePaneTest {
 
 		Condition<Double> eitherUpOrDown = new Condition<>(
 				v -> Math.abs(v - expectedUp) < 0.01 || Math.abs(v - expectedDown) < 0.01,
-				                                             "either close to %s or %s",
-				                                             expectedUp, expectedDown);
+				                                                  "either close to %s or %s",
+				                                                  expectedUp, expectedDown);
 		assertThat(pane.getCurrentScale()).is(eitherUpOrDown);
 		Transform t = target.captureTransform();
 		assertThat(t.getMxx()).is(eitherUpOrDown);
