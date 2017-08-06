@@ -1,15 +1,19 @@
 language: java
 
+before_install:
+ - chmod +x mvnw
+
 matrix:
   include:
     - os: linux
       jdk: oraclejdk8
       addons: {apt: {packages: [oracle-java8-installer]}}
-      before_install:
-        - chmod +x mvnw
-
-#    - os: osx
-#      osx_image: xcode8.2
+      dist: trusty
+    - os: linux
+      jdk: openjdk8
+      dist: trusty
+    - os: osx
+      osx_image: xcode8.3
 
 sudo: false
 
