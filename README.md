@@ -73,11 +73,16 @@ pane.animate(Duration.millis(200))
 ```
 Double click to zoom in:
 ```java
-pane.setOnMouseClicked(event -> {
-	if(event.getButton()== MouseButton.PRIMARY && event.getClickCount() == 2){
-		pane.animate(DURATION)
+// zoom*2 on double-click
+GesturePane pane = //...
+pane.setOnMouseClicked(e -> {
+	if (e.getButton() == MouseButton.PRIMARY && e.getClickCount() == 2) {
+		Point2D pivotOnTarget = pane.targetPointAt(new Point2D(e.getX(), e.getY()))
+				                        .orElse(pane.targetPointAtViewportCentre());
+		// increment of scale makes more sense exponentially instead of linearly 
+		pane.animate(Duration.millis(200))
 				.interpolateWith(Interpolator.EASE_BOTH)
-				.zoomBy(1, pane.viewportCentre());
+				.zoomBy(pane.getCurrentScale(), pivotOnTarget);
 	}
 });
 ```

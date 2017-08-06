@@ -26,6 +26,7 @@ import java.util.Collection;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
+import javafx.animation.Interpolator;
 import javafx.application.Platform;
 import javafx.beans.property.Property;
 import javafx.geometry.BoundingBox;
@@ -43,11 +44,15 @@ import javafx.scene.shape.Rectangle;
 import javafx.scene.transform.Affine;
 import javafx.scene.transform.Transform;
 import javafx.stage.Window;
+import javafx.util.Duration;
 
 import static javafx.geometry.Orientation.HORIZONTAL;
 import static javafx.geometry.Orientation.VERTICAL;
 import static net.kurobako.gesturefx.GesturePaneSkin.DEFAULT_SCROLL_FACTOR;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.timeout;
+import static org.mockito.Mockito.verify;
 
 
 // test will spawn actual window and take control of the mouse and keyboard!
@@ -362,6 +367,7 @@ public class GesturePaneTest {
 		Thread.sleep(100);
 		robot.moveTo(pane);
 		robot.scroll(5, VerticalDirection.UP);
+		Thread.sleep(100);
 		double expected = Math.pow(1 + DEFAULT_SCROLL_FACTOR, 5);
 		assertThat(pane.getCurrentScale()).isCloseTo(expected, Offset.offset(0.0001));
 		Transform t = target.captureTransform();
@@ -399,13 +405,34 @@ public class GesturePaneTest {
 
 	@Test
 	public void testAnimatedScale() throws Exception {
-		throw new RuntimeException();
-//		pane.zoomTarget(2, Duration.millis(100), );
-	}
+		pane.setScrollBarEnabled(false);
+		Runnable before = mock(Runnable.class);
+		Runnable finished = mock(Runnable.class);
+		double zoom = 3d;
+		pane.zoomTo(2, new Point2D(512, 512));
+		pane.animate(Duration.millis(200))
+				.interpolateWith(Interpolator.EASE_BOTH)
+				.beforeStart(before)
+				.afterFinished(finished)
+				.zoomTo(zoom, Point2D.ZERO);
+		final Transform init = target.captureTransform();
+		verify(before, timeout(10)).run();
+		Thread.sleep(100);
+		final Transform mid = target.captureTransform();
+		// mid should not be at destination
+		assertThat(mid.getTx() ).isNotEqualTo(0);
+		assertThat(mid.getTy() ).isNotEqualTo(0);
+		assertThat(mid.getMxx()).isNotEqualTo(zoom);
+		assertThat(mid.getMyy()).isNotEqualTo(zoom);
 
-	@Test
-	public void testAnimatedScaleClamps() throws Exception {
-		throw new RuntimeException();
+		Thread.sleep(110);
+		verify(finished, timeout(100)).run();
+		// should be done at this point
+		final Transform last = target.captureTransform();
+		assertThat(last.getTx() ).isEqualTo(-512);
+		assertThat(last.getTy() ).isEqualTo(-512);
+		assertThat(last.getMxx()).isEqualTo(zoom);
+		assertThat(last.getMyy()).isEqualTo(zoom);
 	}
 
 	@Test
@@ -418,8 +445,6 @@ public class GesturePaneTest {
 		final Transform last = target.captureTransform();
 		pane.centreOn(new Point2D(dx, dy));
 		final Transform now = target.captureTransform();
-		System.out.println(last);
-		System.out.println(now);
 		assertThat(now.getTx()).isEqualTo(-last.getTx() - dx * zoom);
 		assertThat(now.getTy()).isEqualTo(-last.getTy() - dy * zoom);
 	}
@@ -441,23 +466,34 @@ public class GesturePaneTest {
 
 	@Test
 	public void testAnimatedTranslate() throws Exception {
-		throw new RuntimeException();
+		final double zoom = 2d;
+		pane.setScrollBarEnabled(false);
+		pane.zoomTo(zoom,pane.targetPointAtViewportCentre());
+		pane.centreOn(Point2D.ZERO);
+		Runnable before = mock(Runnable.class);
+		Runnable finished = mock(Runnable.class);
+		pane.animate(Duration.millis(200))
+				.interpolateWith(Interpolator.EASE_BOTH)
+				.beforeStart(before)
+				.afterFinished(finished)
+				.centreOn(new Point2D(256, 256));
+		final Transform init = target.captureTransform();
+		verify(before, timeout(10)).run();
+		Thread.sleep(100);
+		final Transform mid = target.captureTransform();
+		// mid should not be at destination
+		assertThat(mid.getTx() - init.getTy()).isNotEqualTo(-256);
+		assertThat(mid.getTy() - init.getTy()).isNotEqualTo(-256);
+
+		Thread.sleep(110);
+		verify(finished, timeout(100)).run();
+		// should be done at this point
+		final Transform last = target.captureTransform();
+		assertThat(last.getTx() - init.getTy()).isEqualTo(-256);
+		assertThat(last.getTy() - init.getTy()).isEqualTo(-256);
 	}
 
-	@Test
-	public void testAnimatedTranslateClamps() throws Exception {
-		throw new RuntimeException();
-	}
 
-	@Test
-	public void testHorizontalTranslateClamp() throws Exception {
-		throw new RuntimeException();
-	}
-
-	@Test
-	public void testVerticalTranslateClamp() throws Exception {
-		throw new RuntimeException();
-	}
 
 
 	// just for sanity, things can get confusing when many of the property types are the same

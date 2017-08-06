@@ -20,7 +20,7 @@
 <?import javafx.scene.layout.RowConstraints?>
 <?import javafx.scene.layout.StackPane?>
 
-<HBox fx:id="root" xmlns="http://javafx.com/javafx/8.0.111" xmlns:fx="http://javafx.com/fxml/1" fx:controller="net.kurobako.gesturefx.sample.LenaSample$GesturePropertyController">
+<HBox fx:id="root" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="net.kurobako.gesturefx.sample.LenaSample$GesturePropertyController">
     <children>
         <StackPane fx:id="viewport" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" minHeight="-Infinity" minWidth="-Infinity" style="-fx-background-color: #333;" HBox.hgrow="ALWAYS" />
         <ScrollPane>

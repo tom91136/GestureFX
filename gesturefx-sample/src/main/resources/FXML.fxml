@@ -7,7 +7,7 @@
 <?import javafx.scene.layout.VBox?>
 <?import net.kurobako.gesturefx.GesturePane?>
 
-<VBox maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" xmlns="http://javafx.com/javafx/8.0.121" xmlns:fx="http://javafx.com/fxml/1">
+<VBox maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1">
     <children>
         <Label text="This sample shows the GesturePane being defined in FXML, you may open this fxml file in SceneBuilder and the editing should still work" wrapText="true">
             <padding>

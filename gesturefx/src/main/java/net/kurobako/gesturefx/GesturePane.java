@@ -35,8 +35,8 @@ import javafx.scene.transform.Affine;
 import javafx.scene.transform.NonInvertibleTransformException;
 import javafx.util.Duration;
 
-import static net.kurobako.gesturefx.GesturePane.FitMode.*;
-import static net.kurobako.gesturefx.GesturePane.ScrollMode.*;
+import static net.kurobako.gesturefx.GesturePane.FitMode.FIT;
+import static net.kurobako.gesturefx.GesturePane.ScrollMode.PAN;
 
 /**
  * Pane that applies transformations to some implementation of {@link Transformable} when a
@@ -304,6 +304,7 @@ public class GesturePane extends Control implements GesturePaneOps {
 				double vy = targetAmount.getHeight() * affine.getMyy();
 				double tx = affine.getTx(); // fixed point
 				double ty = affine.getTy(); // fixed point
+				if (beforeStart != null) beforeStart.run();
 				animateValue(0d, 1d, duration, interpolator, v -> {
 					affine.setTx(tx + vx * v);
 					affine.setTy(ty + vy * v);
@@ -317,7 +318,6 @@ public class GesturePane extends Control implements GesturePaneOps {
 				double dmx = scale - mxx; // delta
 				double dmy = scale - myy; // delta
 				Point2D pv = viewportPointAt(pivotOnTarget);
-				System.out.println(pv);
 				if (beforeStart != null) beforeStart.run();
 				animateValue(0d, 1d, duration, interpolator, v -> {
 					// so, prependScale with pivot is:

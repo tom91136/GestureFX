@@ -16,10 +16,7 @@ import java.text.ParsePosition;
 import java.util.OptionalDouble;
 import java.util.ResourceBundle;
 
-import javax.lang.model.element.ElementVisitor;
-
 import javafx.animation.Interpolator;
-import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
@@ -44,15 +41,13 @@ import javafx.scene.control.ToggleGroup;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseButton;
-import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.stage.FileChooser;
 import javafx.stage.FileChooser.ExtensionFilter;
 import javafx.util.Duration;
-import sun.security.krb5.internal.PAData;
 
-import static javafx.collections.FXCollections.*;
+import static javafx.collections.FXCollections.observableArrayList;
 
 public class LenaSample implements Sample {
 
@@ -156,12 +151,15 @@ public class LenaSample implements Sample {
 
 			});
 
-			// zoom +1 on double-click
-			pane.setOnMouseClicked(event -> {
-				if(event.getButton()== MouseButton.PRIMARY && event.getClickCount() == 2){
+			// zoom*2 on double-click
+			pane.setOnMouseClicked(e -> {
+				if (e.getButton() == MouseButton.PRIMARY && e.getClickCount() == 2) {
+					Point2D pivotOnTarget = pane.targetPointAt(new Point2D(e.getX(), e.getY()))
+							                        .orElse(pane.targetPointAtViewportCentre());
+					// increment of scale makes more sense exponentially instead of linearly
 					pane.animate(DURATION)
 							.interpolateWith(Interpolator.EASE_BOTH)
-							.zoomBy(1, pane.viewportCentre());
+							.zoomBy(pane.getCurrentScale(), pivotOnTarget);
 				}
 			});
 
@@ -232,8 +230,8 @@ public class LenaSample implements Sample {
 					if (!relative.isSelected()) ops.centreOn(d);
 					else ops.translateBy(new Dimension2D(d.getX(), d.getY()));
 				} else if (toggle == zoom) {
-					if (!relative.isSelected()) ops.zoomTo(_zoom,d);
-					else ops.zoomBy(_zoom,d);
+					if (!relative.isSelected()) ops.zoomTo(_zoom, d);
+					else ops.zoomBy(_zoom, d);
 				}
 			});
 
