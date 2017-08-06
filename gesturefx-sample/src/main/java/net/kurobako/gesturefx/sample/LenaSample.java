@@ -104,7 +104,6 @@ public class LenaSample implements Sample {
 
 		@FXML private Label minScale;
 		@FXML private Label maxScale;
-		@FXML private Label currentScale;
 		@FXML private Label zoomFactor;
 		@FXML private Slider zoomFactorSlider;
 		@FXML private Slider minScaleSlider;
@@ -184,7 +183,6 @@ public class LenaSample implements Sample {
 
 			minScale.textProperty().bind(pane.minScaleProperty().asString(FORMAT));
 			maxScale.textProperty().bind(pane.maxScaleProperty().asString(FORMAT));
-			currentScale.textProperty().bind(pane.currentScaleProperty().asString(FORMAT));
 			zoomFactor.textProperty().bind(pane.scrollZoomFactorProperty().asString(FORMAT));
 
 			minScaleSlider.setValue(pane.getMinScale());

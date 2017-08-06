@@ -289,14 +289,14 @@ public class GesturePaneTest {
 				"yx", "yy", "yz",
 				"zx", "zy", "zz",
 				/* "xt", "yt", */ "zt"); // x y will have delta
-		assertThat(actual.getTx()).isEqualTo(expected.getTx() + 100);
-		assertThat(actual.getTy()).isEqualTo(expected.getTy() + 100);
+		assertThat(actual.getTx()).isCloseTo(expected.getTx() + 100, Offset.offset(0.0001));
+		assertThat(actual.getTy()).isCloseTo(expected.getTy() + 100, Offset.offset(0.0001));
 	}
 
 	@Test
 	public void testGestureDisabling() throws Exception {
 		pane.setGestureEnabled(false);
-		pane.zoomTo(2,pane.targetPointAtViewportCentre());
+		pane.zoomTo(2, pane.targetPointAtViewportCentre());
 		Transform expected = target.captureTransform();
 		FxRobot robot = new FxRobot();
 		robot.moveTo(pane)
@@ -341,13 +341,13 @@ public class GesturePaneTest {
 
 	@Test
 	public void testScale() throws Exception {
-		pane.zoomTo(2,pane.targetPointAtViewportCentre());
+		pane.zoomTo(2, pane.targetPointAtViewportCentre());
 		assertThat(pane.getCurrentScale()).isEqualTo(2d);
 	}
 
 	@Test
 	public void testScaleRelative() throws Exception {
-		pane.zoomBy(2,pane.targetPointAtViewportCentre());
+		pane.zoomBy(2, pane.targetPointAtViewportCentre());
 		assertThat(pane.getCurrentScale()).isEqualTo(3d);
 	}
 
@@ -378,28 +378,28 @@ public class GesturePaneTest {
 	@Test
 	public void testMinScaleRespected() throws Exception {
 		pane.setMinScale(1);
-		pane.zoomTo(0.1,pane.targetPointAtViewportCentre());
+		pane.zoomTo(0.1, pane.targetPointAtViewportCentre());
 		assertThat(pane.getCurrentScale()).isEqualTo(1d);
 	}
 
 	@Test
 	public void testMinScaleRelativeRespected() throws Exception {
 		pane.setMinScale(1);
-		pane.zoomBy(-1,pane.targetPointAtViewportCentre());
+		pane.zoomBy(-1, pane.targetPointAtViewportCentre());
 		assertThat(pane.getCurrentScale()).isEqualTo(1d);
 	}
 
 	@Test
 	public void testMaxScaleRespected() throws Exception {
 		pane.setMaxScale(2);
-		pane.zoomTo(10,pane.targetPointAtViewportCentre());
+		pane.zoomTo(10, pane.targetPointAtViewportCentre());
 		assertThat(pane.getCurrentScale()).isEqualTo(2d);
 	}
 
 	@Test
 	public void testMaxScaleRelativeRespected() throws Exception {
 		pane.setMaxScale(2);
-		pane.zoomBy(2,pane.targetPointAtViewportCentre());
+		pane.zoomBy(2, pane.targetPointAtViewportCentre());
 		assertThat(pane.getCurrentScale()).isEqualTo(2d);
 	}
 
@@ -420,8 +420,8 @@ public class GesturePaneTest {
 		Thread.sleep(100);
 		final Transform mid = target.captureTransform();
 		// mid should not be at destination
-		assertThat(mid.getTx() ).isNotEqualTo(0);
-		assertThat(mid.getTy() ).isNotEqualTo(0);
+		assertThat(mid.getTx()).isNotEqualTo(0);
+		assertThat(mid.getTy()).isNotEqualTo(0);
 		assertThat(mid.getMxx()).isNotEqualTo(zoom);
 		assertThat(mid.getMyy()).isNotEqualTo(zoom);
 
@@ -429,8 +429,8 @@ public class GesturePaneTest {
 		verify(finished, timeout(100)).run();
 		// should be done at this point
 		final Transform last = target.captureTransform();
-		assertThat(last.getTx() ).isEqualTo(-512);
-		assertThat(last.getTy() ).isEqualTo(-512);
+		assertThat(last.getTx()).isEqualTo(-512);
+		assertThat(last.getTy()).isEqualTo(-512);
 		assertThat(last.getMxx()).isEqualTo(zoom);
 		assertThat(last.getMyy()).isEqualTo(zoom);
 	}
@@ -441,7 +441,7 @@ public class GesturePaneTest {
 		final double dx = 300d;
 		final double dy = 200d;
 		pane.setScrollBarEnabled(false);
-		pane.zoomTo(zoom,pane.targetPointAtViewportCentre());
+		pane.zoomTo(zoom, pane.targetPointAtViewportCentre());
 		final Transform last = target.captureTransform();
 		pane.centreOn(new Point2D(dx, dy));
 		final Transform now = target.captureTransform();
@@ -455,7 +455,7 @@ public class GesturePaneTest {
 		final double dx = 30d;
 		final double dy = -40d;
 		pane.setScrollBarEnabled(false);
-		pane.zoomTo(zoom,pane.targetPointAtViewportCentre());
+		pane.zoomTo(zoom, pane.targetPointAtViewportCentre());
 		pane.centreOn(new Point2D(256, 256));
 		final Transform previous = target.captureTransform();
 		pane.translateBy(new Dimension2D(dx, dy));
@@ -468,7 +468,7 @@ public class GesturePaneTest {
 	public void testAnimatedTranslate() throws Exception {
 		final double zoom = 2d;
 		pane.setScrollBarEnabled(false);
-		pane.zoomTo(zoom,pane.targetPointAtViewportCentre());
+		pane.zoomTo(zoom, pane.targetPointAtViewportCentre());
 		pane.centreOn(Point2D.ZERO);
 		Runnable before = mock(Runnable.class);
 		Runnable finished = mock(Runnable.class);
@@ -492,8 +492,6 @@ public class GesturePaneTest {
 		assertThat(last.getTx() - init.getTy()).isEqualTo(-256);
 		assertThat(last.getTy() - init.getTy()).isEqualTo(-256);
 	}
-
-
 
 
 	// just for sanity, things can get confusing when many of the property types are the same
