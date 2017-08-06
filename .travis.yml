@@ -9,10 +9,11 @@ matrix:
       dist: trusty
       jdk: oraclejdk8
       addons: {apt: {packages: [oracle-java8-installer]}}
-    - os: linux
-      dist: trusty
-      jdk: openjdk8
-      addons: {apt: {packages: [openjfx]}}
+# TODO openjfx is not supported on trusty, need alternatives
+#    - os: linux
+#      dist: trusty
+#      jdk: openjdk8
+#      addons: {apt: {packages: [openjfx]}}
     - os: osx
       osx_image: xcode8.3
 
