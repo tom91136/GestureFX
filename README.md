@@ -1,8 +1,9 @@
 GestureFX
 ==========
 
-[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![Build Status](https://travis-ci.org/tom91136/GestureFX.svg?branch=master)](https://travis-ci.org/tom91136/GestureFX)
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
+[![Download](https://api.bintray.com/packages/tom91136/maven/gesturefx/images/download.svg)](https://bintray.com/tom91136/maven/gesturefx/_latestVersion)
 
 A lightweight gesture enabled pane for JavaFX
  
@@ -39,7 +40,8 @@ For SBT
 ```scala
 "net.kurobako.gesturefx" % "gesturefx" % "0.1.0"    
 ```
-Alternatively, you can download the jar [here]() and add it to your classpath.
+Alternatively, you can download the jar [here](https://dl.bintray.com/tom91136/maven/net/kurobako/gesturefx/gesturefx/0.1.0/gesturefx-0.1.0.jar)
+ and add it to your classpath.
 
 ## Quick start
 
@@ -90,13 +92,14 @@ pane.setOnMouseClicked(e -> {
 });
 ```
 
-For more interesting examples, take a look at the [samples](TODO).
+For more interesting examples, take a look at the [samples](gesturefx-sample/src/main/java/net/kurobako/gesturefx/sample).
 
 ## Samples
 
 Several samples have been included demoing interesting uses of the gesture pane.
 
-You can download the sample jar [here](TODO) or clone the project and run:
+You can download the sample jar [here](https://dl.bintray.com/tom91136/maven/net/kurobako/gesturefx/gesturefx-sample/0.1.0/gesturefx-sample-0.1.0-jar-with-dependencies.jar) 
+or clone the project and run:
 
     ./mvnw install
     ./mvnw exec:java -pl gesturefx-sample
