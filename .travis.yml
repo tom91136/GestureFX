@@ -6,12 +6,13 @@ before_install:
 matrix:
   include:
     - os: linux
+      dist: trusty
       jdk: oraclejdk8
       addons: {apt: {packages: [oracle-java8-installer]}}
-      dist: trusty
     - os: linux
-      jdk: openjdk8
       dist: trusty
+      jdk: openjdk8
+      addons: {apt: {packages: [openjfx]}}
     - os: osx
       osx_image: xcode8.3
 
