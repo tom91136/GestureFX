@@ -1,6 +1,7 @@
 GestureFX
 ==========
 
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![Build Status](https://travis-ci.org/tom91136/GestureFX.svg?branch=master)](https://travis-ci.org/tom91136/GestureFX)
 
 A lightweight gesture enabled pane for JavaFX
@@ -30,13 +31,13 @@ For Maven users, add the following to pom
 <dependency>
     <groupId>net.kurobako.gesturefx</groupId>
     <artifactId>gesturefx</artifactId>
-    <version>1.0-SNAPSHOT</version>
+    <version>0.1.0</version>
 </dependency>
 ```
 
 For SBT
 ```scala
-"net.kurobako.gesturefx" % "gesturefx" % "1.0-SNAPSHOT"    
+"net.kurobako.gesturefx" % "gesturefx" % "0.1.0"    
 ```
 Alternatively, you can download the jar [here]() and add it to your classpath.
 

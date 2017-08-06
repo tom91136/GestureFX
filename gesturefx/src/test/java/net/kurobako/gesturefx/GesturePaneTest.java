@@ -289,8 +289,8 @@ public class GesturePaneTest {
 				"yx", "yy", "yz",
 				"zx", "zy", "zz",
 				/* "xt", "yt", */ "zt"); // x y will have delta
-		assertThat(actual.getTx()).isCloseTo(expected.getTx() + 100, Offset.offset(0.0001));
-		assertThat(actual.getTy()).isCloseTo(expected.getTy() + 100, Offset.offset(0.0001));
+		assertThat(actual.getTx()).isCloseTo(expected.getTx() + 100, Offset.offset(5d));
+		assertThat(actual.getTy()).isCloseTo(expected.getTy() + 100, Offset.offset(5d));
 	}
 
 	@Test

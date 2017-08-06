@@ -41,29 +41,24 @@ import static net.kurobako.gesturefx.GesturePane.ScrollMode.PAN;
 /**
  * Pane that applies transformations to some implementation of {@link Transformable} when a
  * gesture is applied
- * <p>
+ *
  * Terms:
  * <ol>
  * <li>Target - the actual object that receives transformation</li>
  * <li>Viewport - the view area of the target(not counting vertical and horizontal scrollbars)</li>
  * </ol>
- * <p>
+ *
  * The measured size of the node defaults the the target's size, you can use the usual
  * {@link Region#setPrefSize(double, double)} and related methods/bindings to
  * provide alternative dimensions.
- * <p>
  * To listen for transformation changes, register event listeners for {@link AffineEvent}, for
  * example:
- * <p>
  * <pre>
- *     {@code
- *
- *     GesturePane pane = //...
- *     pane.addEventHandler(AffineEvent.CHANGED, e ->{ ... });
- *
- *     }
+ * {@code
+ * GesturePane pane = //...
+ * pane.addEventHandler(AffineEvent.CHANGED, e ->{ ... });
+ * }
  * </pre>
- * <p>
  * See documentation for the {@link AffineEvent} for more information on the methods provided in
  * the event
  */
@@ -247,21 +242,20 @@ public class GesturePane extends Control implements GesturePaneOps {
 
 	/**
 	 * Animate changes for all operations supported in {@link GesturePaneOps}.
-	 * <p>
+	 * <br>
 	 * Animations does not compose so starting an new animation while one is already running will
 	 * result in the first animation being stopped arbitrary for the second animation to start.
-	 * <p>
-	 * The method returns
-	 * a type-safe builder
-	 * that will limit access to only the available builder methods, for example:
-	 * <p>
-	 * <pre><code>
+	 * <br>
+	 * The method returns a type-safe builder that will limit access to only the available builder
+	 * methods, for example:
+	 * <pre>
+	 * {@code
 	 * animate(Duration.millis(300))
 	 * 	.interpolateWith(Interpolator.EASE_IN)
 	 * 	.afterFinished(() -> System.out.println("Done!"))
 	 * 	.zoomTo(2f);
-	 * </code></pre>
-	 * </p>
+	 * }
+	 * </pre>
 	 *
 	 * @param duration the duration of the animation; must not be null
 	 * @return a type-safe builder that will allow various options to be set
@@ -596,11 +590,11 @@ public class GesturePane extends Control implements GesturePaneOps {
 		 */
 		double width();
 		/**
-		 * @return the target height, must no be negative
+		 * @return the target height, must not be negative
 		 */
 		double height();
 		/**
-		 * Sets the transformation for the target, only happens once
+		 * Sets the transformation for the target, will only happen once
 		 *
 		 * @param affine the transformation; never null
 		 */

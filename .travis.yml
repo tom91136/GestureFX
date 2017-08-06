@@ -15,6 +15,6 @@ matrix:
 sudo: false
 
 script:
- - ./mvnw install -DskipTests=true -B -V
+ - ./mvnw install -Prelease -DskipTests=true -B -V
  - ./mvnw test
  - ./mvnw clean package -DskipTests=true
