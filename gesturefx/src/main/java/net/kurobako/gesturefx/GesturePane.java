@@ -293,15 +293,15 @@ public class GesturePane extends Control implements GesturePaneOps {
 			@Override
 			public void centreOn(Point2D pointOnTarget) {
 				// find the delta between current centre and the point and then animate the delta
-				Point2D delta = targetPointAtViewportCentre().subtract(pointOnTarget);
+				Point2D delta = pointOnTarget.subtract(targetPointAtViewportCentre());
 				translateBy(new Dimension2D(delta.getX(), delta.getY()));
 			}
 			@Override
 			public void translateBy(Dimension2D targetAmount) {
 				// target coordinate so we will be setting tx and ty manually(append) so manually
 				// scale the target amount first
-				double vx = targetAmount.getWidth() * affine.getMxx();
-				double vy = targetAmount.getHeight() * affine.getMyy();
+				double vx = -targetAmount.getWidth() * affine.getMxx();
+				double vy = -targetAmount.getHeight() * affine.getMyy();
 				double tx = affine.getTx(); // fixed point
 				double ty = affine.getTy(); // fixed point
 				if (beforeStart != null) beforeStart.run();

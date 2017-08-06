@@ -47,7 +47,6 @@
                         <RowConstraints />
                         <RowConstraints />
                         <RowConstraints />
-                        <RowConstraints />
                   <RowConstraints minHeight="-Infinity" />
                   <RowConstraints />
                     </rowConstraints>
@@ -61,11 +60,9 @@
                         <CheckBox fx:id="horizontalScrollBar" mnemonicParsing="false" selected="true" text="H.ScrollBar" GridPane.columnIndex="2" GridPane.columnSpan="2147483647" GridPane.halignment="LEFT" GridPane.rowIndex="4" />
                         <Label text="MinSacle" GridPane.rowIndex="11" />
                         <Label text="MaxScale" GridPane.rowIndex="12" />
-                        <Label text="CurrentScale" GridPane.rowIndex="13" />
-                        <Label text="ScrollFactor" GridPane.rowIndex="14" />
+                        <Label text="ScrollFactor" GridPane.rowIndex="13" />
                         <Label fx:id="minScale" text="0" GridPane.columnIndex="3" GridPane.rowIndex="11" />
                         <Label fx:id="maxScale" text="0" GridPane.columnIndex="3" GridPane.rowIndex="12" />
-                        <Label fx:id="currentScale" text="0" GridPane.columnIndex="3" GridPane.rowIndex="13" />
                         <Label text="Ops" GridPane.rowIndex="6" />
                         <Button fx:id="reset" mnemonicParsing="false" text="Reset viewport" GridPane.columnIndex="1" GridPane.columnSpan="2147483647" GridPane.rowIndex="6" />
                         <Label text="Image" />
@@ -76,11 +73,10 @@
                                 <MenuItem fx:id="selectFile" mnemonicParsing="false" text="Choose file" />
                             </items>
                         </MenuButton>
-                        <Slider fx:id="zoomFactorSlider" blockIncrement="0.1" majorTickUnit="0.5" max="2.0" showTickLabels="true" showTickMarks="true" value="1.0" GridPane.columnIndex="1" GridPane.columnSpan="2" GridPane.rowIndex="14" />
-                        <Label fx:id="zoomFactor" text="000" GridPane.columnIndex="3" GridPane.rowIndex="14" />
+                        <Slider fx:id="zoomFactorSlider" blockIncrement="0.1" majorTickUnit="0.5" max="2.0" showTickLabels="true" showTickMarks="true" value="1.0" GridPane.columnIndex="1" GridPane.columnSpan="2" GridPane.rowIndex="13" />
+                        <Label fx:id="zoomFactor" text="000" GridPane.columnIndex="3" GridPane.rowIndex="13" />
                         <Slider fx:id="minScaleSlider" blockIncrement="0.1" majorTickUnit="0.5" max="2.0" showTickLabels="true" showTickMarks="true" value="1.0" GridPane.columnIndex="1" GridPane.columnSpan="2" GridPane.rowIndex="11" />
                         <Slider fx:id="maxScaleSlider" blockIncrement="1.0" majorTickUnit="10.0" showTickLabels="true" showTickMarks="true" value="10.0" GridPane.columnIndex="1" GridPane.columnSpan="2" GridPane.rowIndex="12" />
-                        <Slider fx:id="currentScaleSlider" blockIncrement="1.0" majorTickUnit="10.0" showTickLabels="true" showTickMarks="true" value="10.0" GridPane.columnIndex="1" GridPane.columnSpan="2" GridPane.rowIndex="13" />
                         <Label contentDisplay="RIGHT" text="X" GridPane.rowIndex="8">
                      <graphic>
                         <TextField prefColumnCount="4" fx:id="x" />
@@ -107,16 +103,12 @@
                         <Separator prefWidth="200.0" GridPane.columnSpan="2147483647" GridPane.rowIndex="10" />
                         <CheckBox fx:id="relative" mnemonicParsing="false" text="Relative" GridPane.rowIndex="9" />
                         <CheckBox fx:id="animated" mnemonicParsing="false" text="Animated" GridPane.columnIndex="1" GridPane.rowIndex="9" />
-                  <Slider fx:id="currentXSlider" blockIncrement="1.0" majorTickUnit="10.0" max="2.0" minorTickCount="5" showTickLabels="true" showTickMarks="true" value="1.0" GridPane.columnIndex="1" GridPane.columnSpan="2" GridPane.rowIndex="15" />
-                  <Slider fx:id="currentYSlider" blockIncrement="1.0" majorTickUnit="10.0" max="2.0" minorTickCount="5" showTickLabels="true" showTickMarks="true" value="1.0" GridPane.columnIndex="1" GridPane.columnSpan="2" GridPane.rowIndex="16" />
-                  <Label text="TranslateX" GridPane.rowIndex="15" />
-                  <Label text="TranslateY" GridPane.rowIndex="16" />
-                  <Label fx:id="currentX" text="000" GridPane.columnIndex="3" GridPane.rowIndex="15" />
-                  <Label fx:id="currentY" text="000" GridPane.columnIndex="3" GridPane.rowIndex="16" />
+                  <Label text="Affine" GridPane.rowIndex="14" />
                   <CheckBox fx:id="clip" mnemonicParsing="false" text="Clip" GridPane.rowIndex="3" />
                   <CheckBox fx:id="fitWidth" mnemonicParsing="false" text="FitWidth" GridPane.columnIndex="1" GridPane.rowIndex="3" />
                   <CheckBox fx:id="fitHeight" mnemonicParsing="false" text="FitHeight" GridPane.columnIndex="2" GridPane.halignment="LEFT" GridPane.rowIndex="3" />
                   <ProgressBar fx:id="progress" progress="0.0" GridPane.columnIndex="2" />
+                  <Label fx:id="affine" text="0,0,0" GridPane.columnIndex="1" GridPane.columnSpan="2147483647" GridPane.rowIndex="14" />
                     </children>
                     <padding>
                         <Insets bottom="8.0" left="8.0" right="8.0" top="8.0" />
