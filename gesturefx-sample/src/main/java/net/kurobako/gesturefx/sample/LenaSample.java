@@ -16,7 +16,10 @@ import java.text.ParsePosition;
 import java.util.OptionalDouble;
 import java.util.ResourceBundle;
 
+import javax.lang.model.element.ElementVisitor;
+
 import javafx.animation.Interpolator;
+import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
@@ -40,6 +43,8 @@ import javafx.scene.control.Toggle;
 import javafx.scene.control.ToggleGroup;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.input.MouseButton;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.stage.FileChooser;
@@ -151,13 +156,14 @@ public class LenaSample implements Sample {
 
 			});
 
-			pane.animate(Duration.millis(200))
-					.interpolateWith(Interpolator.EASE_BOTH)
-					.beforeStart(() -> System.out.println("Starting..."))
-					.afterFinished(() -> System.out.println("Done!"))
-					.centreOn(new Point2D(42, 42));
-
-			pane.animate(Duration.millis(200)).zoomTo(1,pane.targetPointAtViewportCentre());
+			// zoom +1 on double-click
+			pane.setOnMouseClicked(event -> {
+				if(event.getButton()== MouseButton.PRIMARY && event.getClickCount() == 2){
+					pane.animate(DURATION)
+							.interpolateWith(Interpolator.EASE_BOTH)
+							.zoomBy(1, pane.viewportCentre());
+				}
+			});
 
 			fitMode.setItems(observableArrayList(FitMode.values()));
 			fitMode.setValue(pane.getFitMode());

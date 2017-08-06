@@ -71,6 +71,16 @@ pane.animate(Duration.millis(200))
 		.centreOn(new Point2D(42, 42));
 
 ```
+Double click to zoom in:
+```java
+pane.setOnMouseClicked(event -> {
+	if(event.getButton()== MouseButton.PRIMARY && event.getClickCount() == 2){
+		pane.animate(DURATION)
+				.interpolateWith(Interpolator.EASE_BOTH)
+				.zoomBy(1, pane.viewportCentre());
+	}
+});
+```
 
 For more interesting examples, take a look at the [samples](TODO).
 
