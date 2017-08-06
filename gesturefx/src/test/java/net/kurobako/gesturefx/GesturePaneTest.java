@@ -362,17 +362,24 @@ public class GesturePaneTest {
 	@Test
 	public void testScaleByScroll() throws Exception {
 		pane.scrollModeProperty().set(ScrollMode.ZOOM);
+		pane.zoomTo(5, pane.targetPointAtViewportCentre());
 		FxRobot robot = new FxRobot();
-		assertThat(pane.getCurrentScale()).isEqualTo(1d);
+		assertThat(pane.getCurrentScale()).isEqualTo(5d);
 		Thread.sleep(100);
 		robot.moveTo(pane);
-		robot.scroll(5, VerticalDirection.UP);
+		robot.scroll(5, VerticalDirection.UP); // direction is platform dependent
 		Thread.sleep(100);
-		double expected = Math.pow(1 + DEFAULT_SCROLL_FACTOR, 5);
-		assertThat(pane.getCurrentScale()).isCloseTo(expected, Offset.offset(0.0001));
+		double expectedUp = 5 * Math.pow(1 + DEFAULT_SCROLL_FACTOR, 5);
+		double expectedDown = 5 * Math.pow(1 - DEFAULT_SCROLL_FACTOR, 5);
+
+		Condition<Double> eitherUpOrDown = new Condition<>(
+				v -> Math.abs(v - expectedUp) < 0.01 || Math.abs(v - expectedDown) < 0.01,
+				                                             "either close to %s or %s",
+				                                             expectedUp, expectedDown);
+		assertThat(pane.getCurrentScale()).is(eitherUpOrDown);
 		Transform t = target.captureTransform();
-		assertThat(t.getMxx()).isCloseTo(t.getMyy(), Offset.offset(0.00000001));
-		assertThat(t.getMxx()).isCloseTo(expected, Offset.offset(0.0001));
+		assertThat(t.getMxx()).is(eitherUpOrDown);
+		assertThat(t.getMyy()).is(eitherUpOrDown);
 	}
 
 	@Test
