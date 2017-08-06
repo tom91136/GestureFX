@@ -598,7 +598,7 @@ public class GesturePane extends Control implements GesturePaneOps {
 		 *
 		 * @param affine the transformation; never null
 		 */
-		void setTransform(Affine affine);
+		default void setTransform(Affine affine) {}
 	}
 
 }

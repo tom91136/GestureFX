@@ -32,8 +32,9 @@ public class ViewportRectSample implements Sample {
 		background.setFitWidth(image.getWidth());
 		background.setFitHeight(image.getHeight());
 
-		Rectangle shade = new Rectangle(image.getWidth(), image.getHeight(), Color.grayRgb(0,
-				0.5));
+		Rectangle shade = new Rectangle(image.getWidth(),
+				                               image.getHeight(),
+				                               Color.grayRgb(0, 0.5));
 		Rectangle viewRect = new Rectangle();
 		viewRect.setStroke(Color.WHITE);
 		viewRect.setStrokeWidth(2);
@@ -45,28 +46,20 @@ public class ViewportRectSample implements Sample {
 		viewportSim.maxWidthProperty().bind(background.fitWidthProperty());
 		viewportSim.maxHeightProperty().bind(background.fitHeightProperty());
 
-
-		gesturePane.targetViewportProperty().addListener((o, p, n) ->{
+		gesturePane.targetViewportProperty().addListener((o, p, n) -> {
 			viewRect.setTranslateX(n.getMinX());
 			viewRect.setTranslateY(n.getMinY());
 			viewRect.setWidth(n.getWidth());
 			viewRect.setHeight(n.getHeight());
 		});
 
-//		gesturePane.addEventHandler(AffineEvent.CHANGED, e -> {
-//			viewRect.setTranslateX(-e.translateX() / e.scaleX());
-//			viewRect.setTranslateY(-e.translateY() / e.scaleY());
-//			viewRect.setWidth(gesturePane.getViewportWidth() / e.scaleY());
-//			viewRect.setHeight(gesturePane.getViewportHeight() / e.scaleY());
-//		});
-
-
 		HBox box = new HBox(gesturePane, viewportSim);
 		box.setAlignment(Pos.CENTER);
 		VBox.setVgrow(box, Priority.ALWAYS);
-		Label description = new Label("Zoom and scroll on the left image(wrapped in a GesturePane); " +
-				                        "the right image will reflect the actual viewport of the" +
-				                        " current transformation");
+		Label description = new Label("Zoom and scroll on the left image(wrapped in a GesturePane)" +
+				                              "; the right image will reflect the actual viewport " +
+				                              "of the current transformation");
+		description.setWrapText(true);
 		description.setPadding(new Insets(16));
 		return new VBox(description, box);
 	}

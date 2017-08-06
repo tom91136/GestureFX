@@ -3,13 +3,22 @@
 <?import javafx.scene.control.Hyperlink?>
 <?import javafx.scene.control.TabPane?>
 <?import javafx.scene.control.ToolBar?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.VBox?>
 
 <VBox fx:id="root" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="800.0" prefWidth="1000.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="net.kurobako.gesturefx.sample.SamplerController">
    <children>
       <ToolBar prefHeight="40.0" prefWidth="200.0">
         <items>
-            <Hyperlink fx:id="link" text="Hyperlink" />
+            <Hyperlink fx:id="link" text="GestureFX on GitHub">
+               <graphic>
+                  <ImageView pickOnBounds="true" preserveRatio="true">
+                     <image>
+                        <Image url="@github_icon.png" />
+                     </image>
+                  </ImageView>
+               </graphic></Hyperlink>
         </items>
       </ToolBar>
       <TabPane fx:id="tabs" tabClosingPolicy="UNAVAILABLE" VBox.vgrow="ALWAYS" />

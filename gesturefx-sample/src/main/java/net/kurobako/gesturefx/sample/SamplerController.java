@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.ResourceBundle;
 import java.util.function.Supplier;
 
+import javafx.application.HostServices;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.Node;
@@ -35,6 +36,8 @@ public class SamplerController implements Initializable {
 	@FXML private Hyperlink link;
 	@FXML private TabPane tabs;
 
+	HostServices hostServices;
+
 	@Override
 	public void initialize(URL location, ResourceBundle resources) {
 
@@ -42,8 +45,8 @@ public class SamplerController implements Initializable {
 				new SampleEntry("Lena(ImageView)", LenaSample::new),
 				new SampleEntry("FXML(ImageView)", FXMLSample::new),
 				new SampleEntry("ViewportRect(ImageView)", ViewportRectSample::new),
-				new SampleEntry("Arbitrary Node", ArbitraryNodeSample::new),
-				new SampleEntry("WebView", WebViewSample::new)
+				new SampleEntry("Arbitrary Node(SubScene)", ArbitraryNodeSample::new),
+				new SampleEntry("WebView(Transformable)", WebViewSample::new)
         );
 
 
@@ -51,6 +54,7 @@ public class SamplerController implements Initializable {
 			tabs.getTabs().add(new Tab(s.name, s.sampleFactory.get().mkRoot()));
 		});
 
+		link.setOnAction(e -> hostServices.showDocument("https://github.com/tom91136/gesturefx"));
 
 	}
 

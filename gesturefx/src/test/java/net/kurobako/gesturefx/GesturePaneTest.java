@@ -285,7 +285,7 @@ public class GesturePaneTest {
 		pane.setScrollBarEnabled(false);
 		pane.getScene().getWindow().setWidth(256);
 		pane.getScene().getWindow().setHeight(256);
-		Thread.sleep(50); // wait for layout
+		Thread.sleep(150); // wait for layout
 		assertThat(pane.getViewportBound()).isEqualTo(new BoundingBox(0, 0, 256, 256));
 		assertThat(pane.viewportCentre()).isEqualTo(new Point2D(128, 128));
 	}
