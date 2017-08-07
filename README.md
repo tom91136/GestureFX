@@ -42,6 +42,8 @@ For SBT
 ```
 Alternatively, you can download the jar [here](https://dl.bintray.com/tom91136/maven/net/kurobako/gesturefx/gesturefx/0.1.0/gesturefx-0.1.0.jar)
  and add it to your classpath.
+ 
+Version history in available in [CHANGELOG.md](CHANGELOG.md)
 
 ## Quick start
 
