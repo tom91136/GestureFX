@@ -35,13 +35,28 @@ For Maven users, add the following to pom
     <version>0.1.0</version>
 </dependency>
 ```
+You also need to add jcenter repo to your pom:
+```xml
+<repositories>
+    <repository>
+        <id>jcenter</id>
+        <url>https://jcenter.bintray.com/</url>
+    </repository>
+</repositories>
+```
 
 For SBT
 ```scala
 "net.kurobako.gesturefx" % "gesturefx" % "0.1.0"    
 ```
+And also jcenter:
+```scala
+resolvers ++= Seq(Resolver.jcenterRepo)
+```
+
 Alternatively, you can download the jar [here](https://dl.bintray.com/tom91136/maven/net/kurobako/gesturefx/gesturefx/0.1.0/gesturefx-0.1.0.jar)
- and add it to your classpath.
+ and add it to your classpath. This library has no dependencies so you do not need to download 
+anything else.
  
 Version history in available in [CHANGELOG.md](CHANGELOG.md)
 
