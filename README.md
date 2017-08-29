@@ -13,6 +13,7 @@ Features
  * Pinch-to-zoom
  * Configurable behavior for trackpad events
  * Works with touch screen devices
+ * Works in Swing via JFXPanel
  * Zoom/scroll to coordinate with animations
  * Mostly works in SceneBuilder*
  * Zero dependency

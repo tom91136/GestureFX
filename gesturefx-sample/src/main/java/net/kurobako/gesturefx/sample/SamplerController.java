@@ -46,7 +46,8 @@ public class SamplerController implements Initializable {
 				new SampleEntry("FXML(ImageView)", FXMLSample::new),
 				new SampleEntry("ViewportRect(ImageView)", ViewportRectSample::new),
 				new SampleEntry("Arbitrary Node(SubScene)", ArbitraryNodeSample::new),
-				new SampleEntry("WebView(Transformable)", WebViewSample::new)
+				new SampleEntry("WebView(Transformable)", WebViewSample::new),
+				new SampleEntry("Swing(ImageView)", SwingSample::new)
         );
 
 
