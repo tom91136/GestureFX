@@ -13,10 +13,13 @@ import javafx.scene.Node;
 import javafx.scene.control.Hyperlink;
 import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
+import javafx.scene.control.TextInputDialog;
 import javafx.scene.layout.VBox;
 
 public class SamplerController implements Initializable {
 
+
+	private static final String URI = "https://github.com/tom91136/gesturefx";
 
 	static class SampleEntry {
 		final String name;
@@ -51,11 +54,18 @@ public class SamplerController implements Initializable {
         );
 
 
-		samples.forEach(s -> {
-			tabs.getTabs().add(new Tab(s.name, s.sampleFactory.get().mkRoot()));
-		});
+		samples.forEach(s -> tabs.getTabs().add(new Tab(s.name, s.sampleFactory.get().mkRoot())));
 
-		link.setOnAction(e -> hostServices.showDocument("https://github.com/tom91136/gesturefx"));
+		link.setOnAction(e -> {
+			// for cases where java was started in something like i3wm
+			if (hostServices == null) {
+				TextInputDialog dialog = new TextInputDialog(URI);
+				dialog.setTitle("HostService missing");
+				dialog.setHeaderText("Unable to open URL due to missing HostService");
+				dialog.setContentText("URL");
+				dialog.showAndWait();
+			} else hostServices.showDocument(URI);
+		});
 
 	}
 

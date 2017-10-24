@@ -14,10 +14,16 @@ import java.io.IOException;
 import java.net.URL;
 import java.text.DecimalFormat;
 import java.text.ParsePosition;
+import java.util.AbstractMap.SimpleImmutableEntry;
+import java.util.Map.Entry;
 import java.util.OptionalDouble;
 import java.util.ResourceBundle;
+import java.util.stream.Collectors;
 
 import javafx.animation.Interpolator;
+import javafx.beans.InvalidationListener;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
@@ -109,6 +115,7 @@ public class LenaSample implements Sample {
 		@FXML private Slider minScaleSlider;
 		@FXML private Slider maxScaleSlider;
 		@FXML private Label affine;
+		@FXML private Label events;
 
 
 		@Override
@@ -230,7 +237,7 @@ public class LenaSample implements Sample {
 			});
 
 			pane.addEventHandler(AffineEvent.CHANGED, e -> {
-				Affine a = e.getAffine();
+				Affine a = e.current();
 				String str = String.format("\n\t%.5f, %.5f, %.5f, %.5f" +
 						                           "\n\t%.5f, %.5f, %.5f, %.5f" +
 						                           "\n\t%.5f, %.5f, %.5f, %.5f",
@@ -239,7 +246,32 @@ public class LenaSample implements Sample {
 						a.getMzx(), a.getMzy(), a.getMzz(), a.getTz());
 				this.affine.setText(str);
 			});
+
+
+			ObservableList<Entry<String, Integer>> history = FXCollections.observableArrayList();
+			history.addListener((InvalidationListener) o -> events.setText(
+					history.stream()
+							.map(e -> e.getKey() +
+									(e.getValue() == 1 ? "" : " (" + e.getValue() + ")"))
+							.collect(Collectors.joining("\n"))));
+
+			pane.addEventHandler(AffineEvent.ANY, e -> {
+				String name = e.getEventType().getName();
+				if (!history.isEmpty()) {
+					Entry<String, Integer> head = history.get(0);
+					if (name.equals(head.getKey())) {
+						history.set(0, new SimpleImmutableEntry<>(name, head.getValue() + 1));
+						return;
+					}
+				}
+
+				history.add(0, new SimpleImmutableEntry<>(name, 1));
+				if (history.size() > 5) history.remove(5, history.size());
+			});
+
+
 		}
+
 
 
 	}

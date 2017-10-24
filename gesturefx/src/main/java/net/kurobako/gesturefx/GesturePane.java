@@ -22,6 +22,7 @@ import javafx.beans.value.ChangeListener;
 import javafx.beans.value.WritableValue;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
+import javafx.event.EventType;
 import javafx.geometry.BoundingBox;
 import javafx.geometry.Bounds;
 import javafx.geometry.Dimension2D;
@@ -67,6 +68,7 @@ import static net.kurobako.gesturefx.GesturePane.ScrollMode.PAN;
 public class GesturePane extends Control implements GesturePaneOps {
 
 	private static final BoundingBox ZERO_BOX = new BoundingBox(0, 0, 0, 0);
+	private static final String DEFAULT_STYLE_CLASS = "gesture-pane";
 
 	final Affine affine = new Affine();
 
@@ -119,6 +121,7 @@ public class GesturePane extends Control implements GesturePaneOps {
 
 	public GesturePane() {
 		super();
+		getStyleClass().setAll(DEFAULT_STYLE_CLASS);
 		target.addListener((o, p, n) -> {
 			if (n == null) return;
 			content.set(null);
@@ -159,7 +162,16 @@ public class GesturePane extends Control implements GesturePaneOps {
 	@Override
 	protected Skin<?> createDefaultSkin() { return new GesturePaneSkin(this); }
 
+	// apparently, performance is a issue here, see
+	// https://bitbucket.org/controlsfx/controlsfx/pull-requests/519/this-is-the-fix-for-https-javafx/diff
+	String stylesheet;
+	@Override
+	public String getUserAgentStylesheet() {
+		if (stylesheet == null)
+			stylesheet = GesturePane.class.getResource("gesturepane.css").toExternalForm();
+		return stylesheet;
 
+	}
 	/**
 	 * Centre of the current viewport.
 	 * <br>
@@ -217,27 +229,34 @@ public class GesturePane extends Control implements GesturePaneOps {
 
 	@Override
 	public void translateBy(Dimension2D targetAmount) {
+		fireAffineEvent(AffineEvent.CHANGE_STARTED);
 		// target coordinate, so append; origin is top left so we we flip signs
 		affine.appendTranslation(-targetAmount.getWidth(), -targetAmount.getHeight());
 		clampAtBound(true);
-
+		fireAffineEvent(AffineEvent.CHANGE_FINISHED);
 	}
 
 	@Override
 	public void centreOn(Point2D pointOnTarget) {
+		fireAffineEvent(AffineEvent.CHANGE_STARTED);
 		// move to centre point and apply scale
 		Point2D delta = pointOnTarget.subtract(targetPointAtViewportCentre());
 		translateBy(new Dimension2D(delta.getX(), delta.getY()));
+		fireAffineEvent(AffineEvent.CHANGE_FINISHED);
 	}
 
 	@Override
 	public void zoomTo(double scale, Point2D pivotOnTarget) {
+		fireAffineEvent(AffineEvent.CHANGE_STARTED);
 		scale(scale / affine.getMxx(), viewportPointAt(pivotOnTarget));
+		fireAffineEvent(AffineEvent.CHANGE_FINISHED);
 	}
 
 	@Override
 	public void zoomBy(double amount, Point2D pivotOnTarget) {
+		fireAffineEvent(AffineEvent.CHANGE_STARTED);
 		scale((amount + affine.getMxx()) / affine.getMxx(), viewportPointAt(pivotOnTarget));
+		fireAffineEvent(AffineEvent.CHANGE_FINISHED);
 	}
 
 	/**
@@ -299,11 +318,15 @@ public class GesturePane extends Control implements GesturePaneOps {
 				double tx = affine.getTx(); // fixed point
 				double ty = affine.getTy(); // fixed point
 				if (beforeStart != null) beforeStart.run();
+				fireAffineEvent(AffineEvent.CHANGE_STARTED);
 				animateValue(0d, 1d, duration, interpolator, v -> {
 					affine.setTx(tx + vx * v);
 					affine.setTy(ty + vy * v);
 					clampAtBound(true);
-				}, afterFinished != null ? e -> afterFinished.run() : null);
+				}, e ->{
+					fireAffineEvent(AffineEvent.CHANGE_FINISHED);
+					if(afterFinished != null) afterFinished.run();
+				});
 			}
 			@Override
 			public void zoomTo(double scale, Point2D pivotOnTarget) {
@@ -313,6 +336,7 @@ public class GesturePane extends Control implements GesturePaneOps {
 				double dmy = scale - myy; // delta
 				Point2D pv = viewportPointAt(pivotOnTarget);
 				if (beforeStart != null) beforeStart.run();
+				fireAffineEvent(AffineEvent.CHANGE_STARTED);
 				animateValue(0d, 1d, duration, interpolator, v -> {
 					// so, prependScale with pivot is:
 					// prependTranslate->prependScale->prependTranslate
@@ -330,7 +354,10 @@ public class GesturePane extends Control implements GesturePaneOps {
 					affine.setTx(affine.getTx() + pv.getX());
 					affine.setTy(affine.getTy() + pv.getY());
 					clampAtBound(true);
-				}, afterFinished != null ? e -> afterFinished.run() : null);
+				}, e ->{
+					fireAffineEvent(AffineEvent.CHANGE_FINISHED);
+					if(afterFinished != null) afterFinished.run();
+				});
 			}
 			@Override
 			public void zoomBy(double scale, Point2D pivotOnTarget) {
@@ -459,6 +486,14 @@ public class GesturePane extends Control implements GesturePaneOps {
 		timeline.getKeyFrames().add(new KeyFrame(duration, keyValue));
 		timeline.setOnFinished(l);
 		timeline.play();
+	}
+
+	Affine lastAffine = null;
+	 void fireAffineEvent(EventType<AffineEvent> type) {
+		Dimension2D dimension = new Dimension2D(getTargetWidth(), getTargetHeight());
+		 Affine snapshot = new Affine(this.affine);
+		 fireEvent(new AffineEvent(type, snapshot, lastAffine, dimension));
+		 lastAffine = snapshot;
 	}
 
 	public double getTargetWidth() {

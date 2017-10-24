@@ -29,10 +29,10 @@ public class WebViewSample implements Sample {
 			String script = String.format(
 					"document.getElementsByTagName('body')[0].style.transform = " +
 							"'matrix(%s,0,0,%s,%s,%s)';",
-					e.getAffine().getMxx(),
-					e.getAffine().getMyy(),
-					e.getAffine().getTx(),
-					e.getAffine().getTy());
+					e.namedCurrent().scaleX(),
+					e.namedCurrent().scaleY(),
+					e.namedCurrent().translateX(),
+					e.namedCurrent().translateY());
 			engine.executeScript(script);
 		});
 		TextField bar = new TextField(INTERESTING_CSS);
