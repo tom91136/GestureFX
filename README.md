@@ -33,7 +33,7 @@ For Maven users, add the following to pom
 <dependency>
     <groupId>net.kurobako.gesturefx</groupId>
     <artifactId>gesturefx</artifactId>
-    <version>0.1.0</version>
+    <version>0.2.0</version>
 </dependency>
 ```
 You also need to add jcenter repo to your pom:
@@ -48,7 +48,7 @@ You also need to add jcenter repo to your pom:
 
 For SBT
 ```scala
-"net.kurobako.gesturefx" % "gesturefx" % "0.1.0"    
+"net.kurobako.gesturefx" % "gesturefx" % "0.2.0"    
 ```
 And also jcenter:
 ```scala
@@ -116,7 +116,7 @@ For more interesting examples, take a look at the [samples](gesturefx-sample/src
 
 Several samples have been included demoing interesting uses of the gesture pane.
 
-You can download the sample jar [here](https://dl.bintray.com/tom91136/maven/net/kurobako/gesturefx/gesturefx-sample/0.1.0/gesturefx-sample-0.1.0-jar-with-dependencies.jar) 
+You can download the sample jar [here](https://dl.bintray.com/tom91136/maven/net/kurobako/gesturefx/gesturefx-sample/0.2.0/gesturefx-sample-0.2.0-jar-with-dependencies.jar) 
 or clone the project and run:
 
     ./mvnw install
