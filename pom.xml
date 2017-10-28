@@ -5,7 +5,7 @@
     <groupId>net.kurobako.gesturefx</groupId>
     <artifactId>gesturefx-parent</artifactId>
     <packaging>pom</packaging>
-    <version>0.2.0-SNAPSHOT</version>
+    <version>0.2.0</version>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -135,7 +135,7 @@
             scm:git:git@github.com:${github.user}/${github.repo}.git
         </developerConnection>
         <url>https://github.com/${github.user}/${github.repo}</url>
-        <tag>gesturefx-parent-0.1.0</tag>
+        <tag>gesturefx-parent-0.2.0</tag>
     </scm>
 
     <distributionManagement>
