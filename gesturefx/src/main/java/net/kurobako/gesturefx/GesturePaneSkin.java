@@ -214,7 +214,7 @@ final class GesturePaneSkin extends SkinBase<GesturePane> {
 			// pinch to zoom on trackpad
 			if (e.isShortcutDown()) {
 				// XXX literally no way to tell start and finish for this kind of scroll :(
-				double zoomFactor = DEFAULT_SCROLL_FACTOR * pane.getScrollZoomFactor();
+				double zoomFactor = DEFAULT_SCROLL_FACTOR * pane.getScrollZoomFactorX();
 				if (e.getDeltaY() < 0) zoomFactor *= -1;
 				pane.scale(1 + zoomFactor,1 + zoomFactor, fromGesture(e));
 				return;
