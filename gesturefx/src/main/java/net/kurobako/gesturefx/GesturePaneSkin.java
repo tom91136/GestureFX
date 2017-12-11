@@ -65,8 +65,8 @@ final class GesturePaneSkin extends SkinBase<GesturePane> {
 		rectangle.heightProperty().bind(pane.heightProperty());
 		rectangle.widthProperty().bind(pane.widthProperty());
 		pane.clipProperty().bind(new When(pane.clipEnabled)
-				                         .then(rectangle)
-				                         .otherwise(new SimpleObjectProperty<>(null)));
+				.then(rectangle)
+				.otherwise(new SimpleObjectProperty<>(null)));
 
 		// bind visibility to managed prop
 		hBar.managedProperty().bind(pane.hBarEnabled);
@@ -128,9 +128,9 @@ final class GesturePaneSkin extends SkinBase<GesturePane> {
 			double mxx = affine.getMxx();
 			double myy = affine.getMyy();
 			pane.targetRect.set(new BoundingBox(-affine.getTx() / mxx,
-					                                       -affine.getTy() / myy,
-					                                       pane.getViewportWidth() / mxx,
-					                                       pane.getViewportHeight() / myy));
+					-affine.getTy() / myy,
+					pane.getViewportWidth() / mxx,
+					pane.getViewportHeight() / myy));
 		}));
 
 		pane.fitWidth.addListener(o -> pane.requestLayout());
@@ -178,7 +178,8 @@ final class GesturePaneSkin extends SkinBase<GesturePane> {
 				consumeThenFireIfEnabled(e -> fireAffineEvent(CHANGE_FINISHED)));
 		pane.addEventHandler(ZoomEvent.ZOOM,
 				consumeThenFireIfEnabled(e -> {
-					pane.scale(e.getZoomFactor(), fromGesture(e));
+					double factor = e.getZoomFactor();
+					pane.scale(factor, factor, fromGesture(e));
 					fireAffineEvent(CHANGED);
 				}));
 
@@ -202,17 +203,17 @@ final class GesturePaneSkin extends SkinBase<GesturePane> {
 
 			// pinch to zoom on trackpad
 			if (e.isShortcutDown()) {
-				double zoomFactor = DEFAULT_SCROLL_FACTOR * pane.getScrollZoomFactor();
+				double zoomFactor = DEFAULT_SCROLL_FACTOR * pane.getScrollZoomFactorX();
 				if (e.getDeltaY() < 0) zoomFactor *= -1;
-				pane.scale(1 + zoomFactor, fromGesture(e));
+				pane.scale(1 + zoomFactor, 1 + zoomFactor, fromGesture(e));
 				fireAffineEvent(CHANGED);
 				return;
 			}
 			switch (pane.scrollMode.get()) {
 				case ZOOM:
-					double zoomFactor = DEFAULT_SCROLL_FACTOR * pane.getScrollZoomFactor();
+					double zoomFactor = DEFAULT_SCROLL_FACTOR * pane.getScrollZoomFactorX();
 					if (e.getDeltaY() < 0) zoomFactor *= -1;
-					pane.scale(1 + zoomFactor, fromGesture(e));
+					pane.scale(1 + zoomFactor, 1 + zoomFactor, fromGesture(e));
 					return;
 				case PAN:
 					pane.translate(e.getDeltaX(), e.getDeltaY());

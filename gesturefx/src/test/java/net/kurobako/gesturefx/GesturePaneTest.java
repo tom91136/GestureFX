@@ -356,13 +356,13 @@ public class GesturePaneTest {
 	@Test
 	public void testScale() throws Exception {
 		pane.zoomTo(2, pane.targetPointAtViewportCentre());
-		assertThat(pane.getCurrentScale()).isEqualTo(2d);
+		assertThat(pane.getCurrentXScale()).isEqualTo(2d);
 	}
 
 	@Test
 	public void testScaleRelative() throws Exception {
 		pane.zoomBy(2, pane.targetPointAtViewportCentre());
-		assertThat(pane.getCurrentScale()).isEqualTo(3d);
+		assertThat(pane.getCurrentXScale()).isEqualTo(3d);
 	}
 
 	@Test
@@ -370,7 +370,7 @@ public class GesturePaneTest {
 		double factor = 4.2;
 		pane.fireEvent(new ZoomEvent(ZoomEvent.ZOOM, 0, 0, 0, 0, false, false, false, false,
 				                            false, false, factor, factor, null));
-		assertThat(pane.getCurrentScale()).isEqualTo(factor);
+		assertThat(pane.getCurrentXScale()).isEqualTo(factor);
 	}
 
 	@Test
@@ -378,7 +378,7 @@ public class GesturePaneTest {
 		pane.scrollModeProperty().set(ScrollMode.ZOOM);
 		pane.zoomTo(5, pane.targetPointAtViewportCentre());
 		FxRobot robot = new FxRobot();
-		assertThat(pane.getCurrentScale()).isEqualTo(5d);
+		assertThat(pane.getCurrentXScale()).isEqualTo(5d);
 		Thread.sleep(100);
 		robot.moveTo(pane);
 		robot.scroll(5, VerticalDirection.UP); // direction is platform dependent
@@ -390,7 +390,7 @@ public class GesturePaneTest {
 				v -> Math.abs(v - expectedUp) < 0.01 || Math.abs(v - expectedDown) < 0.01,
 				                                                  "either close to %s or %s",
 				                                                  expectedUp, expectedDown);
-		assertThat(pane.getCurrentScale()).is(eitherUpOrDown);
+		assertThat(pane.getCurrentXScale()).is(eitherUpOrDown);
 		Transform t = target.captureTransform();
 		assertThat(t.getMxx()).is(eitherUpOrDown);
 		assertThat(t.getMyy()).is(eitherUpOrDown);
@@ -398,30 +398,30 @@ public class GesturePaneTest {
 
 	@Test
 	public void testMinScaleRespected() throws Exception {
-		pane.setMinScale(1);
+		pane.setMinXScale(1);
 		pane.zoomTo(0.1, pane.targetPointAtViewportCentre());
-		assertThat(pane.getCurrentScale()).isEqualTo(1d);
+		assertThat(pane.getCurrentXScale()).isEqualTo(1d);
 	}
 
 	@Test
 	public void testMinScaleRelativeRespected() throws Exception {
-		pane.setMinScale(1);
+		pane.setMinXScale(1);
 		pane.zoomBy(-1, pane.targetPointAtViewportCentre());
-		assertThat(pane.getCurrentScale()).isEqualTo(1d);
+		assertThat(pane.getCurrentXScale()).isEqualTo(1d);
 	}
 
 	@Test
 	public void testMaxScaleRespected() throws Exception {
-		pane.setMaxScale(2);
+		pane.setMaxXScale(2);
 		pane.zoomTo(10, pane.targetPointAtViewportCentre());
-		assertThat(pane.getCurrentScale()).isEqualTo(2d);
+		assertThat(pane.getCurrentXScale()).isEqualTo(2d);
 	}
 
 	@Test
 	public void testMaxScaleRelativeRespected() throws Exception {
-		pane.setMaxScale(2);
+		pane.setMaxXScale(2);
 		pane.zoomBy(2, pane.targetPointAtViewportCentre());
-		assertThat(pane.getCurrentScale()).isEqualTo(2d);
+		assertThat(pane.getCurrentXScale()).isEqualTo(2d);
 	}
 
 	@Test
@@ -573,14 +573,14 @@ public class GesturePaneTest {
 						          FitMode.CENTER),
 				new Prop<>(p::getScrollMode, p::setScrollMode, p::scrollModeProperty,
 						          ScrollMode.ZOOM),
-				new Prop<>(p::getMinScale, p::setMinScale, p::minScaleProperty, 42d),
-				new Prop<>(p::getMaxScale, p::setMaxScale, p::maxScaleProperty, 42d),
-				new Prop<>(p::getScrollZoomFactor, p::setScrollZoomFactor,
-						          p::scrollZoomFactorProperty, 42d))
+				new Prop<>(p::getMinXScale, p::setMinXScale, p::minXScaleProperty, 42d),
+				new Prop<>(p::getMaxXScale, p::setMaxXScale, p::maxXScaleProperty, 42d),
+				new Prop<>(p::getScrollZoomFactorX, p::setScrollZoomFactorX,
+						          p::scrollZoomFactorXProperty, 42d))
 				.forEach(Prop::assertProperty);
 
 		// for read-only properties
-		softly.assertThat(p.getCurrentScale()).isEqualTo(p.currentScaleProperty().get());
+		softly.assertThat(p.getCurrentXScale()).isEqualTo(p.currentScaleXProperty().get());
 		softly.assertThat(p.getCurrentX()).isEqualTo(p.currentXProperty().get());
 		softly.assertThat(p.getCurrentY()).isEqualTo(p.currentYProperty().get());
 		softly.assertThat(p.getTargetViewport()).isEqualTo(p.targetViewportProperty().get());

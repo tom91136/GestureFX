@@ -25,22 +25,33 @@ public interface GesturePaneOps {
 	void translateBy(Dimension2D targetAmount);
 	/**
 	 * Zooms the target to some scale, the actual effect is bounded by
-	 * {@link GesturePane#getMinScale()}, {@link GesturePane#getMaxScale()}, and dependent on
+	 * {@link GesturePane#getMinXScale()}, {@link GesturePane#getMaxXScale()}, and dependent on
 	 * {@link GesturePane#getFitMode()}
 	 *
-	 * @param scale the scale, invalid values will be clamped by various properties of
+	 * @param scaleX the scale, invalid values will be clamped by various properties of
 	 * {@link GesturePane}
 	 * @param pivotOnTarget a pivot point on the target using the target's coordinate system
 	 */
-	void zoomTo(double scale, Point2D pivotOnTarget);
+	void zoomTo(double scaleX, double scaleY, Point2D pivotOnTarget);
+
+	default void zoomTo(double scale, Point2D pivotOnTarget) {
+		zoomTo(scale, scale, pivotOnTarget);
+	}
 	/**
 	 * Changes the scale of the target by some amount, this is equivalent to calling
-	 * {@link #zoomTo(double, Point2D)} with {@link GesturePane#getCurrentScale()} plus the amount
+	 * {@link #zoomTo(double, double, Point2D)} with
+	 * {@link GesturePane#getCurrentXScale()}, {@link GesturePane#getCurrentYScale()}
+	 * plus the delta
 	 *
-	 * @param amount the amount, invalid values will be clamped by various properties of
+	 * @param deltaX the amount, invalid values will be clamped by various properties of
 	 * {@link GesturePane}
 	 * @param pivotOnTarget a pivot point on the target using the target's coordinate system
 	 */
-	void zoomBy(double amount, Point2D pivotOnTarget);
+	void zoomBy(double deltaX, double deltaY, Point2D pivotOnTarget);
+
+	default void zoomBy(double delta, Point2D pivotOnTarget) {
+		zoomBy(delta, delta, pivotOnTarget);
+	}
+
 
 }

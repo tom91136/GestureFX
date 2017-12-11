@@ -16,7 +16,7 @@
         </Label>
 
 
-        <GesturePane fitHeight="false" fitWidth="false" maxScale="9.0" prefHeight="300.0" prefWidth="300.0" VBox.vgrow="ALWAYS">
+        <GesturePane fitHeight="false" fitWidth="false" maxXScale="9.0" maxYScale="9.0" prefHeight="300.0" prefWidth="300.0" VBox.vgrow="ALWAYS">
             <ImageView pickOnBounds="true" preserveRatio="true">
                 <image>
                     <Image url="@lena.png" />
