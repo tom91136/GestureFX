@@ -42,13 +42,13 @@ import static net.kurobako.gesturefx.GesturePane.ScrollMode.PAN;
 /**
  * Pane that applies transformations to some implementation of {@link Transformable} when a
  * gesture is applied
- * <p>
+ *
  * Terms:
  * <ol>
  * <li>Target - the actual object that receives transformation</li>
  * <li>Viewport - the view area of the target(not counting vertical and horizontal scrollbars)</li>
  * </ol>
- * <p>
+ *
  * The measured size of the node defaults the the target's size, you can use the usual
  * {@link Region#setPrefSize(double, double)} and related methods/bindings to
  * provide alternative dimensions.
@@ -85,15 +85,9 @@ public class GesturePane extends Control implements GesturePaneOps {
 	final BooleanProperty clipEnabled = new SimpleBooleanProperty(true);
 	final ObjectProperty<ScrollMode> scrollMode = new SimpleObjectProperty<>(PAN);
 	private final ObjectProperty<FitMode> fitMode = new SimpleObjectProperty<>(FIT);
-
-
-	private final DoubleProperty minXScale = new SimpleDoubleProperty(0.5);
-	private final DoubleProperty maxXScale = new SimpleDoubleProperty(10);
-	private final DoubleProperty scrollZoomFactorX = new SimpleDoubleProperty(1);
-
-	private final DoubleProperty minYScale = new SimpleDoubleProperty(0.5);
-	private final DoubleProperty maxYScale = new SimpleDoubleProperty(10);
-	private final DoubleProperty scrollZoomFactorY = new SimpleDoubleProperty(1);
+	private final DoubleProperty minScale = new SimpleDoubleProperty(0.5);
+	private final DoubleProperty maxScale = new SimpleDoubleProperty(10);
+	private final DoubleProperty scrollZoomFactor = new SimpleDoubleProperty(1);
 
 	final ObjectProperty<Transformable> target = new SimpleObjectProperty<>();
 	final ObjectProperty<Node> content = new SimpleObjectProperty<>();
@@ -252,20 +246,16 @@ public class GesturePane extends Control implements GesturePaneOps {
 	}
 
 	@Override
-	public void zoomTo(double scaleX, double scaleY, Point2D pivotOnTarget) {
+	public void zoomTo(double scale, Point2D pivotOnTarget) {
 		fireAffineEvent(AffineEvent.CHANGE_STARTED);
-		scale(scaleX / affine.getMxx(),
-				scaleY / affine.getMyy(),
-				viewportPointAt(pivotOnTarget));
+		scale(scale / affine.getMxx(), viewportPointAt(pivotOnTarget));
 		fireAffineEvent(AffineEvent.CHANGE_FINISHED);
 	}
 
 	@Override
-	public void zoomBy(double deltaX, double deltaY, Point2D pivotOnTarget) {
+	public void zoomBy(double amount, Point2D pivotOnTarget) {
 		fireAffineEvent(AffineEvent.CHANGE_STARTED);
-		scale((deltaX + affine.getMxx()) / affine.getMxx(),
-				(deltaY + affine.getMyy()) / affine.getMyy(),
-				viewportPointAt(pivotOnTarget));
+		scale((amount + affine.getMxx()) / affine.getMxx(), viewportPointAt(pivotOnTarget));
 		fireAffineEvent(AffineEvent.CHANGE_FINISHED);
 	}
 
@@ -339,11 +329,11 @@ public class GesturePane extends Control implements GesturePaneOps {
 				});
 			}
 			@Override
-			public void zoomTo(double scaleX, double scaleY, Point2D pivotOnTarget) {
+			public void zoomTo(double scale, Point2D pivotOnTarget) {
 				double mxx = affine.getMxx(); // fixed point
 				double myy = affine.getMyy(); // fixed point
-				double dmx = scaleX - mxx; // delta
-				double dmy = scaleY - myy; // delta
+				double dmx = scale - mxx; // delta
+				double dmy = scale - myy; // delta
 				Point2D pv = viewportPointAt(pivotOnTarget);
 				if (beforeStart != null) beforeStart.run();
 				fireAffineEvent(AffineEvent.CHANGE_STARTED);
@@ -370,10 +360,8 @@ public class GesturePane extends Control implements GesturePaneOps {
 				});
 			}
 			@Override
-			public void zoomBy(double deltaX, double deltaY, Point2D pivotOnTarget) {
-				zoomTo(getCurrentXScale() + deltaX,
-						getCurrentYScale() + deltaY,
-						pivotOnTarget);
+			public void zoomBy(double scale, Point2D pivotOnTarget) {
+				zoomTo(getCurrentScale() + scale, pivotOnTarget);
 			}
 		};
 	}
@@ -406,21 +394,16 @@ public class GesturePane extends Control implements GesturePaneOps {
 	 * Resets scale to {@code 1.0} and conditionally centres the image depending on the current
 	 * {@link FitMode}
 	 */
-	public final void reset() { zoomTo(1, 1, targetPointAtViewportCentre()); }
+	public final void reset() { zoomTo(1, targetPointAtViewportCentre()); }
 
-
-	void scale(double factorX, double factorY, Point2D origin) {
-		double deltaX = factorX;
-		double deltaY = factorY;
-		double scaleX = affine.getMxx() * factorX;
-		double scaleY = affine.getMyy() * factorY;
+	void scale(double factor, Point2D origin) {
+		double delta = factor;
+		double scale = affine.getMxx() * factor;
 		// clamp at min and max
-		if (scaleX > getMaxXScale()) deltaX = getMaxXScale() / affine.getMxx();
-		if (scaleX < getMinXScale()) deltaX = getMinXScale() / affine.getMxx();
-		if (scaleY > getMaxYScale()) deltaY = getMaxYScale() / affine.getMyy();
-		if (scaleY < getMinYScale()) deltaY = getMinYScale() / affine.getMyy();
-		affine.prependScale(deltaX, deltaY, origin);
-		clampAtBound(factorX >= 1);
+		if (scale > getMaxScale()) delta = getMaxScale() / affine.getMxx();
+		if (scale < getMinScale()) delta = getMinScale() / affine.getMxx();
+		affine.prependScale(delta, delta, origin);
+		clampAtBound(factor >= 1);
 	}
 
 	void translate(double x, double y) {
@@ -455,8 +438,8 @@ public class GesturePane extends Control implements GesturePaneOps {
 					return;
 
 				double coverScale = (targetWidth <= 0 || targetHeight <= 0) ?
-						1 :
-						Math.max(width / targetWidth, height / targetHeight);
+						                    1 :
+						                    Math.max(width / targetWidth, height / targetHeight);
 				affine.setMxx(coverScale);
 				affine.setMyy(coverScale);
 				//TODO need to centre the image back to origin
@@ -466,11 +449,11 @@ public class GesturePane extends Control implements GesturePaneOps {
 				break;
 			case FIT:
 				double fitScale = (targetWidth <= 0 || targetHeight <= 0) ?
-						0 :
-						Math.min(width / targetWidth, height / targetHeight);
+						                  0 :
+						                  Math.min(width / targetWidth, height / targetHeight);
 				if (zoomPositive ||
-						affine.getMxx() > fitScale ||
-						affine.getMyy() > fitScale) return;
+						    affine.getMxx() > fitScale ||
+						    affine.getMyy() > fitScale) return;
 				affine.setTx((width - fitScale * targetWidth) / 2);
 				affine.setTy((height - fitScale * targetHeight) / 2);
 
@@ -574,27 +557,16 @@ public class GesturePane extends Control implements GesturePaneOps {
 	public ObjectProperty<ScrollMode> scrollModeProperty() { return scrollMode; }
 	public void setScrollMode(ScrollMode mode) { this.scrollMode.set(mode); }
 
-	public double getMinXScale() { return minXScale.get(); }
-	public DoubleProperty minXScaleProperty() { return minXScale; }
-	public void setMinXScale(double scale) { this.minXScale.set(scale); }
+	public double getMinScale() { return minScale.get(); }
+	public DoubleProperty minScaleProperty() { return minScale; }
+	public void setMinScale(double scale) { this.minScale.set(scale); }
 
-	public double getMinYScale() { return minYScale.get(); }
-	public DoubleProperty minYScaleProperty() { return minYScale; }
-	public void setMinYScale(double scale) { this.minYScale.set(scale); }
+	public double getMaxScale() { return maxScale.get(); }
+	public DoubleProperty maxScaleProperty() { return maxScale; }
+	public void setMaxScale(double scale) { this.maxScale.set(scale); }
 
-	public double getMaxXScale() { return maxXScale.get(); }
-	public DoubleProperty maxXScaleProperty() { return maxXScale; }
-	public void setMaxXScale(double scale) { this.maxXScale.set(scale); }
-
-	public double getMaxYScale() { return maxYScale.get(); }
-	public DoubleProperty maxYScaleProperty() { return maxYScale; }
-	public void setMaxYScale(double scale) { this.maxYScale.set(scale); }
-
-	public double getCurrentXScale() { return affine.getMxx(); }
-	public DoubleProperty currentScaleXProperty() { return affine.mxxProperty(); }
-
-	public double getCurrentYScale() { return affine.getMxx(); }
-	public DoubleProperty currentScaleYProperty() { return affine.myyProperty(); }
+	public double getCurrentScale() { return affine.getMxx(); }
+	public DoubleProperty currentScaleProperty() { return affine.mxxProperty(); }
 
 	public double getCurrentX() { return affine.getTx() / affine.getMxx(); }
 	public DoubleBinding currentXProperty() {
@@ -605,13 +577,9 @@ public class GesturePane extends Control implements GesturePaneOps {
 		return affine.tyProperty().divide(affine.myyProperty());
 	}
 
-	public double getScrollZoomFactorX() { return scrollZoomFactorX.get(); }
-	public DoubleProperty scrollZoomFactorXProperty() { return scrollZoomFactorX; }
-	public void setScrollZoomFactorX(double factor) { this.scrollZoomFactorX.set(factor); }
-
-	public double getScrollZoomFactorY() { return scrollZoomFactorY.get(); }
-	public DoubleProperty scrollZoomFactorYProperty() { return scrollZoomFactorY; }
-	public void setScrollZoomFactorY(double factor) { this.scrollZoomFactorY.set(factor); }
+	public double getScrollZoomFactor() { return scrollZoomFactor.get(); }
+	public DoubleProperty scrollZoomFactorProperty() { return scrollZoomFactor; }
+	public void setScrollZoomFactor(double factor) { this.scrollZoomFactor.set(factor); }
 
 	public Bounds getTargetViewport() { return targetRect.get(); }
 	public ObjectProperty<Bounds> targetViewportProperty() { return targetRect; }

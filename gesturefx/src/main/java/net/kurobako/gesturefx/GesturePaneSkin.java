@@ -64,8 +64,8 @@ final class GesturePaneSkin extends SkinBase<GesturePane> {
 		rectangle.heightProperty().bind(pane.heightProperty());
 		rectangle.widthProperty().bind(pane.widthProperty());
 		pane.clipProperty().bind(new When(pane.clipEnabled)
-				.then(rectangle)
-				.otherwise(new SimpleObjectProperty<>(null)));
+				                         .then(rectangle)
+				                         .otherwise(new SimpleObjectProperty<>(null)));
 
 		// bind visibility to managed prop
 		hBar.managedProperty().bind(pane.hBarEnabled);
@@ -140,9 +140,9 @@ final class GesturePaneSkin extends SkinBase<GesturePane> {
 			double mxx = affine.getMxx();
 			double myy = affine.getMyy();
 			pane.targetRect.set(new BoundingBox(-affine.getTx() / mxx,
-					-affine.getTy() / myy,
-					pane.getViewportWidth() / mxx,
-					pane.getViewportHeight() / myy));
+					                                       -affine.getTy() / myy,
+					                                       pane.getViewportWidth() / mxx,
+					                                       pane.getViewportHeight() / myy));
 		}));
 
 		pane.fitWidth.addListener(o -> pane.requestLayout());
@@ -189,8 +189,7 @@ final class GesturePaneSkin extends SkinBase<GesturePane> {
 				consumeThenFireIfEnabled(e -> pane.fireAffineEvent(CHANGE_FINISHED)));
 		pane.addEventHandler(ZoomEvent.ZOOM,
 				consumeThenFireIfEnabled(e -> {
-					double factor = e.getZoomFactor();
-					pane.scale(factor, factor, fromGesture(e));
+					pane.scale(e.getZoomFactor(), fromGesture(e));
 				}));
 
 		// translate+zoom via mouse/touchpad
@@ -216,14 +215,14 @@ final class GesturePaneSkin extends SkinBase<GesturePane> {
 				// XXX literally no way to tell start and finish for this kind of scroll :(
 				double zoomFactor = DEFAULT_SCROLL_FACTOR * pane.getScrollZoomFactor();
 				if (e.getDeltaY() < 0) zoomFactor *= -1;
-				pane.scale(1 + zoomFactor,1 + zoomFactor, fromGesture(e));
+				pane.scale(1 + zoomFactor, fromGesture(e));
 				return;
 			}
 			switch (pane.scrollMode.get()) {
 				case ZOOM:
-					double zoomFactor = DEFAULT_SCROLL_FACTOR * pane.getScrollZoomFactorX();
+					double zoomFactor = DEFAULT_SCROLL_FACTOR * pane.getScrollZoomFactor();
 					if (e.getDeltaY() < 0) zoomFactor *= -1;
-					pane.scale(1 + zoomFactor, 1 + zoomFactor, fromGesture(e));
+					pane.scale(1 + zoomFactor, fromGesture(e));
 					return;
 				case PAN:
 					pane.translate(e.getDeltaX(), e.getDeltaY());

@@ -162,7 +162,7 @@ public class LenaSample implements Sample {
 					// increment of scale makes more sense exponentially instead of linearly
 					pane.animate(DURATION)
 							.interpolateWith(Interpolator.EASE_BOTH)
-							.zoomBy(pane.getCurrentXScale(), pivotOnTarget);
+							.zoomBy(pane.getCurrentScale(), pivotOnTarget);
 				}
 			});
 
@@ -188,18 +188,18 @@ public class LenaSample implements Sample {
 			horizontalScrollBar.setSelected(pane.isHBarEnabled());
 			pane.hBarEnabledProperty().bind(horizontalScrollBar.selectedProperty());
 
-			minScale.textProperty().bind(pane.minXScaleProperty().asString(FORMAT));
-			maxScale.textProperty().bind(pane.maxXScaleProperty().asString(FORMAT));
-			zoomFactor.textProperty().bind(pane.scrollZoomFactorXProperty().asString(FORMAT));
+			minScale.textProperty().bind(pane.minScaleProperty().asString(FORMAT));
+			maxScale.textProperty().bind(pane.maxScaleProperty().asString(FORMAT));
+			zoomFactor.textProperty().bind(pane.scrollZoomFactorProperty().asString(FORMAT));
 
-			minScaleSlider.setValue(pane.getMinXScale());
-			pane.minXScaleProperty().bind(minScaleSlider.valueProperty());
-			maxScaleSlider.setValue(pane.getMaxXScale());
-			pane.maxXScaleProperty().bind(maxScaleSlider.valueProperty());
+			minScaleSlider.setValue(pane.getMinScale());
+			pane.minScaleProperty().bind(minScaleSlider.valueProperty());
+			maxScaleSlider.setValue(pane.getMaxScale());
+			pane.maxScaleProperty().bind(maxScaleSlider.valueProperty());
 //			currentScaleSlider.setValue(gesturePane.getCurrentScale());
 //			gesturePane.currentScaleProperty().bind(currentScaleSlider.valueProperty());
-			zoomFactorSlider.setValue(pane.getScrollZoomFactorX());
-			pane.scrollZoomFactorXProperty().bind(zoomFactorSlider.valueProperty());
+			zoomFactorSlider.setValue(pane.getScrollZoomFactor());
+			pane.scrollZoomFactorProperty().bind(zoomFactorSlider.valueProperty());
 
 			reset.setOnAction(e -> pane.reset());
 
