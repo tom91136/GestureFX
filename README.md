@@ -125,11 +125,13 @@ or clone the project and run:
 
 ## How to build
 
-To ensure the project is usable with Java 8 and [OpenJFX](https://openjfx.io/), you must build against Java 8.
+To ensure the project is usable with Java 8 and [OpenJFX](https://openjfx.io/), you must build against Java 8. 
 
 Prerequisites:
 
- * JDK 8 
+ * JDK 8 with JavaFX
+ 
+Be aware that some OpenJDK distributions does not include JavaFX or have missing webkit libraries which is required for the sample to build. 
 
 Clone the project and then in project root:
 
@@ -137,6 +139,8 @@ Clone the project and then in project root:
     ./mvnw clean package 
     # Windows:
     mvnw clean package
+
+If JDK 8 is not your main JDK, prepend the correct `JAVA_HOME` before any maven command (e.g `JAVA_HOME=/usr/java/jdk1.8.0_161/ mvn clean compile`).
 
 This project uses maven wrapper so you do not need to install maven
 beforehand.
