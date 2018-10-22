@@ -17,6 +17,7 @@ Features
  * Zoom/scroll to coordinate with animations
  * Mostly works in SceneBuilder*
  * Zero dependency
+ * Works with both Java 8 and OpenJFX 11
 
 For comparison, this library is similar to [PhotoView](https://github.com/chrisbanes/PhotoView) 
 for Android but supports gestures on any `Node` subclass.
@@ -31,9 +32,9 @@ open it in SceneBuilder. Pull requests welcome on solving this.
 For Maven users, add the following to pom
 ```xml
 <dependency>
-    <groupId>net.kurobako.gesturefx</groupId>
+    <groupId>net.kurobako</groupId>
     <artifactId>gesturefx</artifactId>
-    <version>0.2.0</version>
+    <version>0.3.0</version>
 </dependency>
 ```
 You also need to add jcenter repo to your pom:
@@ -48,14 +49,14 @@ You also need to add jcenter repo to your pom:
 
 For SBT
 ```scala
-"net.kurobako.gesturefx" % "gesturefx" % "0.2.0"    
+"net.kurobako" % "gesturefx" % "0.3.0"    
 ```
 And also jcenter:
 ```scala
 resolvers ++= Seq(Resolver.jcenterRepo)
 ```
 
-Alternatively, you can download the jar [here](https://dl.bintray.com/tom91136/maven/net/kurobako/gesturefx/gesturefx/0.1.0/gesturefx-0.1.0.jar)
+Alternatively, you can download the jar [here](https://dl.bintray.com/tom91136/maven/net/kurobako/gesturefx/0.3.0/gesturefx-0.3.0.jar)
  and add it to your classpath. This library has no dependencies so you do not need to download 
 anything else.
  
@@ -116,13 +117,15 @@ For more interesting examples, take a look at the [samples](gesturefx-sample/src
 
 Several samples have been included demoing interesting uses of the gesture pane.
 
-You can download the sample jar [here](https://dl.bintray.com/tom91136/maven/net/kurobako/gesturefx/gesturefx-sample/0.2.0/gesturefx-sample-0.2.0-jar-with-dependencies.jar) 
+You can download the sample jar [here](https://dl.bintray.com/tom91136/maven/net/kurobako/gesturefx-sample/0.3.0/gesturefx-sample-0.3.0-jar-with-dependencies.jar) 
 or clone the project and run:
 
     ./mvnw install
     ./mvnw exec:java -pl gesturefx-sample
 
 ## How to build
+
+To ensure the project is usable with Java 8 and [OpenJFX](https://openjfx.io/), you must build against Java 8.
 
 Prerequisites:
 
@@ -146,6 +149,13 @@ with real window:
 **NOTE: Be aware that running the tests headful will spawn actual windows and take over the mouse 
 and keyboard; you will see the test window flicker while different unit tests are invoked.**
 
+## Release process
+
+1. Commit all changes before release
+2. Make sure `${user.home}/.m2/settings.xml` exist, if not copy it from maven home(i.e `cp  usr/share/maven/conf/settings.xml ~/.m2/settings.xml` )
+3. Setup 
+
+
 ## Motivation
 
 Someone has to do it.
@@ -158,7 +168,7 @@ assignment at the
 
 ## Licence
 
-    Copyright 2017 WEI CHEN LIN
+    Copyright 2018 WEI CHEN LIN
     
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.

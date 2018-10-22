@@ -3,8 +3,8 @@
 
     <parent>
         <artifactId>gesturefx-parent</artifactId>
-        <groupId>net.kurobako.gesturefx</groupId>
-        <version>0.2.1-SNAPSHOT</version>
+        <groupId>net.kurobako</groupId>
+        <version>0.3.0-SNAPSHOT</version>
     </parent>
 
     <modelVersion>4.0.0</modelVersion>

@@ -37,18 +37,19 @@ import javafx.scene.transform.NonInvertibleTransformException;
 import javafx.util.Duration;
 
 import static net.kurobako.gesturefx.GesturePane.FitMode.FIT;
+import static net.kurobako.gesturefx.GesturePane.FitMode.UNBOUNDED;
 import static net.kurobako.gesturefx.GesturePane.ScrollMode.PAN;
 
 /**
  * Pane that applies transformations to some implementation of {@link Transformable} when a
  * gesture is applied
- *
+ * <p>
  * Terms:
  * <ol>
  * <li>Target - the actual object that receives transformation</li>
  * <li>Viewport - the view area of the target(not counting vertical and horizontal scrollbars)</li>
  * </ol>
- *
+ * <p>
  * The measured size of the node defaults the the target's size, you can use the usual
  * {@link Region#setPrefSize(double, double)} and related methods/bindings to
  * provide alternative dimensions.
@@ -71,6 +72,9 @@ public class GesturePane extends Control implements GesturePaneOps {
 	private static final String DEFAULT_STYLE_CLASS = "gesture-pane";
 
 	final Affine affine = new Affine();
+	private boolean inhibitPropEvent = false;
+	private boolean clampExternalScale = true;
+
 
 	// XXX in general, these should be written like the JDK counterpart(lazy instantiation of
 	// properties), but, life is too short for these kind of things. If I feel like it, I would
@@ -84,7 +88,8 @@ public class GesturePane extends Control implements GesturePaneOps {
 	final BooleanProperty gestureEnabled = new SimpleBooleanProperty(true);
 	final BooleanProperty clipEnabled = new SimpleBooleanProperty(true);
 	final ObjectProperty<ScrollMode> scrollMode = new SimpleObjectProperty<>(PAN);
-	private final ObjectProperty<FitMode> fitMode = new SimpleObjectProperty<>(FIT);
+	final ObjectProperty<FitMode> fitMode = new SimpleObjectProperty<>(FIT);
+	final DoubleProperty scale = new SimpleDoubleProperty(1);
 	private final DoubleProperty minScale = new SimpleDoubleProperty(0.5);
 	private final DoubleProperty maxScale = new SimpleDoubleProperty(10);
 	private final DoubleProperty scrollZoomFactor = new SimpleDoubleProperty(1);
@@ -121,6 +126,18 @@ public class GesturePane extends Control implements GesturePaneOps {
 
 	public GesturePane() {
 		super();
+		// can't use bindBidirectional here because we need to clamp 
+		// scale -> mxx,myy but not the other way around
+		affine.mxxProperty().addListener(o -> scale.set(affine.getMxx()));
+		affine.myyProperty().addListener(o -> scale.set(affine.getMyy()));
+		scale.addListener(e -> {
+			if (clampExternalScale) clampAtBound(true);
+			affine.setMyy(scale.get());
+			affine.setMxx(scale.get());
+			if (!inhibitPropEvent) {
+				fireAffineEvent(AffineEvent.CHANGED);
+			}
+		});
 		getStyleClass().setAll(DEFAULT_STYLE_CLASS);
 		target.addListener((o, p, n) -> {
 			if (n == null) return;
@@ -162,8 +179,9 @@ public class GesturePane extends Control implements GesturePaneOps {
 	@Override
 	protected Skin<?> createDefaultSkin() { return new GesturePaneSkin(this); }
 
-	// apparently, performance is a issue here, see
-	// https://bitbucket.org/controlsfx/controlsfx/pull-requests/519/this-is-the-fix-for-https-javafx/diff
+	// apparently, performance is an issue here, see
+	// https://bitbucket.org/controlsfx/controlsfx/pull-requests/519/this-is-the-fix-for-https
+	// -javafx/diff
 	String stylesheet;
 	@Override
 	public String getUserAgentStylesheet() {
@@ -230,32 +248,32 @@ public class GesturePane extends Control implements GesturePaneOps {
 	@Override
 	public void translateBy(Dimension2D targetAmount) {
 		fireAffineEvent(AffineEvent.CHANGE_STARTED);
-		// target coordinate, so append; origin is top left so we we flip signs
-		affine.appendTranslation(-targetAmount.getWidth(), -targetAmount.getHeight());
-		clampAtBound(true);
+		atomicallyChange(() -> {
+			// target coordinate, so append; origin is top left so we we flip signs
+			affine.appendTranslation(-targetAmount.getWidth(), -targetAmount.getHeight());
+			clampAtBound(true);
+		});
 		fireAffineEvent(AffineEvent.CHANGE_FINISHED);
 	}
 
 	@Override
 	public void centreOn(Point2D pointOnTarget) {
-		fireAffineEvent(AffineEvent.CHANGE_STARTED);
 		// move to centre point and apply scale
 		Point2D delta = pointOnTarget.subtract(targetPointAtViewportCentre());
 		translateBy(new Dimension2D(delta.getX(), delta.getY()));
-		fireAffineEvent(AffineEvent.CHANGE_FINISHED);
 	}
 
 	@Override
 	public void zoomTo(double scale, Point2D pivotOnTarget) {
 		fireAffineEvent(AffineEvent.CHANGE_STARTED);
-		scale(scale / affine.getMxx(), viewportPointAt(pivotOnTarget));
+		scale(scale / getCurrentScale(), viewportPointAt(pivotOnTarget));
 		fireAffineEvent(AffineEvent.CHANGE_FINISHED);
 	}
 
 	@Override
 	public void zoomBy(double amount, Point2D pivotOnTarget) {
 		fireAffineEvent(AffineEvent.CHANGE_STARTED);
-		scale((amount + affine.getMxx()) / affine.getMxx(), viewportPointAt(pivotOnTarget));
+		scale((amount + getCurrentScale()) / getCurrentScale(), viewportPointAt(pivotOnTarget));
 		fireAffineEvent(AffineEvent.CHANGE_FINISHED);
 	}
 
@@ -309,34 +327,43 @@ public class GesturePane extends Control implements GesturePaneOps {
 				Point2D delta = pointOnTarget.subtract(targetPointAtViewportCentre());
 				translateBy(new Dimension2D(delta.getX(), delta.getY()));
 			}
+
+			private void markStart() {
+				if (beforeStart != null) beforeStart.run();
+				fireAffineEvent(AffineEvent.CHANGE_STARTED);
+				inhibitPropEvent = true;
+				clampExternalScale = false;
+			}
+
+			private void markEnd() {
+				inhibitPropEvent = false;
+				clampExternalScale = true;
+				fireAffineEvent(AffineEvent.CHANGE_FINISHED);
+				if (afterFinished != null) afterFinished.run();
+			}
+
 			@Override
 			public void translateBy(Dimension2D targetAmount) {
 				// target coordinate so we will be setting tx and ty manually(append) so manually
 				// scale the target amount first
-				double vx = -targetAmount.getWidth() * affine.getMxx();
-				double vy = -targetAmount.getHeight() * affine.getMyy();
+				double vx = -targetAmount.getWidth() * getCurrentScale();
+				double vy = -targetAmount.getHeight() * getCurrentScale();
 				double tx = affine.getTx(); // fixed point
 				double ty = affine.getTy(); // fixed point
-				if (beforeStart != null) beforeStart.run();
-				fireAffineEvent(AffineEvent.CHANGE_STARTED);
+				markStart();
 				animateValue(0d, 1d, duration, interpolator, v -> {
 					affine.setTx(tx + vx * v);
 					affine.setTy(ty + vy * v);
 					clampAtBound(true);
-				}, e ->{
-					fireAffineEvent(AffineEvent.CHANGE_FINISHED);
-					if(afterFinished != null) afterFinished.run();
-				});
+				}, e -> markEnd());
 			}
 			@Override
-			public void zoomTo(double scale, Point2D pivotOnTarget) {
-				double mxx = affine.getMxx(); // fixed point
-				double myy = affine.getMyy(); // fixed point
-				double dmx = scale - mxx; // delta
-				double dmy = scale - myy; // delta
+			public void zoomTo(double targetScale, Point2D pivotOnTarget) {
+				double initialScale = scale.get(); // fixed point
+				double ds = clamp(getMinScale(), getMaxScale(), targetScale)
+						- initialScale; // delta
 				Point2D pv = viewportPointAt(pivotOnTarget);
-				if (beforeStart != null) beforeStart.run();
-				fireAffineEvent(AffineEvent.CHANGE_STARTED);
+				markStart();
 				animateValue(0d, 1d, duration, interpolator, v -> {
 					// so, prependScale with pivot is:
 					// prependTranslate->prependScale->prependTranslate
@@ -344,20 +371,17 @@ public class GesturePane extends Control implements GesturePaneOps {
 					affine.setTx(affine.getTx() - pv.getX());
 					affine.setTy(affine.getTy() - pv.getY());
 					// 2. prependScale, but extract the coefficient to scale the translation first
-					double txx = mxx + dmx * v;
-					double tyy = myy + dmy * v;
-					affine.setTx(affine.getTx() * (txx / affine.getMxx()));
-					affine.setTy(affine.getTy() * (tyy / affine.getMyy()));
-					affine.setMxx(txx);
-					affine.setMyy(tyy);
+					double dss = initialScale + ds * v;
+					double currentScale = scale.get();
+					affine.setTx(affine.getTx() * (dss / currentScale));
+					affine.setTy(affine.getTy() * (dss / currentScale));
+					scale.set(dss);
 					// 3. prependTranslate
 					affine.setTx(affine.getTx() + pv.getX());
 					affine.setTy(affine.getTy() + pv.getY());
 					clampAtBound(true);
-				}, e ->{
-					fireAffineEvent(AffineEvent.CHANGE_FINISHED);
-					if(afterFinished != null) afterFinished.run();
-				});
+					fireAffineEvent(AffineEvent.CHANGED);
+				}, e -> markEnd());
 			}
 			@Override
 			public void zoomBy(double scale, Point2D pivotOnTarget) {
@@ -391,78 +415,105 @@ public class GesturePane extends Control implements GesturePaneOps {
 	}
 
 	/**
-	 * Resets scale to {@code 1.0} and conditionally centres the image depending on the current
+	 * Resets zoom to minimum scale
+	 */
+	public final void reset() {
+		zoomTo(getMinScale(), targetPointAtViewportCentre());
+	}
+
+	/**
+	 * Resets zoom to the minimum scale and conditionally centres the image depending on the
+	 * current
 	 * {@link FitMode}
 	 */
-	public final void reset() { zoomTo(1, targetPointAtViewportCentre()); }
+	public void cover() {
+		fireAffineEvent(AffineEvent.CHANGE_STARTED);
+		scale(getMinScale() / getCurrentScale(), viewportPointAt(targetPointAtViewportCentre()));
+		if (fitMode.get() == FitMode.COVER) {
+			double width = getViewportWidth();
+			double height = getViewportHeight();
+			double scale = getCurrentScale();
+			affine.setTy((height - scale * getTargetHeight()) / 2);
+			if (height >= scale * getTargetHeight())
+				affine.setTx((width - scale * getTargetWidth()) / 2);
+		}
+		fireAffineEvent(AffineEvent.CHANGE_FINISHED);
+	}
 
 	void scale(double factor, Point2D origin) {
-		double delta = factor;
-		double scale = affine.getMxx() * factor;
-		// clamp at min and max
-		if (scale > getMaxScale()) delta = getMaxScale() / affine.getMxx();
-		if (scale < getMinScale()) delta = getMinScale() / affine.getMxx();
-		affine.prependScale(delta, delta, origin);
-		clampAtBound(factor >= 1);
+		atomicallyChange(() -> {
+			double delta = factor;
+			double scale = getCurrentScale() * factor;
+			// clamp at min and max
+			if (scale > getMaxScale()) delta = getMaxScale() / getCurrentScale();
+			if (scale < getMinScale()) delta = getMinScale() / getCurrentScale();
+			affine.prependScale(delta, delta, origin);
+			clampAtBound(factor >= 1);
+		});
 	}
 
 	void translate(double x, double y) {
-		affine.prependTranslation(x, y);
-		clampAtBound(true);
+		atomicallyChange(() -> {
+			affine.prependTranslation(x, y);
+			clampAtBound(true);
+		});
+	}
+
+	private static double clamp(double min, double max, double value) {
+		return Math.max(min, Math.min(max, value));
 	}
 
 	void clampAtBound(boolean zoomPositive) {
+		double scale = getCurrentScale();
 		double targetWidth = getTargetWidth();
 		double targetHeight = getTargetHeight();
-		double scaledWidth = affine.getMxx() * targetWidth;
-		double scaledHeight = affine.getMyy() * targetHeight;
+		double scaledWidth = scale * targetWidth;
+		double scaledHeight = scale * targetHeight;
 		double width = getViewportWidth();
 		double height = getViewportHeight();
 
 		// clamp translation
-		double maxX = width - scaledWidth;
-		double maxY = height - scaledHeight;
-		if (affine.getTx() < maxX) affine.setTx(maxX);
-		if (affine.getTy() < maxY) affine.setTy(maxY);
-		if (affine.getTy() > 0) affine.setTy(0);
-		if (affine.getTx() > 0) affine.setTx(0);
-		if (width >= scaledWidth)
-			affine.setTx((width - affine.getMxx() * targetWidth) / 2);
-		if (height >= scaledHeight)
-			affine.setTy((height - affine.getMyy() * targetHeight) / 2);
+		double minX = width - scaledWidth;
+		double minY = height - scaledHeight;
+
+		double tx = affine.getTx();
+		double ty = affine.getTy();
+		double ts = scale;
+
+		if (fitMode.get() != UNBOUNDED) {
+
+			tx = clamp(minX, 0, tx);
+			ty = clamp(minY, 0, ty);
+			if (width >= scaledWidth) tx = (width - scale * targetWidth) / 2;
+			if (height >= scaledHeight) ty = (height - scale * targetHeight) / 2;
+		}
 
 		// clamp scale
 		switch (fitMode.get()) {
 			case COVER:
-				if (width < scaledWidth && height < scaledHeight)
-					return;
-
-				double coverScale = (targetWidth <= 0 || targetHeight <= 0) ?
-						                    1 :
-						                    Math.max(width / targetWidth, height / targetHeight);
-				affine.setMxx(coverScale);
-				affine.setMyy(coverScale);
-				//TODO need to centre the image back to origin
-//					affine.setTy((height - coverScale * targetHeight) / 2);
-//				if (height >= scaledHeight)
-//					affine.setTx((width - coverScale * targetWidth) / 2);
+				if (width < scaledWidth && height < scaledHeight) break;
+				ts = targetWidth <= 0 || targetHeight <= 0 ?
+						1 :
+						Math.max(width / targetWidth, height / targetHeight);
 				break;
 			case FIT:
 				double fitScale = (targetWidth <= 0 || targetHeight <= 0) ?
-						                  0 :
-						                  Math.min(width / targetWidth, height / targetHeight);
-				if (zoomPositive ||
-						    affine.getMxx() > fitScale ||
-						    affine.getMyy() > fitScale) return;
-				affine.setTx((width - fitScale * targetWidth) / 2);
-				affine.setTy((height - fitScale * targetHeight) / 2);
-
-				affine.setMxx(fitScale);
-				affine.setMyy(fitScale);
+						0 :
+						Math.min(width / targetWidth, height / targetHeight);
+				if (zoomPositive || scale > fitScale) break;
+				tx = (width - fitScale * targetWidth) / 2;
+				ty = (height - fitScale * targetHeight) / 2;
+				ts = fitScale;
 				break;
-			case CENTER:
+			default:
 				break;
 		}
+
+		// to prevent excessive affine events as we don't have access to the atomic change field 
+		affine.setTx(tx);
+		affine.setTy(ty);
+		this.scale.set(ts);
+
 	}
 
 	private final Timeline timeline = new Timeline();
@@ -488,12 +539,22 @@ public class GesturePane extends Control implements GesturePaneOps {
 		timeline.play();
 	}
 
+	private void atomicallyChange(Runnable e) {
+		inhibitPropEvent = true;
+		e.run();
+		inhibitPropEvent = false;
+		fireAffineEvent(AffineEvent.CHANGED);
+	}
+
 	Affine lastAffine = null;
-	 void fireAffineEvent(EventType<AffineEvent> type) {
+	void fireAffineEvent(EventType<AffineEvent> type) {
+		if (type == AffineEvent.CHANGED &&
+				lastAffine != null &&
+				affine.similarTo(lastAffine, getViewportBound(), 0.001)) return;
 		Dimension2D dimension = new Dimension2D(getTargetWidth(), getTargetHeight());
-		 Affine snapshot = new Affine(this.affine);
-		 fireEvent(new AffineEvent(type, snapshot, lastAffine, dimension));
-		 lastAffine = snapshot;
+		Affine snapshot = getAffine();
+		fireEvent(new AffineEvent(type, snapshot, lastAffine, dimension));
+		lastAffine = snapshot;
 	}
 
 	public double getTargetWidth() {
@@ -565,16 +626,16 @@ public class GesturePane extends Control implements GesturePaneOps {
 	public DoubleProperty maxScaleProperty() { return maxScale; }
 	public void setMaxScale(double scale) { this.maxScale.set(scale); }
 
-	public double getCurrentScale() { return affine.getMxx(); }
-	public DoubleProperty currentScaleProperty() { return affine.mxxProperty(); }
+	public double getCurrentScale() { return scale.get(); }
+	public DoubleProperty currentScaleProperty() { return scale; }
 
-	public double getCurrentX() { return affine.getTx() / affine.getMxx(); }
+	public double getCurrentX() { return affine.getTx() / getCurrentScale(); }
 	public DoubleBinding currentXProperty() {
-		return affine.txProperty().divide(affine.mxxProperty());
+		return affine.txProperty().divide(scale);
 	}
-	public double getCurrentY() { return affine.getTy() / affine.getMyy(); }
+	public double getCurrentY() { return affine.getTy() / getCurrentScale(); }
 	public DoubleBinding currentYProperty() {
-		return affine.tyProperty().divide(affine.myyProperty());
+		return affine.tyProperty().divide(scale);
 	}
 
 	public double getScrollZoomFactor() { return scrollZoomFactor.get(); }
@@ -583,6 +644,12 @@ public class GesturePane extends Control implements GesturePaneOps {
 
 	public Bounds getTargetViewport() { return targetRect.get(); }
 	public ObjectProperty<Bounds> targetViewportProperty() { return targetRect; }
+
+	/**
+	 * @return a copy of the current affine transformation
+	 */
+	public Affine getAffine() { return new Affine(affine); }
+
 
 	/**
 	 * Modes for different minimum scales
@@ -597,9 +664,14 @@ public class GesturePane extends Control implements GesturePaneOps {
 		 */
 		FIT,
 		/**
-		 * Node will not be scaled
+		 * Node will not be scaled but constrained to the center of the viewport
 		 */
-		CENTER
+		CENTER,
+		/**
+		 * Node will not be scaled nor constrained; this also disables both vertical and
+		 * horizontal scrollbar if enabled
+		 */
+		UNBOUNDED
 	}
 
 	/**

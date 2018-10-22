@@ -1,7 +1,10 @@
 package net.kurobako.gesturefx;
 
+import net.kurobako.gesturefx.GesturePane.FitMode;
+
 import java.util.Arrays;
 
+import javafx.beans.binding.BooleanBinding;
 import javafx.beans.binding.DoubleBinding;
 import javafx.beans.binding.When;
 import javafx.beans.property.SimpleObjectProperty;
@@ -68,9 +71,10 @@ final class GesturePaneSkin extends SkinBase<GesturePane> {
 				                         .otherwise(new SimpleObjectProperty<>(null)));
 
 		// bind visibility to managed prop
-		hBar.managedProperty().bind(pane.hBarEnabled);
-		vBar.managedProperty().bind(pane.vBarEnabled);
-		corner.managedProperty().bind(pane.hBarEnabled.and(pane.vBarEnabled));
+		BooleanBinding isNotUnbounded = pane.fitMode.isNotEqualTo(FitMode.UNBOUNDED);
+		hBar.managedProperty().bind(pane.hBarEnabled.and(isNotUnbounded));
+		vBar.managedProperty().bind(pane.vBarEnabled.and(isNotUnbounded));
+		corner.managedProperty().bind(hBar.managedProperty().and(vBar.managedProperty()));
 
 		// setup scrollbars
 		getChildren().addAll(vBar, hBar, corner);
@@ -81,12 +85,12 @@ final class GesturePaneSkin extends SkinBase<GesturePane> {
 		corner.visibleProperty().bind(corner.managedProperty());
 		corner.getStyleClass().setAll("corner");
 
-		DoubleBinding scaledWidth = pane.targetWidth.multiply(affine.mxxProperty());
-		DoubleBinding scaledHeight = pane.targetHeight.multiply(affine.myyProperty());
+		DoubleBinding scaledWidth = pane.targetWidth.multiply(pane.scale);
+		DoubleBinding scaledHeight = pane.targetHeight.multiply(pane.scale);
 
 		// offset from top left corner so translation is negative
-		hBar.minProperty().bind(scaledWidth.subtract(pane.widthProperty()).negate());
-		vBar.minProperty().bind(scaledHeight.subtract(pane.heightProperty()).negate());
+		hBar.minProperty().bind(scaledWidth.subtract(pane.widthProperty()).add(vBar.widthProperty()).negate());
+		vBar.minProperty().bind(scaledHeight.subtract(pane.heightProperty()).add(hBar.heightProperty()).negate());
 		hBar.setMax(0);
 		vBar.setMax(0);
 
@@ -135,20 +139,19 @@ final class GesturePaneSkin extends SkinBase<GesturePane> {
 		Arrays.asList(pane.viewport,
 				pane.affine.txProperty(),
 				pane.affine.tyProperty(),
-				pane.affine.mxxProperty(),
-				pane.affine.myyProperty()).forEach(p -> p.addListener(o -> {
-			double mxx = affine.getMxx();
-			double myy = affine.getMyy();
-			pane.targetRect.set(new BoundingBox(-affine.getTx() / mxx,
-					                                       -affine.getTy() / myy,
-					                                       pane.getViewportWidth() / mxx,
-					                                       pane.getViewportHeight() / myy));
+				pane.scale).forEach(p -> p.addListener(o -> {
+			double scale = pane.scale.get();
+			pane.targetRect.set(new BoundingBox(-affine.getTx() / scale,
+					                                       -affine.getTy() / scale,
+					                                       pane.getViewportWidth() / scale,
+					                                       pane.getViewportHeight() / scale));
 		}));
 
 		pane.fitWidth.addListener(o -> pane.requestLayout());
 		pane.fitHeight.addListener(o -> pane.requestLayout());
 		pane.scrollMode.addListener(o -> pane.clampAtBound(false));
-		affine.setOnTransformChanged(e -> pane.fireAffineEvent(CHANGED));
+		pane.fitMode.addListener(o -> pane.clampAtBound(false));
+//		affine.setOnTransformChanged(e -> pane.fireAffineEvent(CHANGED));
 		setHBarX.run();
 		setVBarY.run();
 		setupGestures();
@@ -223,7 +226,7 @@ final class GesturePaneSkin extends SkinBase<GesturePane> {
 					double zoomFactor = DEFAULT_SCROLL_FACTOR * pane.getScrollZoomFactor();
 					if (e.getDeltaY() < 0) zoomFactor *= -1;
 					pane.scale(1 + zoomFactor, fromGesture(e));
-					return;
+					break;
 				case PAN:
 					pane.translate(e.getDeltaX(), e.getDeltaY());
 					break;

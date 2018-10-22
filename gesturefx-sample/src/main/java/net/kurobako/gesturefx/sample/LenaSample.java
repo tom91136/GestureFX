@@ -48,6 +48,7 @@ import javafx.scene.control.ToggleGroup;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseButton;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.scene.transform.Affine;
@@ -97,10 +98,11 @@ public class LenaSample implements Sample {
 		@FXML private CheckBox fitHeight;
 
 		@FXML private Button reset;
+		@FXML private Button cover;
 
-		@FXML private TextField x;
-		@FXML private TextField y;
-		@FXML private TextField scale;
+		@FXML private TextField opsX;
+		@FXML private TextField opsY;
+		@FXML private TextField opsScale;
 		@FXML private Button apply;
 		@FXML private ToggleGroup type;
 		@FXML private RadioButton translate;
@@ -111,9 +113,11 @@ public class LenaSample implements Sample {
 		@FXML private Label minScale;
 		@FXML private Label maxScale;
 		@FXML private Label zoomFactor;
+		@FXML private Label scale;
 		@FXML private Slider zoomFactorSlider;
 		@FXML private Slider minScaleSlider;
 		@FXML private Slider maxScaleSlider;
+		@FXML private Slider scaleSlider;
 		@FXML private Label affine;
 		@FXML private Label events;
 
@@ -139,15 +143,15 @@ public class LenaSample implements Sample {
 				FileChooser chooser = new FileChooser();
 				chooser.setTitle("Select image");
 				chooser.setSelectedExtensionFilter(new ExtensionFilter("JavaFX supported image",
-						                                                      "*.png", "*.jpg", "*.gif"));
+						"*.png", "*.jpg", "*.gif"));
 				File selected = chooser.showOpenDialog(root.getScene().getWindow());
 				if (selected == null) return;
 				try {
 					view.setImage(new Image(new FileInputStream(selected)));
 				} catch (FileNotFoundException ex) {
 					new Alert(AlertType.ERROR,
-							         "Unable to open image file: " + ex.getMessage(),
-							         ButtonType.OK)
+							"Unable to open image file: " + ex.getMessage(),
+							ButtonType.OK)
 							.showAndWait();
 					view.setImage(new Image(LENA, true));
 				}
@@ -156,13 +160,17 @@ public class LenaSample implements Sample {
 
 			// zoom*2 on double-click
 			pane.setOnMouseClicked(e -> {
+				Point2D pivotOnTarget = pane.targetPointAt(new Point2D(e.getX(), e.getY()))
+						.orElse(pane.targetPointAtViewportCentre());
 				if (e.getButton() == MouseButton.PRIMARY && e.getClickCount() == 2) {
-					Point2D pivotOnTarget = pane.targetPointAt(new Point2D(e.getX(), e.getY()))
-							                        .orElse(pane.targetPointAtViewportCentre());
 					// increment of scale makes more sense exponentially instead of linearly
 					pane.animate(DURATION)
 							.interpolateWith(Interpolator.EASE_BOTH)
 							.zoomBy(pane.getCurrentScale(), pivotOnTarget);
+				} else if (e.getButton() == MouseButton.SECONDARY && e.getClickCount() == 1) {
+					pane.animate(DURATION)
+							.interpolateWith(Interpolator.EASE_BOTH)
+							.zoomTo(pane.getMinScale(), pivotOnTarget);
 				}
 			});
 
@@ -190,43 +198,53 @@ public class LenaSample implements Sample {
 
 			minScale.textProperty().bind(pane.minScaleProperty().asString(FORMAT));
 			maxScale.textProperty().bind(pane.maxScaleProperty().asString(FORMAT));
+			scale.textProperty().bind(pane.currentScaleProperty().asString(FORMAT));
 			zoomFactor.textProperty().bind(pane.scrollZoomFactorProperty().asString(FORMAT));
 
 			minScaleSlider.setValue(pane.getMinScale());
-			pane.minScaleProperty().bind(minScaleSlider.valueProperty());
+			pane.minScaleProperty().bindBidirectional(minScaleSlider.valueProperty());
+			minScaleSlider.maxProperty().bind(maxScaleSlider.valueProperty());
+
 			maxScaleSlider.setValue(pane.getMaxScale());
-			pane.maxScaleProperty().bind(maxScaleSlider.valueProperty());
-//			currentScaleSlider.setValue(gesturePane.getCurrentScale());
-//			gesturePane.currentScaleProperty().bind(currentScaleSlider.valueProperty());
+			pane.maxScaleProperty().bindBidirectional(maxScaleSlider.valueProperty());
+			maxScaleSlider.minProperty().bind(minScaleSlider.valueProperty());
+
+			scaleSlider.minProperty().bind(minScaleSlider.valueProperty());
+			scaleSlider.maxProperty().bind(maxScaleSlider.valueProperty());
+			scaleSlider.setValue(pane.getCurrentScale());
+			pane.currentScaleProperty().bindBidirectional(scaleSlider.valueProperty());
+
+
 			zoomFactorSlider.setValue(pane.getScrollZoomFactor());
 			pane.scrollZoomFactorProperty().bind(zoomFactorSlider.valueProperty());
 
 			reset.setOnAction(e -> pane.reset());
+			cover.setOnAction(e -> pane.cover());
 
-			x.setTextFormatter(createDecimalFormatter());
-			y.setTextFormatter(createDecimalFormatter());
-			scale.setTextFormatter(createDecimalFormatter());
+			opsX.setTextFormatter(createDecimalFormatter());
+			opsY.setTextFormatter(createDecimalFormatter());
+			opsScale.setTextFormatter(createDecimalFormatter());
 
-			scale.disableProperty().bind(translate.selectedProperty());
+			opsScale.disableProperty().bind(translate.selectedProperty());
 
 			apply.setOnAction(e -> {
 				Toggle toggle = type.getSelectedToggle();
 
-				OptionalDouble xOp = parseDouble(x.getText());
-				OptionalDouble yOp = parseDouble(y.getText());
+				OptionalDouble xOp = parseDouble(opsX.getText());
+				OptionalDouble yOp = parseDouble(opsY.getText());
 
 
 				GesturePaneOps ops = !animated.isSelected() ?
-						                     pane :
-						                     pane.animate(DURATION)
-								                     .interpolateWith(Interpolator.EASE_BOTH);
+						pane :
+						pane.animate(DURATION)
+								.interpolateWith(Interpolator.EASE_BOTH);
 
 				Point2D d = new Point2D(xOp.orElse(0), yOp.orElse(0));
-				double _zoom = parseDouble(scale.getText()).orElse(1);
+				double _zoom = parseDouble(opsScale.getText()).orElse(1);
 
-				x.setText(String.valueOf(d.getX()));
-				y.setText(String.valueOf(d.getY()));
-				scale.setText(String.valueOf(_zoom));
+				opsX.setText(String.valueOf(d.getX()));
+				opsY.setText(String.valueOf(d.getY()));
+				opsScale.setText(String.valueOf(_zoom));
 				if (toggle == translate) {
 					if (!relative.isSelected()) ops.centreOn(d);
 					else ops.translateBy(new Dimension2D(d.getX(), d.getY()));
@@ -239,8 +257,8 @@ public class LenaSample implements Sample {
 			pane.addEventHandler(AffineEvent.CHANGED, e -> {
 				Affine a = e.current();
 				String str = String.format("\n\t%.5f, %.5f, %.5f, %.5f" +
-						                           "\n\t%.5f, %.5f, %.5f, %.5f" +
-						                           "\n\t%.5f, %.5f, %.5f, %.5f",
+								"\n\t%.5f, %.5f, %.5f, %.5f" +
+								"\n\t%.5f, %.5f, %.5f, %.5f",
 						a.getMxx(), a.getMxy(), a.getMxz(), a.getTx(),
 						a.getMyx(), a.getMyy(), a.getMyz(), a.getTy(),
 						a.getMzx(), a.getMzy(), a.getMzz(), a.getTz());
@@ -271,7 +289,6 @@ public class LenaSample implements Sample {
 
 
 		}
-
 
 
 	}
