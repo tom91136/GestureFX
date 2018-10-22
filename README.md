@@ -156,8 +156,19 @@ and keyboard; you will see the test window flicker while different unit tests ar
 ## Release process
 
 1. Commit all changes before release
-2. Make sure `${user.home}/.m2/settings.xml` exist, if not copy it from maven home(i.e `cp  usr/share/maven/conf/settings.xml ~/.m2/settings.xml` )
-3. Setup 
+2. Make sure `${user.home}/.m2/settings.xml` exist, if not copy it from maven home (i.e `cp usr/share/maven/conf/settings.xml ~/.m2/settings.xml` ) and add the following section to `<servers></servers>`:
+
+    ```xml
+    <server>
+      <id>bintray-${bintray.user}-maven</id>
+      <username>${bintray-username}</username>
+      <password>${bintray-api-key}</password>
+    </server>
+    ```
+    Look up bintray-api-key and bintray-username in the bintray profile page, also make sure machine has SSH access to GitHub
+3. Run `mvn release:prepare -DdryRun=true`, make sure it succeeds and then run `mvn release:clean`
+4. Run `mvn release:prepare`, maven will tag and commit the new version. Inspect the commits and do a push, also push the tags via `git push --tags`
+5. Finally, run `mvn clean release:perform` to create docs and sources and upload to bintray 
 
 
 ## Motivation
