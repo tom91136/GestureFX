@@ -143,12 +143,14 @@ public class GesturePaneTest {
 	private static final String ID = "target";
 	private GesturePane pane;
 
+	private static final Offset<Double> EQ_OFFSET = Offset.offset(0.01); 
+	
 	@Parameter public TestTarget target;
 
 	// headful test will spawn actual window and take control of the mouse and keyboard!
 	@BeforeClass
 	public static void setupClass() {
-		if (!Boolean.getBoolean("headful")) {
+		if (!Boolean.getBoolean("headful") && false) {
 			System.out.println("Testing using Monocle");
 			System.setProperty("testfx.robot", "glass");
 			System.setProperty("testfx.headless", "true");
@@ -441,10 +443,11 @@ public class GesturePaneTest {
 		Thread.sleep(100);
 		final Transform mid = target.captureTransform();
 		// mid should not be at destination
-		assertThat(mid.getTx()).isNotEqualTo(0);
-		assertThat(mid.getTy()).isNotEqualTo(0);
-		assertThat(mid.getMxx()).isNotEqualTo(zoom);
-		assertThat(mid.getMyy()).isNotEqualTo(zoom);
+		
+		assertThat(mid.getTx()).isNotCloseTo(0, EQ_OFFSET);
+		assertThat(mid.getTy()).isNotCloseTo(0, EQ_OFFSET);
+		assertThat(mid.getMxx()).isNotCloseTo(zoom, EQ_OFFSET);
+		assertThat(mid.getMyy()).isNotCloseTo(zoom, EQ_OFFSET);
 
 		Thread.sleep(110);
 		verify(finished, timeout(100)).run();
