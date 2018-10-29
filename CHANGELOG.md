@@ -1,6 +1,16 @@
 Changelog
 =========
 
+## 0.4.0 (??/10/2018)
+
+Library
+
+ * Exposed the `changing` property to check whether there is a ongoing gesture or animation
+ * Shortcut based zooming now also has start and end events(based on the shortcut key press)
+ * Control will now properly focus when interacted upon
+ * Fixed a bug where touchscreen enabled Windows devices will receive double start and end events
+ * Fixed a bug where scrollbars will not generating change events
+
 ## 0.3.0 (21/10/2018)
 
 Library
