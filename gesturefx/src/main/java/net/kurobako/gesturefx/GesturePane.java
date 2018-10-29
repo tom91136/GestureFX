@@ -14,6 +14,7 @@ import javafx.beans.binding.DoubleBinding;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.ReadOnlyBooleanProperty;
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleDoubleProperty;
@@ -87,6 +88,7 @@ public class GesturePane extends Control implements GesturePaneOps {
 	final BooleanProperty hBarEnabled = new SimpleBooleanProperty(true);
 	final BooleanProperty gestureEnabled = new SimpleBooleanProperty(true);
 	final BooleanProperty clipEnabled = new SimpleBooleanProperty(true);
+	final BooleanProperty changing = new SimpleBooleanProperty(false);
 	final ObjectProperty<ScrollMode> scrollMode = new SimpleObjectProperty<>(PAN);
 	final ObjectProperty<FitMode> fitMode = new SimpleObjectProperty<>(FIT);
 	final DoubleProperty scale = new SimpleDoubleProperty(1);
@@ -329,6 +331,7 @@ public class GesturePane extends Control implements GesturePaneOps {
 			}
 
 			private void markStart() {
+				changing.set(true);
 				if (beforeStart != null) beforeStart.run();
 				fireAffineEvent(AffineEvent.CHANGE_STARTED);
 				inhibitPropEvent = true;
@@ -340,6 +343,7 @@ public class GesturePane extends Control implements GesturePaneOps {
 				clampExternalScale = true;
 				fireAffineEvent(AffineEvent.CHANGE_FINISHED);
 				if (afterFinished != null) afterFinished.run();
+				changing.set(false);
 			}
 
 			@Override
@@ -594,6 +598,9 @@ public class GesturePane extends Control implements GesturePaneOps {
 		setVBarEnabled(enabled);
 	}
 
+	public boolean isChanging() {  return changing.get(); }
+	public ReadOnlyBooleanProperty changingProperty() { return changing; }
+	
 	public boolean isGestureEnabled() { return gestureEnabled.get(); }
 	public BooleanProperty gestureEnabledProperty() { return gestureEnabled; }
 	public void setGestureEnabled(boolean enable) { this.gestureEnabled.set(enable); }
@@ -645,6 +652,7 @@ public class GesturePane extends Control implements GesturePaneOps {
 	public Bounds getTargetViewport() { return targetRect.get(); }
 	public ObjectProperty<Bounds> targetViewportProperty() { return targetRect; }
 
+	
 	/**
 	 * @return a copy of the current affine transformation
 	 */

@@ -20,6 +20,7 @@ import javafx.scene.Node;
 import javafx.scene.control.ScrollBar;
 import javafx.scene.control.SkinBase;
 import javafx.scene.input.GestureEvent;
+import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.input.ScrollEvent;
 import javafx.scene.input.ZoomEvent;
@@ -52,6 +53,9 @@ final class GesturePaneSkin extends SkinBase<GesturePane> {
 	private final ScrollBar vBar = new ScrollBar();
 	private final StackPane corner = new StackPane();
 
+	private boolean hBarDown = false;
+	private boolean vBarDown = false;
+
 	private final GesturePane pane;
 	private final Affine affine;
 
@@ -67,8 +71,8 @@ final class GesturePaneSkin extends SkinBase<GesturePane> {
 		rectangle.heightProperty().bind(pane.heightProperty());
 		rectangle.widthProperty().bind(pane.widthProperty());
 		pane.clipProperty().bind(new When(pane.clipEnabled)
-				                         .then(rectangle)
-				                         .otherwise(new SimpleObjectProperty<>(null)));
+				.then(rectangle)
+				.otherwise(new SimpleObjectProperty<>(null)));
 
 		// bind visibility to managed prop
 		BooleanBinding isNotUnbounded = pane.fitMode.isNotEqualTo(FitMode.UNBOUNDED);
@@ -99,8 +103,16 @@ final class GesturePaneSkin extends SkinBase<GesturePane> {
 		Runnable setVBarY = () -> vBar.setValue(vBar.getMin() - affine.getTy());
 		affine.txProperty().addListener(o -> setHBarX.run());
 		affine.tyProperty().addListener(o -> setVBarY.run());
-		hBar.valueProperty().addListener(o -> affine.setTx(hBar.getMin() - hBar.getValue()));
-		vBar.valueProperty().addListener(o -> affine.setTy(vBar.getMin() - vBar.getValue()));
+		hBar.valueProperty().addListener(o -> {
+			if (!hBarDown) return;
+			affine.setTx(hBar.getMin() - hBar.getValue());
+			markChanged();
+		});
+		vBar.valueProperty().addListener(o -> {
+			if (!vBarDown) return;
+			affine.setTy(vBar.getMin() - vBar.getValue());
+			markChanged();
+		});
 
 		// (barMax - barMin) * (bound/targetBound)
 		hBar.visibleAmountProperty().bind(
@@ -111,14 +123,10 @@ final class GesturePaneSkin extends SkinBase<GesturePane> {
 						.multiply(pane.heightProperty().divide(scaledHeight)));
 
 		// fire start and finish events for scrollbars
-		EventHandler<MouseEvent> pressedHandler = e ->
-				pane.fireAffineEvent(AffineEvent.CHANGE_STARTED);
-		EventHandler<MouseEvent> releasedHandler = e ->
-				pane.fireAffineEvent(AffineEvent.CHANGE_FINISHED);
-		hBar.addEventFilter(MouseEvent.MOUSE_PRESSED, pressedHandler);
-		hBar.addEventFilter(MouseEvent.MOUSE_RELEASED, releasedHandler);
-		vBar.addEventFilter(MouseEvent.MOUSE_PRESSED, pressedHandler);
-		vBar.addEventFilter(MouseEvent.MOUSE_RELEASED, releasedHandler);
+		hBar.addEventFilter(MouseEvent.MOUSE_PRESSED, e -> {hBarDown = true; markStart();});
+		vBar.addEventFilter(MouseEvent.MOUSE_PRESSED, e -> {vBarDown = true; markStart();});
+		hBar.addEventFilter(MouseEvent.MOUSE_RELEASED, e -> {hBarDown = false; markEnd();});
+		vBar.addEventFilter(MouseEvent.MOUSE_RELEASED, e -> {vBarDown = false; markEnd();});
 
 		// bind viewport to target dimension
 		Arrays.asList(
@@ -142,9 +150,9 @@ final class GesturePaneSkin extends SkinBase<GesturePane> {
 				pane.scale).forEach(p -> p.addListener(o -> {
 			double scale = pane.scale.get();
 			pane.targetRect.set(new BoundingBox(-affine.getTx() / scale,
-					                                       -affine.getTy() / scale,
-					                                       pane.getViewportWidth() / scale,
-					                                       pane.getViewportHeight() / scale));
+					-affine.getTy() / scale,
+					pane.getViewportWidth() / scale,
+					pane.getViewportHeight() / scale));
 		}));
 
 		pane.fitWidth.addListener(o -> pane.requestLayout());
@@ -166,18 +174,29 @@ final class GesturePaneSkin extends SkinBase<GesturePane> {
 
 	private Point2D lastPosition;
 
+	private void markStart() {
+		pane.requestFocus();
+		pane.changing.set(true);
+		pane.fireAffineEvent(CHANGE_STARTED);
+	}
+	private void markChanged() { pane.fireAffineEvent(CHANGED); }
+	private void markEnd() {
+		pane.fireAffineEvent(CHANGE_FINISHED);
+		pane.changing.set(false);
+	}
+
 	private void setupGestures() {
 		// translate
 		pane.addEventHandler(MouseEvent.MOUSE_PRESSED,
 				consumeThenFireIfEnabled(e -> {
 					lastPosition = new Point2D(e.getX(), e.getY());
 					cache(true);
-					pane.fireAffineEvent(CHANGE_STARTED);
+					markStart();
 				}));
 		pane.addEventHandler(MouseEvent.MOUSE_RELEASED,
 				consumeThenFireIfEnabled(e -> {
 					cache(false);
-					pane.fireAffineEvent(CHANGE_FINISHED);
+					markEnd();
 				}));
 		pane.addEventHandler(MouseEvent.MOUSE_DRAGGED,
 				consumeThenFireIfEnabled(e -> {
@@ -187,9 +206,9 @@ final class GesturePaneSkin extends SkinBase<GesturePane> {
 
 		// zoom via touch
 		pane.addEventHandler(ZoomEvent.ZOOM_STARTED,
-				consumeThenFireIfEnabled(e -> pane.fireAffineEvent(CHANGE_STARTED)));
+				consumeThenFireIfEnabled(e -> markStart()));
 		pane.addEventHandler(ZoomEvent.ZOOM_FINISHED,
-				consumeThenFireIfEnabled(e -> pane.fireAffineEvent(CHANGE_FINISHED)));
+				consumeThenFireIfEnabled(e -> markEnd()));
 		pane.addEventHandler(ZoomEvent.ZOOM,
 				consumeThenFireIfEnabled(e -> {
 					pane.scale(e.getZoomFactor(), fromGesture(e));
@@ -197,17 +216,20 @@ final class GesturePaneSkin extends SkinBase<GesturePane> {
 
 		// translate+zoom via mouse/touchpad
 		pane.addEventHandler(ScrollEvent.SCROLL_STARTED, consumeThenFireIfEnabled(e -> {
+			pane.requestFocus();
 			cache(true);
-			pane.fireAffineEvent(CHANGE_STARTED);
+			markStart();
 		}));
 		pane.addEventHandler(ScrollEvent.SCROLL_FINISHED, consumeThenFireIfEnabled(e -> {
 			cache(false);
-			pane.fireAffineEvent(CHANGE_FINISHED);
+			markEnd();
 		}));
+		pane.addEventHandler(KeyEvent.KEY_RELEASED, e -> {
+			if ((!e.isShortcutDown() && pane.isChanging())) markEnd();
+		});
 		pane.addEventHandler(ScrollEvent.SCROLL, consumeThenFireIfEnabled(e -> {
 			// mouse scroll events only
 			if (e.getTouchCount() > 0) return;
-
 			// TODO might be driver and platform specific
 			// TODO test on Linux
 			// TODO test on different Windows versions
@@ -215,7 +237,7 @@ final class GesturePaneSkin extends SkinBase<GesturePane> {
 
 			// pinch to zoom on trackpad
 			if (e.isShortcutDown()) {
-				// XXX literally no way to tell start and finish for this kind of scroll :(
+				if (!pane.isChanging()) markStart();
 				double zoomFactor = DEFAULT_SCROLL_FACTOR * pane.getScrollZoomFactor();
 				if (e.getDeltaY() < 0) zoomFactor *= -1;
 				pane.scale(1 + zoomFactor, fromGesture(e));
@@ -290,7 +312,7 @@ final class GesturePaneSkin extends SkinBase<GesturePane> {
 		}
 
 		// draw corner on bottom right where two scrollbar meets
-		if(hBar.isManaged() && vBar.isManaged()){
+		if (hBar.isManaged() && vBar.isManaged()) {
 			corner.resizeRelocate(hBar.getWidth(), vBar.getHeight(),
 					hBar.getHeight(), vBar.getWidth());
 		}

@@ -120,6 +120,7 @@ public class LenaSample implements Sample {
 		@FXML private Slider scaleSlider;
 		@FXML private Label affine;
 		@FXML private Label events;
+		@FXML private Label changing;
 
 
 		@Override
@@ -273,6 +274,7 @@ public class LenaSample implements Sample {
 									(e.getValue() == 1 ? "" : " (" + e.getValue() + ")"))
 							.collect(Collectors.joining("\n"))));
 
+			changing.textProperty().bind(pane.changingProperty().asString());
 			pane.addEventHandler(AffineEvent.ANY, e -> {
 				String name = e.getEventType().getName();
 				if (!history.isEmpty()) {

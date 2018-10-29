@@ -84,7 +84,7 @@
                         <Slider fx:id="maxScaleSlider" blockIncrement="1.0" majorTickUnit="10.0" showTickLabels="true" showTickMarks="true" value="10.0" GridPane.columnIndex="1" GridPane.columnSpan="2" GridPane.rowIndex="14" />
                         <Label contentDisplay="RIGHT" text="X" GridPane.rowIndex="10">
                      <graphic>
-                        <TextField prefColumnCount="4" fx:id="opsX" />
+                        <TextField fx:id="opsX" prefColumnCount="4" />
                      </graphic>
                         </Label>
                         <Label contentDisplay="RIGHT" text="Y" GridPane.columnIndex="1" GridPane.rowIndex="10">
@@ -120,6 +120,8 @@
                   <Label text="Scale" GridPane.rowIndex="15" />
                   <Slider fx:id="scaleSlider" blockIncrement="1.0" majorTickUnit="10.0" showTickLabels="true" showTickMarks="true" value="10.0" GridPane.columnIndex="1" GridPane.columnSpan="2" GridPane.rowIndex="15" />
                   <Label fx:id="scale" text="0" GridPane.columnIndex="3" GridPane.rowIndex="15" />
+                  <Label text="Changing" GridPane.rowIndex="19" />
+                  <Label fx:id="changing" text="Label" GridPane.columnIndex="1" GridPane.rowIndex="19" />
                     </children>
                     <padding>
                         <Insets bottom="8.0" left="8.0" right="8.0" top="8.0" />
