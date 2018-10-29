@@ -175,12 +175,16 @@ final class GesturePaneSkin extends SkinBase<GesturePane> {
 	private Point2D lastPosition;
 
 	private void markStart() {
+		// XXX windows might give us mouse + scroll events if using touchscreen
+		if(pane.isChanging()) return;
 		pane.requestFocus();
 		pane.changing.set(true);
 		pane.fireAffineEvent(CHANGE_STARTED);
 	}
 	private void markChanged() { pane.fireAffineEvent(CHANGED); }
 	private void markEnd() {
+		// XXX windows might give us mouse + scroll events if using touchscreen
+		if(!pane.isChanging()) return;
 		pane.fireAffineEvent(CHANGE_FINISHED);
 		pane.changing.set(false);
 	}
@@ -216,7 +220,6 @@ final class GesturePaneSkin extends SkinBase<GesturePane> {
 
 		// translate+zoom via mouse/touchpad
 		pane.addEventHandler(ScrollEvent.SCROLL_STARTED, consumeThenFireIfEnabled(e -> {
-			pane.requestFocus();
 			cache(true);
 			markStart();
 		}));
