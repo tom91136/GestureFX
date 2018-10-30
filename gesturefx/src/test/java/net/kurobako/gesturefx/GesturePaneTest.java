@@ -150,7 +150,7 @@ public class GesturePaneTest {
 	// headful test will spawn actual window and take control of the mouse and keyboard!
 	@BeforeClass
 	public static void setupClass() {
-		if (!Boolean.getBoolean("headful") && false) {
+		if (!Boolean.getBoolean("headful")) {
 			System.out.println("Testing using Monocle");
 			System.setProperty("testfx.robot", "glass");
 			System.setProperty("testfx.headless", "true");
