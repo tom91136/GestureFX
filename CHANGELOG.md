@@ -1,7 +1,7 @@
 Changelog
 =========
 
-## 0.4.0 (??/10/2018)
+## 0.4.0 (22/9/2019)
 
 Library
 
@@ -9,7 +9,11 @@ Library
  * Shortcut based zooming now also has start and end events(based on the shortcut key press)
  * Control will now properly focus when interacted upon
  * Fixed a bug where touchscreen enabled Windows devices will receive double start and end events
- * Fixed a bug where scrollbars will not generating change events
+ * Fixed a bug where scrollbars will not generate change events
+ 
+Sample
+
+* Fixed an issue in samples where webkit related error prevents launch
 
 ## 0.3.0 (21/10/2018)
 
