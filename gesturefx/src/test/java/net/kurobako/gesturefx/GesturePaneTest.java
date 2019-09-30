@@ -4,6 +4,7 @@ package net.kurobako.gesturefx;
 import net.kurobako.gesturefx.GesturePane.FitMode;
 import net.kurobako.gesturefx.GesturePane.ScrollMode;
 import net.kurobako.gesturefx.GesturePane.Transformable;
+import net.kurobako.gesturefx.GesturePaneTests.TestTarget;
 
 import org.assertj.core.api.Condition;
 import org.assertj.core.api.SoftAssertions;
@@ -21,7 +22,6 @@ import org.testfx.api.FxRobot;
 import org.testfx.api.FxToolkit;
 import org.testfx.matcher.base.NodeMatchers;
 
-import java.lang.Thread.UncaughtExceptionHandler;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.function.Consumer;
@@ -37,197 +37,96 @@ import javafx.geometry.Point2D;
 import javafx.geometry.VerticalDirection;
 import javafx.scene.Node;
 import javafx.scene.control.ScrollBar;
-import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.ZoomEvent;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.transform.Affine;
 import javafx.scene.transform.Transform;
-import javafx.stage.Window;
 import javafx.util.Duration;
 
 import static javafx.geometry.Orientation.HORIZONTAL;
 import static javafx.geometry.Orientation.VERTICAL;
 import static net.kurobako.gesturefx.GesturePaneSkin.DEFAULT_SCROLL_FACTOR;
+import static net.kurobako.gesturefx.GesturePaneTests.basicTestCases;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 
 
-@RunWith(Parameterized.class)
-public class GesturePaneTest {
-
-
-	private static abstract class TestTarget {
-		final String name;
-		TestTarget(String name) { this.name = name; }
-		abstract GesturePane createPane();
-		abstract Transform captureTransform();
-		@Override
-		public String toString() { return name; }
-	}
-
-	private static final String LENA = GesturePaneTest.class
-			                                   .getResource("/lena_512.jpg")
-			                                   .toExternalForm();
-
-	private static final UncaughtExceptionHandler HANDLER = (t, e) -> {
-		throw new AssertionError("Thread " + t.getName() + " crashed while testing", e);
-	};
+@RunWith(Parameterized.class) public class GesturePaneTest {
 
 
 	@Parameters(name = "{index}:{0}")
-	public static Collection<TestTarget> data() {
-		abstract class ImageTest extends TestTarget {
-			ImageView view;
-			ImageTest(String name) { super(name); }
-			@Override
-			Transform captureTransform() {
-				try {
-					return new Affine(view.getTransforms().get(0));
-				} catch (Exception e) {
-					throw new AssertionError("Unable to find/capture transformation", e);
-				}
-			}
-		}
-		abstract class EmptyTest extends TestTarget {
-			private Affine transform;
-			EmptyTest(String name) { super(name); }
-			Transformable mkTransformable() {
-				return new Transformable() {
-					@Override
-					public double width() { return 512; }
-					@Override
-					public double height() { return 512; }
-					@Override
-					public void setTransform(Affine affine) { transform = affine; }
-				};
-			}
-			@Override
-			Transform captureTransform() { return new Affine(transform); }
-		}
-		return Arrays.asList(
-				new ImageTest("ImageView(Content)") {
-					@Override
-					GesturePane createPane() {
-						view = new ImageView(LENA);
-						return new GesturePane(view);
-					}
-				},
-				new ImageTest("ImageView(Content,Injected)") {
-					@Override
-					GesturePane createPane() {
-						GesturePane pane = new GesturePane(view);
-						view = new ImageView(LENA);
-						pane.setContent(view);
-						return pane;
-					}
-				},
-				new EmptyTest("Empty(Target)") {
+	public static Collection<TestTarget> data() {return basicTestCases(); }
 
-					@Override
-					GesturePane createPane() { return new GesturePane(mkTransformable()); }
-				},
-				new EmptyTest("Empty(Target),Injected") {
-					@Override
-					GesturePane createPane() {
-						GesturePane pane = new GesturePane();
-						pane.setTarget(mkTransformable());
-						return pane;
-					}
-				});
-	}
-
-	private static final String ID = "target";
 	private GesturePane pane;
 
-	private static final Offset<Double> EQ_OFFSET = Offset.offset(0.01); 
-	
+	private static final Offset<Double> EQ_OFFSET = Offset.offset(0.01);
+
 	@Parameter public TestTarget target;
 
-	// headful test will spawn actual window and take control of the mouse and keyboard!
-	@BeforeClass
-	public static void setupClass() {
-		if (!Boolean.getBoolean("headful")) {
-			System.out.println("Testing using Monocle");
-			System.setProperty("testfx.robot", "glass");
-			System.setProperty("testfx.headless", "true");
-			System.setProperty("prism.order", "sw");
-			System.setProperty("prism.text", "t2k");
-		} else {
-			System.out.println("Testing headful with real windows, " +
-					                   "please do not touch keyboard or mouse until tests are " +
-					                   "complete.");
-		}
-	}
+	@BeforeClass public static void setupClass() { GesturePaneTests.setupProperties(); }
 
-	@Before
-	public void setup() throws Exception {
+	@Before public void setup() throws Exception {
 		if (Platform.isFxApplicationThread()) throw new AssertionError("Invalid test state");
-		Thread.setDefaultUncaughtExceptionHandler(HANDLER);
+		Thread.setDefaultUncaughtExceptionHandler(GesturePaneTests.HANDLER);
 		FxToolkit.registerPrimaryStage();
-//		FxToolkit.registerStage(() -> new Stage(StageStyle.TRANSPARENT));
 		FxToolkit.setupSceneRoot(() -> {
 			if (!Platform.isFxApplicationThread()) throw new AssertionError("Invalid test state");
-			Thread.currentThread().setUncaughtExceptionHandler(HANDLER);
+			Thread.currentThread().setUncaughtExceptionHandler(GesturePaneTests.HANDLER);
 			pane = target.createPane();
-			pane.setId(ID);
+			pane.setId(GesturePaneTests.ID);
 			return pane;
 		});
-		FxToolkit.setupStage(Window::sizeToScene);
+		FxToolkit.setupStage(stage -> {
+			stage.sizeToScene();
+			stage.setAlwaysOnTop(true);
+		});
 		FxToolkit.showStage();
 	}
 
-	@After
-	public void tearDown() throws Exception {
-		FxToolkit.cleanupStages();
-	}
+	@After public void tearDown() throws Exception { FxToolkit.cleanupStages(); }
+
 	private static Condition<Node> createBarCondition(Orientation orientation, boolean visible) {
 		return new Condition<>(n -> {
 			if (n instanceof ScrollBar) {
 				ScrollBar bar = (ScrollBar) n;
 				return ((ScrollBar) n).getOrientation() == orientation &&
-						       visible == bar.isManaged() &&
-						       visible == bar.isVisible();
+						visible == bar.isManaged() &&
+						visible == bar.isVisible();
 			} else return false;
 		}, "Is ScrollBar " + orientation + " and " + (visible ? "visible" : "hidden"));
 	}
 
-	@Test
-	public void testInitialisation() throws Exception {
-		FxAssert.verifyThat("#" + ID, NodeMatchers.isNotNull());
+	@Test public void testInitialisation() {
+		FxAssert.verifyThat("#" + GesturePaneTests.ID, NodeMatchers.isNotNull());
 	}
 
-	@Test
-	public void testInitialTransformSet() throws Exception {
+	@Test public void testInitialTransformSet() {
 		assertThat(target.captureTransform()).isNotNull();
 	}
 
-	@Test
-	public void testInitialTransformIsIdentity() throws Exception {
+	@Test public void testInitialTransformIsIdentity() {
 		assertThat(target.captureTransform().isIdentity()).isTrue();
 	}
 
-	@Test
-	public void testScrollBarEnabled() throws Exception {
+	@Test public void testScrollBarEnabled() {
 		// enabled by default
 		assertThat(pane.lookupAll("*"))
 				.haveExactly(1, createBarCondition(HORIZONTAL, true))
 				.haveExactly(1, createBarCondition(VERTICAL, true));
 	}
 
-	@Test
-	public void testScrollBarDisabled() throws Exception {
+	@Test public void testScrollBarDisabled() {
 		pane.setScrollBarEnabled(false);
 		assertThat(pane.lookupAll("*"))
 				.haveExactly(1, createBarCondition(HORIZONTAL, false))
 				.haveExactly(1, createBarCondition(VERTICAL, false));
 	}
 
-	@Test
-	public void testHBar() throws Exception {
+	@Test public void testHBar() {
 		pane.setHBarEnabled(true);
 		pane.setVBarEnabled(false);
 		assertThat(pane.lookupAll("*"))
@@ -235,8 +134,7 @@ public class GesturePaneTest {
 				.haveExactly(1, createBarCondition(VERTICAL, false));
 	}
 
-	@Test
-	public void testVBar() throws Exception {
+	@Test public void testVBar() {
 		pane.setHBarEnabled(false);
 		pane.setVBarEnabled(true);
 		assertThat(pane.lookupAll("*"))
@@ -244,34 +142,25 @@ public class GesturePaneTest {
 				.haveExactly(1, createBarCondition(VERTICAL, true));
 	}
 
-	@Test
-	public void testSetTarget() throws Exception {
+	@Test public void testSetTarget() {
 		pane.setTarget(new Transformable() {
-			@Override
-			public double width() { return 128; }
-			@Override
-			public double height() { return 128; }
-			@Override
-			public void setTransform(Affine affine) { }
+			@Override public double width() { return 128; }
+			@Override public double height() { return 128; }
+			@Override public void setTransform(Affine affine) { }
 		});
 		pane.setTarget(new Transformable() {
-			@Override
-			public double width() { return 1014; }
-			@Override
-			public double height() { return 1024; }
-			@Override
-			public void setTransform(Affine affine) { }
+			@Override public double width() { return 1014; }
+			@Override public double height() { return 1024; }
+			@Override public void setTransform(Affine affine) { }
 		});
 	}
 
-	@Test
-	public void testSetContent() throws Exception {
+	@Test public void testSetContent() {
 		pane.setContent(new Rectangle(128, 128));
 		pane.setContent(new Rectangle(1024, 1024));
 	}
 
-	@Test
-	public void testContentBoundChanged() throws Exception {
+	@Test public void testContentBoundChanged() throws Exception {
 		Rectangle rect = new Rectangle(128, 128, Color.RED);
 		pane.setContent(rect);
 		Thread.sleep(50);
@@ -282,8 +171,7 @@ public class GesturePaneTest {
 		rect.setHeight(0);
 	}
 
-	@Test
-	public void testContainerBoundChanged() throws Exception {
+	@Test public void testContainerBoundChanged() throws Exception {
 		pane.setScrollBarEnabled(false);
 		pane.getScene().getWindow().setWidth(256);
 		pane.getScene().getWindow().setHeight(256);
@@ -292,8 +180,7 @@ public class GesturePaneTest {
 		assertThat(pane.viewportCentre()).isEqualTo(new Point2D(128, 128));
 	}
 
-	@Test
-	public void testDragAndDrop() throws Exception {
+	@Test public void testDragAndDrop() {
 		pane.zoomTo(2, pane.targetPointAtViewportCentre());
 		Transform expected = target.captureTransform();
 		FxRobot robot = new FxRobot();
@@ -309,8 +196,7 @@ public class GesturePaneTest {
 		assertThat(actual.getTy()).isCloseTo(expected.getTy() + 100, Offset.offset(10d));
 	}
 
-	@Test
-	public void testGestureDisabling() throws Exception {
+	@Test public void testGestureDisabling() {
 		pane.setGestureEnabled(false);
 		pane.zoomTo(2, pane.targetPointAtViewportCentre());
 		Transform expected = target.captureTransform();
@@ -326,15 +212,13 @@ public class GesturePaneTest {
 				"xt", "yt", "zt");
 	}
 
-	@Test
-	public void testViewportCentre() throws Exception {
+	@Test public void testViewportCentre() {
 		pane.setScrollBarEnabled(false);
 		//  we got a 512*512 image
 		assertThat(pane.viewportCentre()).isEqualTo(new Point2D(256, 256));
 	}
 
-	@Test
-	public void testTargetPointAtViewportPoint() throws Exception {
+	@Test public void testTargetPointAtViewportPoint() {
 		pane.setScrollBarEnabled(false);
 		//  we got an 512*512 image and the window is exactly 512*512
 		final int d = 512;
@@ -346,37 +230,32 @@ public class GesturePaneTest {
 		softly.assertAll();
 	}
 
-	@Test
-	public void testTargetPointAtViewportCentre() throws Exception {
+	@Test public void testTargetPointAtViewportCentre() {
 		pane.setScrollBarEnabled(false);
 		// a completely valid point in viewport
 		Point2D expected = pane.targetPointAt(pane.viewportCentre())
-				                   .orElseThrow(AssertionError::new);
+				.orElseThrow(AssertionError::new);
 		assertThat(pane.targetPointAtViewportCentre()).isEqualTo(expected);
 	}
 
-	@Test
-	public void testScale() throws Exception {
+	@Test public void testScale() {
 		pane.zoomTo(2, pane.targetPointAtViewportCentre());
 		assertThat(pane.getCurrentScale()).isEqualTo(2d);
 	}
 
-	@Test
-	public void testScaleRelative() throws Exception {
+	@Test public void testScaleRelative() {
 		pane.zoomBy(2, pane.targetPointAtViewportCentre());
 		assertThat(pane.getCurrentScale()).isEqualTo(3d);
 	}
 
-	@Test
-	public void testScaleByTouch() throws Exception {
+	@Test public void testScaleByTouch() {
 		double factor = 4.2;
 		pane.fireEvent(new ZoomEvent(ZoomEvent.ZOOM, 0, 0, 0, 0, false, false, false, false,
-				                            false, false, factor, factor, null));
+				false, false, factor, factor, null));
 		assertThat(pane.getCurrentScale()).isEqualTo(factor);
 	}
 
-	@Test
-	public void testScaleByScroll() throws Exception {
+	@Test public void testScaleByScroll() throws Exception {
 		pane.scrollModeProperty().set(ScrollMode.ZOOM);
 		pane.zoomTo(5, pane.targetPointAtViewportCentre());
 		FxRobot robot = new FxRobot();
@@ -390,44 +269,39 @@ public class GesturePaneTest {
 
 		Condition<Double> eitherUpOrDown = new Condition<>(
 				v -> Math.abs(v - expectedUp) < 0.01 || Math.abs(v - expectedDown) < 0.01,
-				                                                  "either close to %s or %s",
-				                                                  expectedUp, expectedDown);
+				"either close to %s or %s",
+				expectedUp, expectedDown);
 		assertThat(pane.getCurrentScale()).is(eitherUpOrDown);
 		Transform t = target.captureTransform();
 		assertThat(t.getMxx()).is(eitherUpOrDown);
 		assertThat(t.getMyy()).is(eitherUpOrDown);
 	}
 
-	@Test
-	public void testMinScaleRespected() throws Exception {
+	@Test public void testMinScaleRespected() {
 		pane.setMinScale(1);
 		pane.zoomTo(0.1, pane.targetPointAtViewportCentre());
 		assertThat(pane.getCurrentScale()).isEqualTo(1d);
 	}
 
-	@Test
-	public void testMinScaleRelativeRespected() throws Exception {
+	@Test public void testMinScaleRelativeRespected() {
 		pane.setMinScale(1);
 		pane.zoomBy(-1, pane.targetPointAtViewportCentre());
 		assertThat(pane.getCurrentScale()).isEqualTo(1d);
 	}
 
-	@Test
-	public void testMaxScaleRespected() throws Exception {
+	@Test public void testMaxScaleRespected() {
 		pane.setMaxScale(2);
 		pane.zoomTo(10, pane.targetPointAtViewportCentre());
 		assertThat(pane.getCurrentScale()).isEqualTo(2d);
 	}
 
-	@Test
-	public void testMaxScaleRelativeRespected() throws Exception {
+	@Test public void testMaxScaleRelativeRespected() {
 		pane.setMaxScale(2);
 		pane.zoomBy(2, pane.targetPointAtViewportCentre());
 		assertThat(pane.getCurrentScale()).isEqualTo(2d);
 	}
 
-	@Test
-	public void testAnimatedScale() throws Exception {
+	@Test public void testAnimatedScale() throws Exception {
 		pane.setScrollBarEnabled(false);
 		Runnable before = mock(Runnable.class);
 		Runnable finished = mock(Runnable.class);
@@ -438,12 +312,11 @@ public class GesturePaneTest {
 				.beforeStart(before)
 				.afterFinished(finished)
 				.zoomTo(zoom, Point2D.ZERO);
-		final Transform init = target.captureTransform();
 		verify(before, timeout(10)).run();
 		Thread.sleep(100);
 		final Transform mid = target.captureTransform();
 		// mid should not be at destination
-		
+
 		assertThat(mid.getTx()).isNotCloseTo(0, EQ_OFFSET);
 		assertThat(mid.getTy()).isNotCloseTo(0, EQ_OFFSET);
 		assertThat(mid.getMxx()).isNotCloseTo(zoom, EQ_OFFSET);
@@ -459,8 +332,7 @@ public class GesturePaneTest {
 		assertThat(last.getMyy()).isEqualTo(zoom);
 	}
 
-	@Test
-	public void testCentreOn() throws Exception {
+	@Test public void testCentreOn() {
 		final double zoom = 2d;
 		final double dx = 300d;
 		final double dy = 200d;
@@ -473,8 +345,7 @@ public class GesturePaneTest {
 		assertThat(now.getTy()).isEqualTo(-last.getTy() - dy * zoom);
 	}
 
-	@Test
-	public void testTranslateRelative() throws Exception {
+	@Test public void testTranslateRelative() {
 		final double zoom = 2d;
 		final double dx = 30d;
 		final double dy = -40d;
@@ -488,8 +359,7 @@ public class GesturePaneTest {
 		assertThat(now.getTy() - previous.getTy()).isEqualTo(-dy * zoom);
 	}
 
-	@Test
-	public void testAnimatedTranslate() throws Exception {
+	@Test public void testAnimatedTranslate() throws Exception {
 		final double zoom = 2d;
 		pane.setScrollBarEnabled(false);
 		pane.zoomTo(zoom, pane.targetPointAtViewportCentre());
@@ -503,6 +373,7 @@ public class GesturePaneTest {
 				.centreOn(new Point2D(256, 256));
 		final Transform init = target.captureTransform();
 		verify(before, timeout(10)).run();
+
 		Thread.sleep(100);
 		final Transform mid = target.captureTransform();
 		// mid should not be at destination
@@ -518,9 +389,11 @@ public class GesturePaneTest {
 	}
 
 
+	@Test public void no() {
+	}
+
 	// just for sanity, things can get confusing when many of the property types are the same
-	@Test
-	public void testProperties() throws Exception {
+	@Test public void testProperties() {
 		SoftAssertions softly = new SoftAssertions();
 
 		// for some general read-write properties
@@ -548,6 +421,7 @@ public class GesturePaneTest {
 					softly.assertThat(getter.get()).isEqualTo(expected);
 					softly.assertThat(property.get().getValue()).isEqualTo(expected);
 				} catch (Exception e) {
+					e.printStackTrace();
 					softly.fail("Unexpected exception while resetting property:" + expected, e);
 				}
 			}
@@ -555,31 +429,31 @@ public class GesturePaneTest {
 		GesturePane p = this.pane;
 		Arrays.asList(
 				new Prop<>(p::getTarget, this.pane::setTarget, this.pane::targetProperty,
-						          new Transformable() {
-							          @Override
-							          public double width() { return 0; }
-							          @Override
-							          public double height() { return 0; }
-							          @Override
-							          public void setTransform(Affine affine) { }
-						          }),
+						new Transformable() {
+							@Override
+							public double width() { return 0; }
+							@Override
+							public double height() { return 0; }
+							@Override
+							public void setTransform(Affine affine) { }
+						}),
 				new Prop<>(p::getContent, p::setContent, p::contentProperty,
-						          new Rectangle(512, 512)),
+						new Rectangle(512, 512)),
 				new Prop<>(p::isVBarEnabled, p::setVBarEnabled, p::vBarEnabledProperty, false),
 				new Prop<>(p::isHBarEnabled, p::setHBarEnabled, p::hBarEnabledProperty, false),
 				new Prop<>(p::isGestureEnabled, p::setGestureEnabled, p::gestureEnabledProperty,
-						          false),
+						false),
 				new Prop<>(p::isClipEnabled, p::setClipEnabled, p::clipEnabledProperty, false),
 				new Prop<>(p::isFitWidth, p::setFitWidth, p::fitWidthProperty, false),
 				new Prop<>(p::isFitHeight, p::setFitHeight, p::fitHeightProperty, false),
 				new Prop<>(p::getFitMode, p::setFitMode, p::fitModeProperty,
-						          FitMode.CENTER),
+						FitMode.CENTER),
 				new Prop<>(p::getScrollMode, p::setScrollMode, p::scrollModeProperty,
-						          ScrollMode.ZOOM),
+						ScrollMode.ZOOM),
 				new Prop<>(p::getMinScale, p::setMinScale, p::minScaleProperty, 42d),
 				new Prop<>(p::getMaxScale, p::setMaxScale, p::maxScaleProperty, 42d),
 				new Prop<>(p::getScrollZoomFactor, p::setScrollZoomFactor,
-						          p::scrollZoomFactorProperty, 42d))
+						p::scrollZoomFactorProperty, 42d))
 				.forEach(Prop::assertProperty);
 
 		// for read-only properties

@@ -93,6 +93,8 @@ final class GesturePaneSkin extends SkinBase<GesturePane> {
 		DoubleBinding scaledHeight = pane.targetHeight.multiply(pane.scale);
 
 		// offset from top left corner so translation is negative
+		// XXX changing min/max properties causes a full layout pass (requestLayout) to propagate from the scrollbars
+		// this behavior is potentially decremental during animations and continuous zooming
 		hBar.minProperty().bind(scaledWidth.subtract(pane.widthProperty()).add(vBar.widthProperty()).negate());
 		vBar.minProperty().bind(scaledHeight.subtract(pane.heightProperty()).add(hBar.heightProperty()).negate());
 		hBar.setMax(0);
@@ -176,7 +178,7 @@ final class GesturePaneSkin extends SkinBase<GesturePane> {
 
 	private void markStart() {
 		// XXX windows might give us mouse + scroll events if using touchscreen
-		if(pane.isChanging()) return;
+		if (pane.isChanging()) return;
 		pane.requestFocus();
 		pane.changing.set(true);
 		pane.fireAffineEvent(CHANGE_STARTED);
@@ -184,7 +186,7 @@ final class GesturePaneSkin extends SkinBase<GesturePane> {
 	private void markChanged() { pane.fireAffineEvent(CHANGED); }
 	private void markEnd() {
 		// XXX windows might give us mouse + scroll events if using touchscreen
-		if(!pane.isChanging()) return;
+		if (!pane.isChanging()) return;
 		pane.fireAffineEvent(CHANGE_FINISHED);
 		pane.changing.set(false);
 	}
@@ -214,9 +216,7 @@ final class GesturePaneSkin extends SkinBase<GesturePane> {
 		pane.addEventHandler(ZoomEvent.ZOOM_FINISHED,
 				consumeThenFireIfEnabled(e -> markEnd()));
 		pane.addEventHandler(ZoomEvent.ZOOM,
-				consumeThenFireIfEnabled(e -> {
-					pane.scale(e.getZoomFactor(), fromGesture(e));
-				}));
+				consumeThenFireIfEnabled(e -> pane.scale(e.getZoomFactor(), fromGesture(e))));
 
 		// translate+zoom via mouse/touchpad
 		pane.addEventHandler(ScrollEvent.SCROLL_STARTED, consumeThenFireIfEnabled(e -> {
@@ -241,14 +241,14 @@ final class GesturePaneSkin extends SkinBase<GesturePane> {
 			// pinch to zoom on trackpad
 			if (e.isShortcutDown()) {
 				if (!pane.isChanging()) markStart();
-				double zoomFactor = DEFAULT_SCROLL_FACTOR * pane.getScrollZoomFactor();
+				double zoomFactor = DEFAULT_SCROLL_FACTOR * pane.scrollZoomFactor.get();
 				if (e.getDeltaY() < 0) zoomFactor *= -1;
 				pane.scale(1 + zoomFactor, fromGesture(e));
 				return;
 			}
 			switch (pane.scrollMode.get()) {
 				case ZOOM:
-					double zoomFactor = DEFAULT_SCROLL_FACTOR * pane.getScrollZoomFactor();
+					double zoomFactor = DEFAULT_SCROLL_FACTOR * pane.scrollZoomFactor.get();
 					if (e.getDeltaY() < 0) zoomFactor *= -1;
 					pane.scale(1 + zoomFactor, fromGesture(e));
 					break;
@@ -258,11 +258,6 @@ final class GesturePaneSkin extends SkinBase<GesturePane> {
 			}
 		}));
 	}
-
-//	private void fireAffineEvent(EventType<AffineEvent> type) {
-//		Dimension2D dimension = new Dimension2D(pane.getTargetWidth(), pane.getTargetHeight());
-//		pane.fireEvent(new AffineEvent(type, new Affine(affine), dimension));
-//	}
 
 	private void cache(boolean enable) {
 		pane.setCacheHint(enable ? CacheHint.SPEED : CacheHint.QUALITY);
@@ -299,8 +294,7 @@ final class GesturePaneSkin extends SkinBase<GesturePane> {
 	@Override
 	protected void layoutChildren(double contentX, double contentY,
 	                              double contentWidth, double contentHeight) {
-		super.layoutChildren(contentX, contentY, contentWidth, contentHeight);
-		// round 2
+		// XXX do not call super.layoutChildren as that causes infinite layout passes in OpenJFX11
 		if (hBar.isManaged()) {
 			layoutInArea(hBar, 0, 0,
 					contentWidth - (vBar.isManaged() ? vBar.getWidth() : 0),
@@ -329,6 +323,5 @@ final class GesturePaneSkin extends SkinBase<GesturePane> {
 					HPos.LEFT, VPos.TOP);
 		}
 		pane.clampAtBound(false);
-//		pane.fireAffineEvent(CHANGED);
 	}
 }

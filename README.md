@@ -17,7 +17,7 @@ Features
  * Zoom/scroll to coordinate with animations
  * Mostly works in SceneBuilder*
  * Zero dependency
- * Works with both Java 8 and OpenJFX 11
+ * Works with both Java 8 and OpenJFX 11+
 
 For comparison, this library is similar to [PhotoView](https://github.com/chrisbanes/PhotoView) 
 for Android but supports gestures on any `Node` subclass.
@@ -117,11 +117,37 @@ For more interesting examples, take a look at the [samples](gesturefx-sample/src
 
 Several samples have been included demoing interesting uses of the gesture pane.
 
+**JavaFX 8**
+
 You can download the sample jar [here](https://dl.bintray.com/tom91136/maven/net/kurobako/gesturefx-sample/0.4.0/gesturefx-sample-0.4.0-jar-with-dependencies.jar) 
 or clone the project and run:
 
     ./mvnw install
     ./mvnw exec:java -pl gesturefx-sample
+    
+
+**OpenJFX 11+**
+
+Make sure you have at least JDK 11 installed:
+
+    > java -version
+    openjdk version "11.0.4" 2019-07-16
+    OpenJDK Runtime Environment 18.9 (build 11.0.4+11)
+    OpenJDK 64-Bit Server VM 18.9 (build 11.0.4+11, mixed mode, sharing)
+
+
+Run the sample jar with the following:
+
+    java  
+    -Dglass.gtk.uiScale=200% \
+    --module-path path/to/javafx-sdk-13/lib \ 
+    --add-modules javafx.controls,javafx.fxml,javafx.web,javafx.swing \ 
+    -jar gesturefx-sample-0.4.0-jar-with-dependencies.jar \
+
+See [https://openjfx.io/openjfx-docs/#install-javafx] for more details.
+The `-Dglass.gtk.uiScale=200%` flag is optional if OpenJFX does not detect HiDPI monitors automatically. 
+On Windows the flags should be `-Dglass.win.uiScale=N%`.
+
 
 ## How to build
 

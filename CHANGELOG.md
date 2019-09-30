@@ -1,11 +1,23 @@
 Changelog
 =========
+## 0.5.0 (30/9/2019)
+
+
+Library 
+
+ * Fixed a severe layout bug where layout passes are infinitely trampolined, causing high CPU usage or unbounded memory usage
+ * Much better API documentation coverage
+ * MinScale/MaxScale and ScrollZoomFactor have defaults as documented constants
+
+Sample
+
+ * Add instructions on running with Java11+ and OpenJFX11+
 
 ## 0.4.0 (22/9/2019)
 
 Library
 
- * Exposed the `changing` property to check whether there is a ongoing gesture or animation
+ * Exposed the `changing` property to check whether there is an ongoing gesture or animation
  * Shortcut based zooming now also has start and end events(based on the shortcut key press)
  * Control will now properly focus when interacted upon
  * Fixed a bug where touchscreen enabled Windows devices will receive double start and end events
