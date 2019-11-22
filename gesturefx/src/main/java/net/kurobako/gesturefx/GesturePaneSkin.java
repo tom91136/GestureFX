@@ -206,8 +206,10 @@ final class GesturePaneSkin extends SkinBase<GesturePane> {
 				}));
 		pane.addEventHandler(MouseEvent.MOUSE_DRAGGED,
 				consumeThenFireIfEnabled(e -> {
-					pane.translate(e.getX() - lastPosition.getX(), e.getY() - lastPosition.getY());
-					lastPosition = new Point2D(e.getX(), e.getY());
+					if(lastPosition != null){
+						pane.translate(e.getX() - lastPosition.getX(), e.getY() - lastPosition.getY());
+						lastPosition = new Point2D(e.getX(), e.getY());
+					}
 				}));
 
 		// zoom via touch
