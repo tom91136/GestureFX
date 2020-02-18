@@ -138,15 +138,12 @@ Make sure you have at least JDK 11 installed:
 
 Run the sample jar with the following:
 
-    java  
-    -Dglass.gtk.uiScale=200% \
-    --module-path path/to/javafx-sdk-13/lib \ 
-    --add-modules javafx.controls,javafx.fxml,javafx.web,javafx.swing \ 
-    -jar gesturefx-sample-0.5.0-jar-with-dependencies.jar \
+    java -Dglass.gtk.uiScale=200% --module-path path/to/javafx-sdk-13/lib --add-modules javafx.controls,javafx.fxml,javafx.web,javafx.swing -jar gesturefx-sample-0.5.0-jar-with-dependencies.jar
 
-See [https://openjfx.io/openjfx-docs/#install-javafx] for more details.
+See <https://openjfx.io/openjfx-docs/#install-javafx> for more details.
+
 The `-Dglass.gtk.uiScale=200%` flag is optional if OpenJFX does not detect HiDPI monitors automatically. 
-On Windows the flags should be `-Dglass.win.uiScale=N%`.
+On Windows the flag should be `-Dglass.win.uiScale=N%`.
 
 
 ## How to build
@@ -201,15 +198,24 @@ and keyboard; you will see the test window flicker while different unit tests ar
 
 Someone has to do it.
 
-## Acknowledgement
+## Acknowledgements
 
 Features or designs of this library was originally developed as part of an undergraduate coursework 
 assignment at the 
 [*University of Bristol*](http://www.bristol.ac.uk/engineering/departments/computerscience/). 
 
+
+<img src="https://www.yourkit.com/images/yklogo.png" align="right" />
+
+YourKit supports the GestureFX project with its full-featured Java Profiler.
+YourKit, LLC is the creator [YourKit Java Profiler](https://www.yourkit.com/java/profiler/index.jsp)
+and [YourKit .NET Profiler](https://www.yourkit.com/.net/profiler/index.jsp),
+innovative and intelligent tools for profiling Java and .NET applications.
+
+
 ## Licence
 
-    Copyright 2019 WEI CHEN LIN
+    Copyright 2020 WeiChen Lin
     
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
