@@ -34,7 +34,7 @@ For Maven users, add the following to pom
 <dependency>
     <groupId>net.kurobako</groupId>
     <artifactId>gesturefx</artifactId>
-    <version>0.5.0</version>
+    <version>0.6.0</version>
 </dependency>
 ```
 You also need to add jcenter repo to your pom:
@@ -49,14 +49,14 @@ You also need to add jcenter repo to your pom:
 
 For SBT
 ```scala
-"net.kurobako" % "gesturefx" % "0.5.0"    
+"net.kurobako" % "gesturefx" % "0.6.0"    
 ```
 And also jcenter:
 ```scala
 resolvers ++= Seq(Resolver.jcenterRepo)
 ```
 
-Alternatively, you can download the jar [here](https://dl.bintray.com/tom91136/maven/net/kurobako/gesturefx/0.5.0/gesturefx-0.5.0.jar)
+Alternatively, you can download the jar [here](https://dl.bintray.com/tom91136/maven/net/kurobako/gesturefx/0.6.0/gesturefx-0.6.0.jar)
  and add it to your classpath. This library has no dependencies so you do not need to download 
 anything else.
  
@@ -119,7 +119,7 @@ Several samples have been included demoing interesting uses of the gesture pane.
 
 **JavaFX 8**
 
-You can download the sample jar [here](https://dl.bintray.com/tom91136/maven/net/kurobako/gesturefx-sample/0.5.0/gesturefx-sample-0.5.0-jar-with-dependencies.jar) 
+You can download the sample jar [here](https://dl.bintray.com/tom91136/maven/net/kurobako/gesturefx-sample/0.6.0/gesturefx-sample-0.6.0-jar-with-dependencies.jar) 
 or clone the project and run:
 
     ./mvnw install
@@ -138,7 +138,7 @@ Make sure you have at least JDK 11 installed:
 
 Run the sample jar with the following:
 
-    java -Dglass.gtk.uiScale=200% --module-path path/to/javafx-sdk-13/lib --add-modules javafx.controls,javafx.fxml,javafx.web,javafx.swing -jar gesturefx-sample-0.5.0-jar-with-dependencies.jar
+    java -Dglass.gtk.uiScale=200% --module-path path/to/javafx-sdk-13/lib --add-modules javafx.controls,javafx.fxml,javafx.web,javafx.swing -jar gesturefx-sample-0.6.0-jar-with-dependencies.jar
 
 See <https://openjfx.io/openjfx-docs/#install-javafx> for more details.
 
