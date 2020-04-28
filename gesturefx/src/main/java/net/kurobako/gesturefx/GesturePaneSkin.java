@@ -1,6 +1,7 @@
 package net.kurobako.gesturefx;
 
 import net.kurobako.gesturefx.GesturePane.FitMode;
+import net.kurobako.gesturefx.GesturePane.ScrollBarPolicy;
 
 import java.util.Arrays;
 
@@ -49,12 +50,12 @@ final class GesturePaneSkin extends SkinBase<GesturePane> {
 	// An arbitrary scroll factor that seems to work well(hopefully)
 	static final double DEFAULT_SCROLL_FACTOR = 0.095;
 
-	private final ScrollBar hBar = new ScrollBar();
-	private final ScrollBar vBar = new ScrollBar();
+	private final ScrollBar hbar = new ScrollBar();
+	private final ScrollBar vbar = new ScrollBar();
 	private final StackPane corner = new StackPane();
 
-	private boolean hBarDown = false;
-	private boolean vBarDown = false;
+	private boolean hbarDown = false;
+	private boolean vbarDown = false;
 
 	private final GesturePane pane;
 	private final Affine affine;
@@ -74,18 +75,31 @@ final class GesturePaneSkin extends SkinBase<GesturePane> {
 				.then(rectangle)
 				.otherwise(new SimpleObjectProperty<>(null)));
 
+		// allow min size to be less than pref size
+		hbar.setMinHeight(0);
+		vbar.setMinWidth(0);
+
 		// bind visibility to managed prop
 		BooleanBinding isNotUnbounded = pane.fitMode.isNotEqualTo(FitMode.UNBOUNDED);
-		hBar.managedProperty().bind(pane.hBarEnabled.and(isNotUnbounded));
-		vBar.managedProperty().bind(pane.vBarEnabled.and(isNotUnbounded));
-		corner.managedProperty().bind(hBar.managedProperty().and(vBar.managedProperty()));
+
+		hbar.managedProperty().bind(isNotUnbounded.and(
+				pane.hbarPolicy.isEqualTo(ScrollBarPolicy.AS_NEEDED)
+						.and((hbar.visibleAmountProperty().greaterThan(vbar.widthProperty())))
+						.or(pane.hbarPolicy.isEqualTo(ScrollBarPolicy.ALWAYS))));
+
+		vbar.managedProperty().bind(isNotUnbounded.and(
+				pane.vbarPolicy.isEqualTo(ScrollBarPolicy.AS_NEEDED)
+						.and(vbar.visibleAmountProperty().greaterThan(hbar.heightProperty()))
+						.or(pane.vbarPolicy.isEqualTo(ScrollBarPolicy.ALWAYS))));
+
+		corner.managedProperty().bind(hbar.managedProperty().and(vbar.managedProperty()));
 
 		// setup scrollbars
-		getChildren().addAll(vBar, hBar, corner);
-		hBar.setOrientation(Orientation.HORIZONTAL);
-		vBar.setOrientation(Orientation.VERTICAL);
-		hBar.visibleProperty().bind(hBar.managedProperty());
-		vBar.visibleProperty().bind(vBar.managedProperty());
+		getChildren().addAll(vbar, hbar, corner);
+		hbar.setOrientation(Orientation.HORIZONTAL);
+		vbar.setOrientation(Orientation.VERTICAL);
+		hbar.visibleProperty().bind(hbar.managedProperty());
+		vbar.visibleProperty().bind(vbar.managedProperty());
 		corner.visibleProperty().bind(corner.managedProperty());
 		corner.getStyleClass().setAll("corner");
 
@@ -93,55 +107,54 @@ final class GesturePaneSkin extends SkinBase<GesturePane> {
 		DoubleBinding scaledHeight = pane.targetHeight.multiply(pane.scale);
 
 		// offset from top left corner so translation is negative
-		// XXX changing min/max properties causes a full layout pass (requestLayout) to propagate from the scrollbars
-		// this behavior is potentially decremental during animations and continuous zooming
-		hBar.minProperty().bind(scaledWidth.subtract(pane.widthProperty()).add(vBar.widthProperty()).negate());
-		vBar.minProperty().bind(scaledHeight.subtract(pane.heightProperty()).add(hBar.heightProperty()).negate());
-		hBar.setMax(0);
-		vBar.setMax(0);
+		// XXX changing min/max properties causes a full layout pass (requestLayout) to propagate
+		// from the scrollbars
+		// this behavior is potentially detrimental during animations and continuous zooming
+		hbar.minProperty().bind(scaledWidth.subtract(pane.widthProperty()).add(vbar.widthProperty()).negate());
+		vbar.minProperty().bind(scaledHeight.subtract(pane.heightProperty()).add(hbar.heightProperty()).negate());
+		hbar.setMax(0);
+		vbar.setMax(0);
 
 		// bind scrollbars to translation
-		Runnable setHBarX = () -> hBar.setValue(hBar.getMin() - affine.getTx());
-		Runnable setVBarY = () -> vBar.setValue(vBar.getMin() - affine.getTy());
-		affine.txProperty().addListener(o -> setHBarX.run());
-		affine.tyProperty().addListener(o -> setVBarY.run());
-		hBar.valueProperty().addListener(o -> {
-			if (!hBarDown) return;
-			affine.setTx(hBar.getMin() - hBar.getValue());
+		Runnable setHbarX = () -> hbar.setValue(hbar.getMin() - affine.getTx());
+		Runnable setVbarY = () -> vbar.setValue(vbar.getMin() - affine.getTy());
+		affine.txProperty().addListener(o -> setHbarX.run());
+		affine.tyProperty().addListener(o -> setVbarY.run());
+		hbar.valueProperty().addListener(o -> {
+			if (!hbarDown) return;
+			affine.setTx(hbar.getMin() - hbar.getValue());
 			markChanged();
 		});
-		vBar.valueProperty().addListener(o -> {
-			if (!vBarDown) return;
-			affine.setTy(vBar.getMin() - vBar.getValue());
+		vbar.valueProperty().addListener(o -> {
+			if (!vbarDown) return;
+			affine.setTy(vbar.getMin() - vbar.getValue());
 			markChanged();
 		});
 
 		// (barMax - barMin) * (bound/targetBound)
-		hBar.visibleAmountProperty().bind(
-				hBar.maxProperty().subtract(hBar.minProperty())
-						.multiply(pane.widthProperty().divide(scaledWidth)));
-		vBar.visibleAmountProperty().bind(
-				vBar.maxProperty().subtract(vBar.minProperty())
-						.multiply(pane.heightProperty().divide(scaledHeight)));
+		hbar.visibleAmountProperty().bind(hbar.minProperty().negate()
+				.multiply(pane.widthProperty().divide(scaledWidth)));
+		vbar.visibleAmountProperty().bind(vbar.minProperty().negate()
+				.multiply(pane.heightProperty().divide(scaledHeight)));
 
 		// fire start and finish events for scrollbars
-		hBar.addEventFilter(MouseEvent.MOUSE_PRESSED, e -> {hBarDown = true; markStart();});
-		vBar.addEventFilter(MouseEvent.MOUSE_PRESSED, e -> {vBarDown = true; markStart();});
-		hBar.addEventFilter(MouseEvent.MOUSE_RELEASED, e -> {hBarDown = false; markEnd();});
-		vBar.addEventFilter(MouseEvent.MOUSE_RELEASED, e -> {vBarDown = false; markEnd();});
+		hbar.addEventFilter(MouseEvent.MOUSE_PRESSED, e -> {hbarDown = true; markStart();});
+		vbar.addEventFilter(MouseEvent.MOUSE_PRESSED, e -> {vbarDown = true; markStart();});
+		hbar.addEventFilter(MouseEvent.MOUSE_RELEASED, e -> {hbarDown = false; markEnd();});
+		vbar.addEventFilter(MouseEvent.MOUSE_RELEASED, e -> {vbarDown = false; markEnd();});
 
 		// bind viewport to target dimension
 		Arrays.asList(
 				pane.widthProperty(),
 				pane.heightProperty(),
-				hBar.layoutBoundsProperty(),
-				vBar.layoutBoundsProperty(),
-				vBar.managedProperty(),
-				hBar.managedProperty(),
+				hbar.layoutBoundsProperty(),
+				vbar.layoutBoundsProperty(),
+				vbar.managedProperty(),
+				hbar.managedProperty(),
 				pane.target,
 				pane.content).forEach(p -> p.addListener(o -> {
-			double width = pane.getWidth() - (vBar.isManaged() ? vBar.getWidth() : 0);
-			double height = pane.getHeight() - (hBar.isManaged() ? hBar.getHeight() : 0);
+			double width = pane.getWidth() - (vbar.isManaged() ? vbar.getWidth() : 0);
+			double height = pane.getHeight() - (hbar.isManaged() ? hbar.getHeight() : 0);
 			pane.viewport.set(new BoundingBox(0, 0, width, height));
 		}));
 
@@ -162,8 +175,8 @@ final class GesturePaneSkin extends SkinBase<GesturePane> {
 		pane.scrollMode.addListener(o -> pane.clampAtBound(false));
 		pane.fitMode.addListener(o -> pane.clampAtBound(false));
 //		affine.setOnTransformChanged(e -> pane.fireAffineEvent(CHANGED));
-		setHBarX.run();
-		setVBarY.run();
+		setHbarX.run();
+		setVbarY.run();
 		setupGestures();
 	}
 
@@ -206,8 +219,9 @@ final class GesturePaneSkin extends SkinBase<GesturePane> {
 				}));
 		pane.addEventHandler(MouseEvent.MOUSE_DRAGGED,
 				consumeThenFireIfEnabled(e -> {
-					if(lastPosition != null){
-						pane.translate(e.getX() - lastPosition.getX(), e.getY() - lastPosition.getY());
+					if (lastPosition != null) {
+						pane.translate(
+								e.getX() - lastPosition.getX(), e.getY() - lastPosition.getY());
 						lastPosition = new Point2D(e.getX(), e.getY());
 					}
 				}));
@@ -293,27 +307,28 @@ final class GesturePaneSkin extends SkinBase<GesturePane> {
 		return topInset + (pane.fitHeight.get() ? pane.getTargetHeight() : 0) + bottomInset;
 	}
 
+
 	@Override
 	protected void layoutChildren(double contentX, double contentY,
 	                              double contentWidth, double contentHeight) {
 		// XXX do not call super.layoutChildren as that causes infinite layout passes in OpenJFX11
-		if (hBar.isManaged()) {
-			layoutInArea(hBar, 0, 0,
-					contentWidth - (vBar.isManaged() ? vBar.getWidth() : 0),
+		if (hbar.isManaged()) {
+			layoutInArea(hbar, 0, 0, contentWidth -
+							(vbar.isManaged() ? (vbar.prefWidth(ScrollBar.USE_COMPUTED_SIZE)) : 0),
 					contentHeight,
 					0, HPos.CENTER, VPos.BOTTOM);
 		}
-		if (vBar.isManaged()) {
-			layoutInArea(vBar, 0, 0,
-					contentWidth,
-					contentHeight - (hBar.isManaged() ? hBar.getHeight() : 0),
+		if (vbar.isManaged()) {
+			layoutInArea(vbar, 0, 0,
+					contentWidth, contentHeight -
+							(hbar.isManaged() ? hbar.prefHeight(ScrollBar.USE_COMPUTED_SIZE) : 0),
 					0, HPos.RIGHT, VPos.CENTER);
 		}
 
 		// draw corner on bottom right where two scrollbar meets
-		if (hBar.isManaged() && vBar.isManaged()) {
-			corner.resizeRelocate(hBar.getWidth(), vBar.getHeight(),
-					hBar.getHeight(), vBar.getWidth());
+		if (hbar.isManaged() && vbar.isManaged()) {
+			corner.resizeRelocate(hbar.getWidth(), vbar.getHeight(),
+					hbar.getHeight(), vbar.getWidth());
 		}
 
 		Node content = pane.getContent();

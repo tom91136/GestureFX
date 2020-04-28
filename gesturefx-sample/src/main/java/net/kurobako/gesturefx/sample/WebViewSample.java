@@ -5,6 +5,9 @@ import net.kurobako.gesturefx.GesturePane;
 import net.kurobako.gesturefx.GesturePane.Transformable;
 import net.kurobako.gesturefx.sample.SamplerController.Sample;
 
+import java.io.PrintWriter;
+import java.io.StringWriter;
+
 import javafx.geometry.Insets;
 import javafx.geometry.Point2D;
 import javafx.scene.Node;
@@ -86,8 +89,10 @@ public class WebViewSample implements Sample {
 			VBox.setVgrow(glass, Priority.ALWAYS);
 			return new VBox(description, bar, glass);
 		} catch (Throwable e) {
-			e.printStackTrace();
-			return new VBox(new Label("Unable to initialise WebView: " + e.getMessage()));
+			StringWriter sw = new StringWriter();
+			PrintWriter pw = new PrintWriter(sw);
+			e.printStackTrace(pw);
+			return new VBox(new Label("Unable to initialise WebView: \n" + sw.toString()));
 		}
 
 

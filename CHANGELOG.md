@@ -1,5 +1,14 @@
 Changelog
 =========
+## 0.6.0 (28/4/2020)
+
+Library
+
+ * Replaced vbar/hbar enabled with proper ScrollBarPolicy similar to ScrollPane's implementation 
+ * Fixed an issue where scrollbars cannot be smaller than the preferred dimension
+
+**Note: Changes are not source or binary incompatible to previous versions.**
+
 ## 0.5.0 (30/9/2019)
 
 

@@ -3,6 +3,7 @@ package net.kurobako.gesturefx.sample;
 import net.kurobako.gesturefx.AffineEvent;
 import net.kurobako.gesturefx.GesturePane;
 import net.kurobako.gesturefx.GesturePane.FitMode;
+import net.kurobako.gesturefx.GesturePane.ScrollBarPolicy;
 import net.kurobako.gesturefx.GesturePane.ScrollMode;
 import net.kurobako.gesturefx.GesturePaneOps;
 import net.kurobako.gesturefx.sample.SamplerController.Sample;
@@ -48,7 +49,6 @@ import javafx.scene.control.ToggleGroup;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseButton;
-import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.scene.transform.Affine;
@@ -90,8 +90,8 @@ public class LenaSample implements Sample {
 		@FXML private ComboBox<ScrollMode> scrollMode;
 
 		@FXML private CheckBox gesture;
-		@FXML private CheckBox verticalScrollBar;
-		@FXML private CheckBox horizontalScrollBar;
+		@FXML private ComboBox<ScrollBarPolicy> verticalScrollBar;
+		@FXML private ComboBox<ScrollBarPolicy> horizontalScrollBar;
 
 		@FXML private CheckBox clip;
 		@FXML private CheckBox fitWidth;
@@ -192,10 +192,14 @@ public class LenaSample implements Sample {
 
 			gesture.setSelected(pane.isGestureEnabled());
 			pane.gestureEnabledProperty().bind(gesture.selectedProperty());
-			verticalScrollBar.setSelected(pane.isVBarEnabled());
-			pane.vBarEnabledProperty().bind(verticalScrollBar.selectedProperty());
-			horizontalScrollBar.setSelected(pane.isHBarEnabled());
-			pane.hBarEnabledProperty().bind(horizontalScrollBar.selectedProperty());
+
+			verticalScrollBar.setItems(observableArrayList(ScrollBarPolicy.values()));
+			verticalScrollBar.setValue(pane.getVbarPolicy());
+			pane.vbarPolicyProperty().bind(verticalScrollBar.valueProperty());
+
+			horizontalScrollBar.setItems(observableArrayList(ScrollBarPolicy.values()));
+			horizontalScrollBar.setValue(pane.getVbarPolicy());
+			pane.hbarPolicyProperty().bind(horizontalScrollBar.valueProperty());
 
 			minScale.textProperty().bind(pane.minScaleProperty().asString(FORMAT));
 			maxScale.textProperty().bind(pane.maxScaleProperty().asString(FORMAT));

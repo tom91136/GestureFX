@@ -60,8 +60,8 @@
                         <ComboBox fx:id="fitMode" prefWidth="150.0" GridPane.columnIndex="1" GridPane.columnSpan="2147483647" GridPane.rowIndex="1" />
                         <ComboBox fx:id="scrollMode" prefWidth="150.0" GridPane.columnIndex="1" GridPane.columnSpan="2147483647" GridPane.rowIndex="3" />
                         <CheckBox fx:id="gesture" mnemonicParsing="false" selected="true" text="Gesture" GridPane.columnSpan="2147483647" GridPane.rowIndex="6" />
-                        <CheckBox fx:id="verticalScrollBar" mnemonicParsing="false" selected="true" text="V.ScrollBar" GridPane.columnIndex="1" GridPane.rowIndex="6" />
-                        <CheckBox fx:id="horizontalScrollBar" mnemonicParsing="false" selected="true" text="H.ScrollBar" GridPane.columnIndex="2" GridPane.columnSpan="2147483647" GridPane.halignment="LEFT" GridPane.rowIndex="6" />
+                        <ComboBox fx:id="verticalScrollBar" prefWidth="150.0" GridPane.columnIndex="1" GridPane.rowIndex="6" />
+                        <ComboBox fx:id="horizontalScrollBar" prefWidth="150.0" GridPane.columnIndex="2" GridPane.columnSpan="2147483647" GridPane.halignment="LEFT" GridPane.rowIndex="6" />
                         <Label text="MinScale" GridPane.rowIndex="13" />
                         <Label text="MaxScale" GridPane.rowIndex="14" />
                         <Label text="ScrollFactor" GridPane.rowIndex="16" />

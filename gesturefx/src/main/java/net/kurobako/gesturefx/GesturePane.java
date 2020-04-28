@@ -28,6 +28,8 @@ import javafx.geometry.BoundingBox;
 import javafx.geometry.Bounds;
 import javafx.geometry.Dimension2D;
 import javafx.geometry.Point2D;
+import javafx.scene.AccessibleAttribute;
+import javafx.scene.AccessibleRole;
 import javafx.scene.Node;
 import javafx.scene.control.Control;
 import javafx.scene.control.ScrollBar;
@@ -39,6 +41,7 @@ import javafx.util.Duration;
 
 import static net.kurobako.gesturefx.GesturePane.FitMode.FIT;
 import static net.kurobako.gesturefx.GesturePane.FitMode.UNBOUNDED;
+import static net.kurobako.gesturefx.GesturePane.ScrollBarPolicy.AS_NEEDED;
 import static net.kurobako.gesturefx.GesturePane.ScrollMode.PAN;
 
 /**
@@ -88,8 +91,8 @@ public class GesturePane extends Control implements GesturePaneOps {
 	final BooleanProperty fitWidth = new SimpleBooleanProperty(true);
 	final BooleanProperty fitHeight = new SimpleBooleanProperty(true);
 
-	final BooleanProperty vBarEnabled = new SimpleBooleanProperty(true);
-	final BooleanProperty hBarEnabled = new SimpleBooleanProperty(true);
+	final ObjectProperty<ScrollBarPolicy> vbarPolicy = new SimpleObjectProperty<>(AS_NEEDED);
+	final ObjectProperty<ScrollBarPolicy> hbarPolicy = new SimpleObjectProperty<>(AS_NEEDED);
 	final BooleanProperty gestureEnabled = new SimpleBooleanProperty(true);
 	final BooleanProperty clipEnabled = new SimpleBooleanProperty(true);
 	final BooleanProperty changing = new SimpleBooleanProperty(false);
@@ -143,6 +146,7 @@ public class GesturePane extends Control implements GesturePaneOps {
 			if (!inhibitPropEvent) fireAffineEvent(AffineEvent.CHANGED);
 		});
 		getStyleClass().setAll(DEFAULT_STYLE_CLASS);
+		setAccessibleRole(AccessibleRole.SCROLL_PANE);
 		target.addListener((o, p, n) -> {
 			if (n == null) return;
 			content.set(null);
@@ -383,7 +387,7 @@ public class GesturePane extends Control implements GesturePaneOps {
 					// 3. prependTranslate
 					affine.setTx(affine.getTx() + pv.getX());
 					affine.setTy(affine.getTy() + pv.getY());
-					clampAtBound(true);
+					clampAtBound(false);
 					fireAffineEvent(AffineEvent.CHANGED);
 				}, e -> markEnd());
 			}
@@ -587,7 +591,7 @@ public class GesturePane extends Control implements GesturePaneOps {
 	public void setTarget(Transformable target) { this.target.set(target); }
 
 	/**
-	 * @return the current content ode if set; null if unset
+	 * @return the current content node if set; null if unset
 	 * <b>NOTE</b>: Targets and content nodes are mutually exclusive, if one is set, the other one
 	 * is automatically set to null
 	 */
@@ -596,26 +600,26 @@ public class GesturePane extends Control implements GesturePaneOps {
 	public void setContent(Node content) { this.content.set(content); }
 
 	/**
-	 * @return whether the vertical scrollbar is enabled
+	 * @return which scrollbar policy the vertical scrollbar uses
 	 */
-	public boolean isVBarEnabled() { return vBarEnabled.get();}
-	public BooleanProperty vBarEnabledProperty() { return vBarEnabled; }
-	public void setVBarEnabled(boolean enable) { this.vBarEnabled.set(enable); }
+	public ScrollBarPolicy getVbarPolicy() { return vbarPolicy.get(); }
+	public ObjectProperty<ScrollBarPolicy> vbarPolicyProperty() { return vbarPolicy; }
+	public void setVbarPolicy(ScrollBarPolicy policy) { this.vbarPolicy.set(policy); }
 
 
 	/**
-	 * @return whether the horizontal scrollbar is enabled
+	 * @return which scrollbar policy the horizontal scrollbar uses
 	 */
-	public boolean isHBarEnabled() { return hBarEnabled.get(); }
-	public BooleanProperty hBarEnabledProperty() { return hBarEnabled; }
-	public void setHBarEnabled(boolean enable) { this.hBarEnabled.set(enable); }
+	public ScrollBarPolicy getHbarPolicy() { return hbarPolicy.get(); }
+	public ObjectProperty<ScrollBarPolicy> hbarPolicyProperty() { return hbarPolicy; }
+	public void setHbarPolicy(ScrollBarPolicy policy) { this.hbarPolicy.set(policy); }
 
 	/**
-	 * Toggles all scroll bars
+	 * Sets the same scrollbar policy for both vbar and hbar
 	 */
-	public void setScrollBarEnabled(boolean enabled) {
-		setHBarEnabled(enabled);
-		setVBarEnabled(enabled);
+	public void setScrollBarPolicy(ScrollBarPolicy policy) {
+		setHbarPolicy(policy);
+		setVbarPolicy(policy);
 	}
 
 	/**
@@ -721,6 +725,11 @@ public class GesturePane extends Control implements GesturePaneOps {
 	 */
 	public Affine getAffine() { return new Affine(affine); }
 
+	@Override
+	public Object queryAccessibleAttribute(AccessibleAttribute attribute, Object... parameters) {
+		if (attribute == AccessibleAttribute.CONTENTS) return getContent();
+		return super.queryAccessibleAttribute(attribute, parameters);
+	}
 
 	/**
 	 * Modes for different minimum scales
@@ -757,6 +766,21 @@ public class GesturePane extends Control implements GesturePaneOps {
 		 * Treat scroll as pan
 		 */
 		PAN
+	}
+
+	public enum ScrollBarPolicy {
+		/**
+		 * No scrollbar
+		 */
+		NEVER,
+		/**
+		 * Always enable scrollbar
+		 */
+		ALWAYS,
+		/**
+		 * Show scrollbar when viewport is panning
+		 */
+		AS_NEEDED;
 	}
 
 	/**

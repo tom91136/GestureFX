@@ -2,6 +2,7 @@ package net.kurobako.gesturefx;
 
 
 import net.kurobako.gesturefx.GesturePane.FitMode;
+import net.kurobako.gesturefx.GesturePane.ScrollBarPolicy;
 import net.kurobako.gesturefx.GesturePane.ScrollMode;
 import net.kurobako.gesturefx.GesturePane.Transformable;
 import net.kurobako.gesturefx.GesturePaneTests.TestTarget;
@@ -112,31 +113,31 @@ import static org.mockito.Mockito.verify;
 		assertThat(target.captureTransform().isIdentity()).isTrue();
 	}
 
-	@Test public void testScrollBarEnabled() {
-		// enabled by default
+	@Test public void testScrollBarHidden() {
+		// AS_NEEDED by default
 		assertThat(pane.lookupAll("*"))
-				.haveExactly(1, createBarCondition(HORIZONTAL, true))
-				.haveExactly(1, createBarCondition(VERTICAL, true));
+				.haveExactly(1, createBarCondition(HORIZONTAL, false))
+				.haveExactly(1, createBarCondition(VERTICAL, false));
 	}
 
 	@Test public void testScrollBarDisabled() {
-		pane.setScrollBarEnabled(false);
+		pane.setScrollBarPolicy(ScrollBarPolicy.NEVER);
 		assertThat(pane.lookupAll("*"))
 				.haveExactly(1, createBarCondition(HORIZONTAL, false))
 				.haveExactly(1, createBarCondition(VERTICAL, false));
 	}
 
 	@Test public void testHBar() {
-		pane.setHBarEnabled(true);
-		pane.setVBarEnabled(false);
+		pane.setHbarPolicy(ScrollBarPolicy.ALWAYS);
+		pane.setVbarPolicy(ScrollBarPolicy.NEVER);
 		assertThat(pane.lookupAll("*"))
 				.haveExactly(1, createBarCondition(HORIZONTAL, true))
 				.haveExactly(1, createBarCondition(VERTICAL, false));
 	}
 
 	@Test public void testVBar() {
-		pane.setHBarEnabled(false);
-		pane.setVBarEnabled(true);
+		pane.setHbarPolicy(ScrollBarPolicy.NEVER);
+		pane.setVbarPolicy(ScrollBarPolicy.ALWAYS);
 		assertThat(pane.lookupAll("*"))
 				.haveExactly(1, createBarCondition(HORIZONTAL, false))
 				.haveExactly(1, createBarCondition(VERTICAL, true));
@@ -172,7 +173,7 @@ import static org.mockito.Mockito.verify;
 	}
 
 	@Test public void testContainerBoundChanged() throws Exception {
-		pane.setScrollBarEnabled(false);
+		pane.setScrollBarPolicy(ScrollBarPolicy.NEVER);
 		pane.getScene().getWindow().setWidth(256);
 		pane.getScene().getWindow().setHeight(256);
 		Thread.sleep(150); // wait for layout
@@ -197,6 +198,7 @@ import static org.mockito.Mockito.verify;
 	}
 
 	@Test public void testGestureDisabling() {
+		pane.setScrollBarPolicy(ScrollBarPolicy.NEVER);
 		pane.setGestureEnabled(false);
 		pane.zoomTo(2, pane.targetPointAtViewportCentre());
 		Transform expected = target.captureTransform();
@@ -213,13 +215,13 @@ import static org.mockito.Mockito.verify;
 	}
 
 	@Test public void testViewportCentre() {
-		pane.setScrollBarEnabled(false);
+		pane.setScrollBarPolicy(ScrollBarPolicy.NEVER);
 		//  we got a 512*512 image
 		assertThat(pane.viewportCentre()).isEqualTo(new Point2D(256, 256));
 	}
 
 	@Test public void testTargetPointAtViewportPoint() {
-		pane.setScrollBarEnabled(false);
+		pane.setScrollBarPolicy(ScrollBarPolicy.NEVER);
 		//  we got an 512*512 image and the window is exactly 512*512
 		final int d = 512;
 		SoftAssertions softly = new SoftAssertions();
@@ -231,7 +233,7 @@ import static org.mockito.Mockito.verify;
 	}
 
 	@Test public void testTargetPointAtViewportCentre() {
-		pane.setScrollBarEnabled(false);
+		pane.setScrollBarPolicy(ScrollBarPolicy.NEVER);
 		// a completely valid point in viewport
 		Point2D expected = pane.targetPointAt(pane.viewportCentre())
 				.orElseThrow(AssertionError::new);
@@ -302,7 +304,7 @@ import static org.mockito.Mockito.verify;
 	}
 
 	@Test public void testAnimatedScale() throws Exception {
-		pane.setScrollBarEnabled(false);
+		pane.setScrollBarPolicy(ScrollBarPolicy.NEVER);
 		Runnable before = mock(Runnable.class);
 		Runnable finished = mock(Runnable.class);
 		double zoom = 3d;
@@ -336,7 +338,7 @@ import static org.mockito.Mockito.verify;
 		final double zoom = 2d;
 		final double dx = 300d;
 		final double dy = 200d;
-		pane.setScrollBarEnabled(false);
+		pane.setScrollBarPolicy(ScrollBarPolicy.NEVER);
 		pane.zoomTo(zoom, pane.targetPointAtViewportCentre());
 		final Transform last = target.captureTransform();
 		pane.centreOn(new Point2D(dx, dy));
@@ -349,7 +351,7 @@ import static org.mockito.Mockito.verify;
 		final double zoom = 2d;
 		final double dx = 30d;
 		final double dy = -40d;
-		pane.setScrollBarEnabled(false);
+		pane.setScrollBarPolicy(ScrollBarPolicy.NEVER);
 		pane.zoomTo(zoom, pane.targetPointAtViewportCentre());
 		pane.centreOn(new Point2D(256, 256));
 		final Transform previous = target.captureTransform();
@@ -361,7 +363,7 @@ import static org.mockito.Mockito.verify;
 
 	@Test public void testAnimatedTranslate() throws Exception {
 		final double zoom = 2d;
-		pane.setScrollBarEnabled(false);
+		pane.setScrollBarPolicy(ScrollBarPolicy.NEVER);
 		pane.zoomTo(zoom, pane.targetPointAtViewportCentre());
 		pane.centreOn(Point2D.ZERO);
 		Runnable before = mock(Runnable.class);
@@ -439,8 +441,10 @@ import static org.mockito.Mockito.verify;
 						}),
 				new Prop<>(p::getContent, p::setContent, p::contentProperty,
 						new Rectangle(512, 512)),
-				new Prop<>(p::isVBarEnabled, p::setVBarEnabled, p::vBarEnabledProperty, false),
-				new Prop<>(p::isHBarEnabled, p::setHBarEnabled, p::hBarEnabledProperty, false),
+				new Prop<>(p::getVbarPolicy, p::setVbarPolicy, p::vbarPolicyProperty,
+						ScrollBarPolicy.AS_NEEDED),
+				new Prop<>(p::getHbarPolicy, p::setHbarPolicy, p::hbarPolicyProperty,
+						ScrollBarPolicy.AS_NEEDED),
 				new Prop<>(p::isGestureEnabled, p::setGestureEnabled, p::gestureEnabledProperty,
 						false),
 				new Prop<>(p::isClipEnabled, p::setClipEnabled, p::clipEnabledProperty, false),
