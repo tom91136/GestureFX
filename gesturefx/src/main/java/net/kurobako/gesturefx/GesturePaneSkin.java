@@ -4,10 +4,16 @@ import net.kurobako.gesturefx.GesturePane.FitMode;
 import net.kurobako.gesturefx.GesturePane.ScrollBarPolicy;
 
 import java.util.Arrays;
+import java.util.function.BiFunction;
+import java.util.function.Function;
 
+import javafx.beans.binding.Bindings;
 import javafx.beans.binding.BooleanBinding;
 import javafx.beans.binding.DoubleBinding;
+import javafx.beans.binding.NumberBinding;
 import javafx.beans.binding.When;
+import javafx.beans.property.DoubleProperty;
+import javafx.beans.property.SimpleDoubleProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.event.Event;
 import javafx.event.EventHandler;
@@ -103,21 +109,34 @@ final class GesturePaneSkin extends SkinBase<GesturePane> {
 		corner.visibleProperty().bind(corner.managedProperty());
 		corner.getStyleClass().setAll("corner");
 
-		DoubleBinding scaledWidth = pane.targetWidth.multiply(pane.scale);
-		DoubleBinding scaledHeight = pane.targetHeight.multiply(pane.scale);
+		DoubleBinding scaledWidth = pane.targetWidth.multiply(pane.scaleX);
+		DoubleBinding scaledHeight = pane.targetHeight.multiply(pane.scaleY);
+
+		DoubleProperty hbarHeight = new SimpleDoubleProperty(0);
+		DoubleProperty vbarWidth = new SimpleDoubleProperty(0);
+
+		Runnable updateHBarHeight = () -> hbarHeight.set(hbar.isManaged() ? hbar.getHeight() : 0);
+		Runnable updateVBarWidth = () -> vbarWidth.set(vbar.isManaged() ? vbar.getWidth() : 0);
+
+		hbar.managedProperty().addListener(o -> updateHBarHeight.run());
+		vbar.managedProperty().addListener(o -> updateVBarWidth.run());
+		updateHBarHeight.run();
+		updateVBarWidth.run();
 
 		// offset from top left corner so translation is negative
 		// XXX changing min/max properties causes a full layout pass (requestLayout) to propagate
 		// from the scrollbars
 		// this behavior is potentially detrimental during animations and continuous zooming
-		hbar.minProperty().bind(scaledWidth.subtract(pane.widthProperty()).add(vbar.widthProperty()).negate());
-		vbar.minProperty().bind(scaledHeight.subtract(pane.heightProperty()).add(hbar.heightProperty()).negate());
-		hbar.setMax(0);
 		vbar.setMax(0);
+		hbar.setMax(0);
 
 		// bind scrollbars to translation
 		Runnable setHbarX = () -> hbar.setValue(hbar.getMin() - affine.getTx());
 		Runnable setVbarY = () -> vbar.setValue(vbar.getMin() - affine.getTy());
+		vbar.minProperty().bind(scaledHeight.subtract(pane.heightProperty()).add(hbarHeight).negate());
+		hbar.minProperty().bind(scaledWidth.subtract(pane.widthProperty()).add(vbarWidth).negate());
+		hbar.minProperty().addListener(o -> setHbarX.run());
+		vbar.minProperty().addListener(o -> setVbarY.run());
 		affine.txProperty().addListener(o -> setHbarX.run());
 		affine.tyProperty().addListener(o -> setVbarY.run());
 		hbar.valueProperty().addListener(o -> {
@@ -162,12 +181,15 @@ final class GesturePaneSkin extends SkinBase<GesturePane> {
 		Arrays.asList(pane.viewport,
 				pane.affine.txProperty(),
 				pane.affine.tyProperty(),
-				pane.scale).forEach(p -> p.addListener(o -> {
-			double scale = pane.scale.get();
-			pane.targetRect.set(new BoundingBox(-affine.getTx() / scale,
-					-affine.getTy() / scale,
-					pane.getViewportWidth() / scale,
-					pane.getViewportHeight() / scale));
+				pane.scaleX, pane.scaleY).forEach(p -> p.addListener(o -> {
+			double scaleX = pane.scaleX.get();
+			double scaleY = pane.scaleY.get();
+
+
+			pane.targetRect.set(new BoundingBox(-affine.getTx() / scaleX,
+					-affine.getTy() / scaleY,
+					pane.getViewportWidth() / scaleX,
+					pane.getViewportHeight() / scaleY));
 		}));
 
 		pane.fitWidth.addListener(o -> pane.requestLayout());
@@ -232,7 +254,7 @@ final class GesturePaneSkin extends SkinBase<GesturePane> {
 		pane.addEventHandler(ZoomEvent.ZOOM_FINISHED,
 				consumeThenFireIfEnabled(e -> markEnd()));
 		pane.addEventHandler(ZoomEvent.ZOOM,
-				consumeThenFireIfEnabled(e -> pane.scale(e.getZoomFactor(), fromGesture(e))));
+				consumeThenFireIfEnabled(e -> pane.scale(e.getZoomFactor(),e.getZoomFactor(), fromGesture(e))));
 
 		// translate+zoom via mouse/touchpad
 		pane.addEventHandler(ScrollEvent.SCROLL_STARTED, consumeThenFireIfEnabled(e -> {
@@ -269,7 +291,10 @@ final class GesturePaneSkin extends SkinBase<GesturePane> {
 					pane.scale(1 + zoomFactor, fromGesture(e));
 					break;
 				case PAN:
-					pane.translate(e.getDeltaX(), e.getDeltaY());
+					boolean invert = pane.invertScrollTranslate.get();
+					pane.translate(
+							invert ? e.getDeltaY() : e.getDeltaX(),
+							invert ? e.getDeltaX() : e.getDeltaY());
 					break;
 			}
 		}));

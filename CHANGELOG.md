@@ -1,5 +1,17 @@
 Changelog
 =========
+
+## 0.7.0 (1/8/2020)
+
+Library
+
+ * Added support for scaling x-axis and y-axis independently 
+ * Added support for locking scales on each supported axis
+ * Added support for centering per axis
+ * Fixed a bug where the scrollbar positions would become out of sync with the current transformation when the size of the GesturePane changes
+ * Fixed a bug where scrollbar can scroll out of bounds if the opposite side scrollbar is not enabled    
+
+
 ## 0.6.0 (28/4/2020)
 
 Library
