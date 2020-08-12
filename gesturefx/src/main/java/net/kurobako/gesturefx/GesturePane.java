@@ -188,8 +188,10 @@ public class GesturePane extends Control implements GesturePaneOps {
 			targetHeight.set(n.getHeight());
 		};
 		content.addListener((o, p, n) -> {
-			if (p != null)
+			if (p != null){
 				p.layoutBoundsProperty().removeListener(layoutBoundsListener);
+				getChildren().remove(p);
+			}
 			if (n == null) return;
 			target.set(null);
 			if(n instanceof Parent){
