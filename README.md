@@ -29,35 +29,24 @@ open it in SceneBuilder. Pull requests welcome on solving this.
 
 ## How to use
 
+**Versions <= 0.6.0 was published on JCenter, versions >= 0.7.0 is now published on Maven Central**
+
 For Maven users, add the following to pom
 ```xml
 <dependency>
     <groupId>net.kurobako</groupId>
     <artifactId>gesturefx</artifactId>
-    <version>0.6.0</version>
+    <version>0.7.0</version>
 </dependency>
-```
-You also need to add jcenter repo to your pom:
-```xml
-<repositories>
-    <repository>
-        <id>jcenter</id>
-        <url>https://jcenter.bintray.com/</url>
-    </repository>
-</repositories>
 ```
 
 For SBT
 ```scala
-"net.kurobako" % "gesturefx" % "0.6.0"    
-```
-And also jcenter:
-```scala
-resolvers ++= Seq(Resolver.jcenterRepo)
+"net.kurobako" % "gesturefx" % "0.7.0"    
 ```
 
-Alternatively, you can download the jar [here](https://dl.bintray.com/tom91136/maven/net/kurobako/gesturefx/0.6.0/gesturefx-0.6.0.jar)
- and add it to your classpath. This library has no dependencies so you do not need to download 
+Alternatively, you can download the jar [here](https://dl.bintray.com/tom91136/maven/net/kurobako/gesturefx/0.7.0/gesturefx-0.7.0.jar)
+ and add it to your classpath. This library has no dependencies, so you do not need to download 
 anything else.
  
 Version history in available in [CHANGELOG.md](CHANGELOG.md)
@@ -119,7 +108,7 @@ Several samples have been included demoing interesting uses of the gesture pane.
 
 **JavaFX 8**
 
-You can download the sample jar [here](https://dl.bintray.com/tom91136/maven/net/kurobako/gesturefx-sample/0.6.0/gesturefx-sample-0.6.0-jar-with-dependencies.jar) 
+You can download the sample jar [here](https://dl.bintray.com/tom91136/maven/net/kurobako/gesturefx-sample/0.7.0/gesturefx-sample-0.7.0-jar-with-dependencies.jar) 
 or clone the project and run:
 
     ./mvnw install
@@ -138,7 +127,7 @@ Make sure you have at least JDK 11 installed:
 
 Run the sample jar with the following:
 
-    java -Dglass.gtk.uiScale=200% --module-path path/to/javafx-sdk-13/lib --add-modules javafx.controls,javafx.fxml,javafx.web,javafx.swing -jar gesturefx-sample-0.6.0-jar-with-dependencies.jar
+    java -Dglass.gtk.uiScale=200% --module-path path/to/javafx-sdk-13/lib --add-modules javafx.controls,javafx.fxml,javafx.web,javafx.swing -jar gesturefx-sample-0.7.0-jar-with-dependencies.jar
 
 See <https://openjfx.io/openjfx-docs/#install-javafx> for more details.
 
@@ -183,9 +172,9 @@ and keyboard; you will see the test window flicker while different unit tests ar
 
     ```xml
     <server>
-      <id>bintray-${bintray.user}-maven</id>
-      <username>${bintray-username}</username>
-      <password>${bintray-api-key}</password>
+      <id>ossrh</id>
+      <username>${jira-username}</username>
+      <password>${jira-password}</password>
     </server>
     ```
     Look up bintray-api-key and bintray-username in the bintray profile page, also make sure machine has SSH access to GitHub
