@@ -3,7 +3,6 @@ GestureFX
 
 [![Java CI](https://github.com/tom91136/GestureFX/actions/workflows/main.yaml/badge.svg)](https://github.com/tom91136/GestureFX/actions/workflows/main.yaml)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
-[![Download](https://api.bintray.com/packages/tom91136/maven/gesturefx/images/download.svg)](https://bintray.com/tom91136/maven/gesturefx/_latestVersion)
 
 A lightweight gesture enabled pane for JavaFX
  
@@ -29,23 +28,23 @@ open it in SceneBuilder. Pull requests welcome on solving this.
 
 ## How to use
 
-**Versions <= 0.6.0 was published on JCenter, versions >= 0.7.0 is now published on Maven Central**
+**Versions <= 0.6.0 was published on JCenter, versions >= 0.7.1 is now published on Maven Central**
 
 For Maven users, add the following to pom
 ```xml
 <dependency>
     <groupId>net.kurobako</groupId>
     <artifactId>gesturefx</artifactId>
-    <version>0.7.0</version>
+    <version>0.7.1</version>
 </dependency>
 ```
 
 For SBT
 ```scala
-"net.kurobako" % "gesturefx" % "0.7.0"    
+"net.kurobako" % "gesturefx" % "0.7.1"    
 ```
 
-Alternatively, you can download the jar [here](https://dl.bintray.com/tom91136/maven/net/kurobako/gesturefx/0.7.0/gesturefx-0.7.0.jar)
+Alternatively, you can download the jar [here](https://repo.maven.apache.org/maven2/net/kurobako/gesturefx/0.7.1/gesturefx-0.7.1.jar)
  and add it to your classpath. This library has no dependencies, so you do not need to download 
 anything else.
  
@@ -108,7 +107,7 @@ Several samples have been included demoing interesting uses of the gesture pane.
 
 **JavaFX 8**
 
-You can download the sample jar [here](https://dl.bintray.com/tom91136/maven/net/kurobako/gesturefx-sample/0.7.0/gesturefx-sample-0.7.0-jar-with-dependencies.jar) 
+You can download the sample jar [here](https://repo.maven.apache.org/maven2/net/kurobako/gesturefx-sample/0.7.1/gesturefx-sample-0.7.1-jar-with-dependencies.jar) 
 or clone the project and run:
 
     ./mvnw install
@@ -127,7 +126,7 @@ Make sure you have at least JDK 11 installed:
 
 Run the sample jar with the following:
 
-    java -Dglass.gtk.uiScale=200% --module-path path/to/javafx-sdk-13/lib --add-modules javafx.controls,javafx.fxml,javafx.web,javafx.swing -jar gesturefx-sample-0.7.0-jar-with-dependencies.jar
+    java -Dglass.gtk.uiScale=200% --module-path path/to/javafx-sdk-13/lib --add-modules javafx.controls,javafx.fxml,javafx.web,javafx.swing -jar gesturefx-sample-0.7.1-jar-with-dependencies.jar
 
 See <https://openjfx.io/openjfx-docs/#install-javafx> for more details.
 
@@ -181,8 +180,9 @@ and keyboard; you will see the test window flicker while different unit tests ar
 3. Run `mvn release:prepare -DdryRun=true -Darguments=-DskipTests`, make sure it succeeds 
 4. Run `mvn release:clean` to clean up from the release dry run 
 5. Run `mvn release:prepare -Darguments=-DskipTests`, maven will tag and commit the new version. 
-6.Inspect the commits after `release:prepare` and do a push, also push the tags via `git push --tags`
-7. Finally, run `mvn clean release:perform -Darguments=-DskipTests` to create docs and sources and upload to bintray
+6. Inspect the commits after `release:prepare` and do a push, also push the tags via `git push --tags`
+7. Finally, run `mvn clean release:perform -Darguments=-DskipTests` to create docs and sources and upload sonatype
+8. Complete the release process by closing via `cd target/checkout && mvn nexus-staging:release` 
 
 ## Motivation
 
