@@ -820,7 +820,7 @@ public class GesturePane extends Control implements GesturePaneOps {
 
 
 	/**
-	 * @return the current y axis scale; defaults to 1.0 initially unless the selected {@link FitMode}
+	 * @return the current x axis scale (x == y iff bindScale is true); defaults to 1.0 initially unless the selected {@link FitMode}
 	 * disallows this
 	 */
 	public double getCurrentScale() { return scaleX.get(); }

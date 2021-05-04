@@ -175,6 +175,8 @@ public class LenaSample implements Sample {
 				}
 			});
 
+			pane.setBindScale(true);
+
 			fitMode.setItems(observableArrayList(FitMode.values()));
 			fitMode.setValue(pane.getFitMode());
 			pane.fitModeProperty().bind(fitMode.valueProperty());

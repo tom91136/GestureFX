@@ -20,6 +20,6 @@ matrix:
 sudo: false
 
 script:
- - ./mvnw install -Prelease -DskipTests=true -B -V
+ - ./mvnw install -Prelease -DskipTests=true -Dgpg.skip -B -V # don't sign
  - ./mvnw test
  - ./mvnw clean package -DskipTests=true
