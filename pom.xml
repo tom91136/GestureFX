@@ -5,7 +5,7 @@
     <groupId>net.kurobako</groupId>
     <artifactId>gesturefx-parent</artifactId>
     <packaging>pom</packaging>
-    <version>0.7.1-SNAPSHOT</version>
+    <version>0.7.1</version>
     <name>GestureFX</name>
     <description>A lightweight gesture enabled pane for JavaFX</description>
     <url>https://github.com/tom91136/GestureFX</url>
@@ -172,7 +172,7 @@
             scm:git:git@github.com:${github.user}/${github.repo}.git
         </developerConnection>
         <url>https://github.com/${github.user}/${github.repo}</url>
-        <tag>HEAD</tag>
+        <tag>gesturefx-parent-0.7.1</tag>
     </scm>
 
 
