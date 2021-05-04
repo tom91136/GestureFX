@@ -5,7 +5,7 @@
     <groupId>net.kurobako</groupId>
     <artifactId>gesturefx-parent</artifactId>
     <packaging>pom</packaging>
-    <version>0.8.0-SNAPSHOT</version>
+    <version>0.7.1-SNAPSHOT</version>
     <name>GestureFX</name>
     <description>A lightweight gesture enabled pane for JavaFX</description>
     <url>https://github.com/tom91136/GestureFX</url>
@@ -43,9 +43,6 @@
                     <plugin>
                         <artifactId>maven-javadoc-plugin</artifactId>
                         <version>3.1.1</version>
-                        <configuration>
-                            <excludePackageNames>net.kurobako.gesturefx.*</excludePackageNames>
-                        </configuration>
                         <executions>
                             <execution>
                                 <id>attach-javadocs</id>
@@ -149,9 +146,6 @@
             <plugin>
                 <artifactId>maven-javadoc-plugin</artifactId>
                 <version>3.1.1</version>
-                <configuration>
-                    <excludePackageNames>net.kurobako.gesturefx.*</excludePackageNames>
-                </configuration>
             </plugin>
         </plugins>
     </reporting>

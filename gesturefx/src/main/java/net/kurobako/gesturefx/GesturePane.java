@@ -757,6 +757,7 @@ public class GesturePane extends Control implements GesturePaneOps {
 
 	/**
 	 * Sets the same scrollbar policy for both vbar and hbar
+	 * @param policy the policy to use
 	 */
 	public void setScrollBarPolicy(ScrollBarPolicy policy) {
 		setHbarPolicy(policy);
