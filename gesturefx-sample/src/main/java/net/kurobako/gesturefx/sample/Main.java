@@ -14,7 +14,11 @@ public class Main extends Application {
 	public void start(Stage primaryStage) throws Exception {
 		FXMLLoader loader = new FXMLLoader(getClass().getResource("/Sampler.fxml"));
 		Parent parent = loader.load();
-		loader.<SamplerController>getController().hostServices = getHostServices(); // seems ugly
+		try {
+			loader.<SamplerController>getController().hostServices = getHostServices(); // seems ugly
+		} catch (Throwable e) {
+			System.err.println("Unable to access host services:" + e.getMessage());
+		}
 		primaryStage.setTitle("GesturePane samples");
 		primaryStage.setScene(new Scene(parent));
 		primaryStage.show();

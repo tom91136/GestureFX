@@ -12,9 +12,6 @@
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <github.user>tom91136</github.user>
         <github.repo>gesturefx</github.repo>
-        <bintray.user>tom91136</bintray.user>
-        <bintray.repo>maven</bintray.repo>
-        <bintray.package>gesturefx</bintray.package>
     </properties>
 
     <modules>
@@ -106,6 +103,31 @@
                     </dependency>
                 </dependencies>
             </plugin>
+            <plugin>
+                <groupId>org.sonatype.plugins</groupId>
+                <artifactId>nexus-staging-maven-plugin</artifactId>
+                <version>1.6.7</version>
+                <extensions>true</extensions>
+                <configuration>
+                    <serverId>ossrh</serverId>
+                    <nexusUrl>https://s01.oss.sonatype.org/</nexusUrl>
+                    <autoReleaseAfterClose>true</autoReleaseAfterClose>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-gpg-plugin</artifactId>
+                <version>1.5</version>
+                <executions>
+                    <execution>
+                        <id>sign-artifacts</id>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>sign</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
         </plugins>
     </build>
 
@@ -150,14 +172,5 @@
         <tag>HEAD</tag>
     </scm>
 
-    <distributionManagement>
-        <repository>
-            <id>bintray-${bintray.user}-maven</id>
-            <name>${bintray.user}-maven</name>
-            <url>
-                https://api.bintray.com/maven/${bintray.user}/${bintray.repo}/${bintray.package}/;publish=1
-            </url>
-        </repository>
-    </distributionManagement>
 
 </project>
