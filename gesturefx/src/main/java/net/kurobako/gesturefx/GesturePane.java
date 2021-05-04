@@ -174,8 +174,8 @@ public class GesturePane extends Control implements GesturePaneOps {
 		setAccessibleRole(AccessibleRole.SCROLL_PANE);
 		target.addListener((o, p, n) -> {
 			if (n == null) return;
-			content.set(null);
 			runLaterOrNowIfOnFXThread(() -> {
+				content.set(null);
 				getChildren().removeIf(x -> !(x instanceof ScrollBar));
 				n.setTransform(affine);
 				targetWidth.set(n.width());
@@ -189,8 +189,10 @@ public class GesturePane extends Control implements GesturePaneOps {
 		};
 		content.addListener((o, p, n) -> {
 			if (p != null){
-				p.layoutBoundsProperty().removeListener(layoutBoundsListener);
-				getChildren().remove(p);
+				runLaterOrNowIfOnFXThread(() -> {
+					p.layoutBoundsProperty().removeListener(layoutBoundsListener);
+					getChildren().remove(p);
+				});
 			}
 			if (n == null) return;
 			target.set(null);
@@ -588,9 +590,10 @@ public class GesturePane extends Control implements GesturePaneOps {
 			if (scaleY > getMaxScale()) deltaY = getMaxScale() / getCurrentScaleY();
 			if (scaleY < getMinScale()) deltaY = getMinScale() / getCurrentScaleY();
 
+			affine.prependScale(deltaX, 1, origin);
+			affine.prependScale(1, deltaY, origin);
 
-			affine.prependScale(deltaX, deltaY, origin);
-			clampAtBound(factorX >= 1 || factorY > 1);
+			clampAtBound(factorX >= 1 || factorY >= 1);
 		});
 	}
 
