@@ -6,6 +6,9 @@
     <artifactId>gesturefx-parent</artifactId>
     <packaging>pom</packaging>
     <version>0.8.0-SNAPSHOT</version>
+    <name>GestureFX</name>
+    <description>A lightweight gesture enabled pane for JavaFX</description>
+    <url>https://github.com/tom91136/GestureFX</url>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>

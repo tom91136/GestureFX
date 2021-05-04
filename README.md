@@ -177,11 +177,12 @@ and keyboard; you will see the test window flicker while different unit tests ar
       <password>${jira-password}</password>
     </server>
     ```
-    Look up bintray-api-key and bintray-username in the bintray profile page, also make sure machine has SSH access to GitHub
-3. Run `mvn release:prepare -DdryRun=true`, make sure it succeeds and then run `mvn release:clean`
-4. Run `mvn release:prepare`, maven will tag and commit the new version. Inspect the commits and do a push, also push the tags via `git push --tags`
-5. Finally, run `mvn clean release:perform` to create docs and sources and upload to bintray 
-
+    Look up jira-username and jira-password is the username and password for sonatype, also make sure machine has SSH access to GitHub
+3. Run `mvn release:prepare -DdryRun=true -Darguments=-DskipTests`, make sure it succeeds 
+4. Run `mvn release:clean` to clean up from the release dry run 
+5. Run `mvn release:prepare -Darguments=-DskipTests`, maven will tag and commit the new version. 
+6.Inspect the commits after `release:prepare` and do a push, also push the tags via `git push --tags`
+7. Finally, run `mvn clean release:perform -Darguments=-DskipTests` to create docs and sources and upload to bintray
 
 ## Motivation
 
