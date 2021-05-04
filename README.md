@@ -1,7 +1,7 @@
 GestureFX
 ==========
 
-![Build Status](https://github.com/tom91136/GestureFX/actions/workflows/main.yml/badge.svg)
+[![Java CI](https://github.com/tom91136/GestureFX/actions/workflows/main.yaml/badge.svg)](https://github.com/tom91136/GestureFX/actions/workflows/main.yaml)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![Download](https://api.bintray.com/packages/tom91136/maven/gesturefx/images/download.svg)](https://bintray.com/tom91136/maven/gesturefx/_latestVersion)
 
