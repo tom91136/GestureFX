@@ -3,6 +3,7 @@ GestureFX
 
 [![Java CI](https://github.com/tom91136/GestureFX/actions/workflows/main.yaml/badge.svg)](https://github.com/tom91136/GestureFX/actions/workflows/main.yaml)
 [![Maven Central](https://img.shields.io/maven-central/v/net.kurobako/gesturefx)](https://central.sonatype.com/artifact/net.kurobako/gesturefx)
+[![Javadoc](https://javadoc.io/badge2/net.kurobako/gesturefx/javadoc.svg)](https://javadoc.io/doc/net.kurobako/gesturefx)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
 A lightweight gesture enabled pane for JavaFX
