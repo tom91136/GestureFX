@@ -150,12 +150,13 @@ and keyboard; you will see the test window flicker while different unit tests ar
     </server>
     ```
     Generate the token at https://central.sonatype.com. Also make sure the machine has a GPG key and SSH access to GitHub.
-3. Run `mvn release:prepare -DdryRun=true -Darguments=-DskipTests`, make sure it succeeds
-4. Run `mvn release:clean` to clean up from the release dry run
-5. Run `mvn release:prepare -Darguments=-DskipTests`, maven will tag and commit the new version.
-6. Inspect the commits after `release:prepare` and do a push, also push the tags via `git push --tags`
-7. Finally, run `mvn clean release:perform -Darguments=-DskipTests` to create docs and sources and upload to Central Portal
-8. Verify and publish the deployment at https://central.sonatype.com/publishing
+3. Run `mvn verify -Prelease -DskipTests` to check that signing, sources, and javadoc generation all succeed before starting the release
+4. Run `mvn release:prepare -DdryRun=true -Darguments=-DskipTests`, make sure it succeeds
+5. Run `mvn release:clean` to clean up from the release dry run
+6. Run `mvn release:prepare -Darguments=-DskipTests`, maven will tag and commit the new version.
+7. Inspect the commits after `release:prepare` and do a push, also push the tags via `git push --tags`
+8. Finally, run `mvn clean release:perform -Darguments=-DskipTests` to create docs and sources and upload to Central Portal
+9. Verify and publish the deployment at https://central.sonatype.com/publishing
 
 ## Acknowledgements
 
