@@ -115,17 +115,13 @@ final class GesturePaneTests {
 
 	// headful test will spawn actual window and take control of the mouse and keyboard!
 	static void setupProperties() {
-		if (!Boolean.getBoolean("headful")) {
-			System.out.println("Testing using Monocle");
-			System.setProperty("testfx.robot", "glass");
-			System.setProperty("testfx.headless", "true");
-			System.setProperty("prism.order", "sw");
-			System.setProperty("prism.text", "t2k");
-			System.setProperty("prism.verbose", "true");
-		} else {
+		if (Boolean.getBoolean("headful")) {
 			System.out.println("Testing headful with real windows, " +
 					"please do not touch keyboard or mouse until tests are " +
 					"complete.");
+		} else {
+			// headless testing is handled via xvfb + prism.order=sw (set in surefire argLine).
+			System.out.println("Testing headless (xvfb + software rendering)");
 		}
 	}
 

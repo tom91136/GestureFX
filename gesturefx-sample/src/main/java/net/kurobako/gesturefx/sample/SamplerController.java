@@ -1,20 +1,32 @@
 package net.kurobako.gesturefx.sample;
 
+import atlantafx.base.theme.CupertinoDark;
+import atlantafx.base.theme.CupertinoLight;
+import atlantafx.base.theme.Dracula;
+import atlantafx.base.theme.NordDark;
+import atlantafx.base.theme.NordLight;
+import atlantafx.base.theme.PrimerDark;
+import atlantafx.base.theme.PrimerLight;
+import atlantafx.base.theme.Theme;
+
 import java.net.URL;
 import java.util.Arrays;
 import java.util.List;
 import java.util.ResourceBundle;
 import java.util.function.Supplier;
 
+import javafx.application.Application;
 import javafx.application.HostServices;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.Node;
+import javafx.scene.control.ComboBox;
 import javafx.scene.control.Hyperlink;
 import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
 import javafx.scene.control.TextInputDialog;
 import javafx.scene.layout.VBox;
+import javafx.util.StringConverter;
 
 public class SamplerController implements Initializable {
 
@@ -38,6 +50,7 @@ public class SamplerController implements Initializable {
 	@FXML private VBox root;
 	@FXML private Hyperlink link;
 	@FXML private TabPane tabs;
+	@FXML private ComboBox<Theme> themeCombo;
 
 	HostServices hostServices;
 
@@ -67,6 +80,26 @@ public class SamplerController implements Initializable {
 			} else hostServices.showDocument(URI);
 		});
 
+		themeCombo.setConverter(new StringConverter<>() {
+			@Override public String toString(Theme theme) { return theme == null ? "" : theme.getName(); }
+			@Override public Theme fromString(String s) { return null; }
+		});
+		PrimerDark defaultTheme = new PrimerDark();
+		themeCombo.getItems().addAll(
+				new PrimerLight(),
+				defaultTheme,
+				new NordLight(),
+				new NordDark(),
+				new CupertinoLight(),
+				new CupertinoDark(),
+				new Dracula()
+		);
+		themeCombo.setValue(defaultTheme);
+		themeCombo.valueProperty().addListener((obs, old, theme) -> {
+			if (theme != null) {
+				Application.setUserAgentStylesheet(theme.getUserAgentStylesheet());
+			}
+		});
 	}
 
 }

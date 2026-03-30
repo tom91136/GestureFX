@@ -1,6 +1,27 @@
 Changelog
 =========
 
+## 0.8.0 (30/3/2026)
+
+Library
+
+ * **Breaking:** Dropped Java 8 support; now requires Java 11+ with OpenJFX
+ * Fixed a bug where independent X/Y axis scaling caused asymmetric distortion during zoom (intermediate `clampAtBound` calls saw stale scale on one axis)
+ * Fixed a bug where min/max scale clamping could override a locked axis
+ * Corner background is now set at runtime instead of via CSS to avoid `ClassCastException` with third-party themes (e.g. AtlantaFX) that don't define `-fx-base`
+
+Sample
+
+* Switch to AtlantaFX theming (affects sample only)
+
+Build
+
+ * Migrated to OpenJFX dependencies (`javafx-controls`, etc.) from Maven Central
+ * CI now tests across JDK 17–25 and JavaFX 17–25 on Ubuntu, Windows, and macOS
+ * Headless testing via xvfb + software rendering (replaced Monocle)
+ * Updated all Maven wrapper/plugin versions (compiler 3.15.0, surefire 3.5.5, javadoc 3.12.0, etc.)
+ * Updated test dependencies: TestFX 4.0.18, Mockito 4.11.0, AssertJ 3.27.7
+
 ## 0.7.0 (4/5/2021)
 
 Library

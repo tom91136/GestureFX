@@ -218,17 +218,6 @@ public class GesturePane extends Control implements GesturePaneOps {
 	@Override
 	protected Skin<?> createDefaultSkin() { return new GesturePaneSkin(this); }
 
-	// apparently, performance is an issue here, see
-	// https://bitbucket.org/controlsfx/controlsfx/pull-requests/519/this-is-the-fix-for-https
-	// -javafx/diff
-	private String stylesheet;
-	@Override
-	public String getUserAgentStylesheet() {
-		if (stylesheet == null)
-			stylesheet = GesturePane.class.getResource("gesturepane.css").toExternalForm();
-		return stylesheet;
-
-	}
 	/**
 	 * Centre of the current viewport.
 	 * <br>
@@ -576,13 +565,11 @@ public class GesturePane extends Control implements GesturePaneOps {
 
 		atomicallyChange(() -> {
 
-			double deltaX = factorX;
-			double deltaY = factorY;
+			double deltaX = lockScaleX.get() ? 1 : factorX;
+			double deltaY = lockScaleY.get() ? 1 : factorY;
 
-			if (lockScaleX.get()) deltaX = 1;
-			if (lockScaleY.get()) deltaY = 1;
-			double scaleX = getCurrentScaleX() * factorX;
-			double scaleY = getCurrentScaleY() * factorY;
+			double scaleX = getCurrentScaleX() * deltaX;
+			double scaleY = getCurrentScaleY() * deltaY;
 			// clamp at min and max
 			if (scaleX > getMaxScale()) deltaX = getMaxScale() / getCurrentScaleX();
 			if (scaleX < getMinScale()) deltaX = getMinScale() / getCurrentScaleX();
@@ -590,8 +577,7 @@ public class GesturePane extends Control implements GesturePaneOps {
 			if (scaleY > getMaxScale()) deltaY = getMaxScale() / getCurrentScaleY();
 			if (scaleY < getMinScale()) deltaY = getMinScale() / getCurrentScaleY();
 
-			affine.prependScale(deltaX, 1, origin);
-			affine.prependScale(1, deltaY, origin);
+			affine.prependScale(deltaX, deltaY, origin);
 
 			clampAtBound(factorX >= 1 || factorY >= 1);
 		});
@@ -684,8 +670,13 @@ public class GesturePane extends Control implements GesturePaneOps {
 
 	private void atomicallyChange(Runnable e) {
 		inhibitPropEvent = true;
-		e.run();
-		inhibitPropEvent = false;
+		clampExternalScale = false;
+		try {
+			e.run();
+		} finally {
+			clampExternalScale = true;
+			inhibitPropEvent = false;
+		}
 		fireAffineEvent(AffineEvent.CHANGED);
 	}
 

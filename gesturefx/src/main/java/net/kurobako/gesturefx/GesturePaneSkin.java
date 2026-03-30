@@ -108,6 +108,9 @@ final class GesturePaneSkin extends SkinBase<GesturePane> {
 		vbar.visibleProperty().bind(vbar.managedProperty());
 		corner.visibleProperty().bind(corner.managedProperty());
 		corner.getStyleClass().setAll("corner");
+		// Match the scrollbar track background; done at runtime to avoid CSS
+		// lookup conflicts with third-party themes that may not define -fx-base (eg AtlantaFX).
+		corner.backgroundProperty().bind(vbar.backgroundProperty());
 
 		DoubleBinding scaledWidth = pane.targetWidth.multiply(pane.scaleX);
 		DoubleBinding scaledHeight = pane.targetHeight.multiply(pane.scaleY);

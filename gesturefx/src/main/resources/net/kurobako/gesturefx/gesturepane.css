@@ -1,3 +1,0 @@
-.gesture-pane>*.corner {
-    -fx-background-color: derive(-fx-base, -1%);
-}

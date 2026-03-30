@@ -1,18 +1,86 @@
-name: Java CI
-on: [push, pull_request]
+name: CI
+
+on:
+  push:
+    branches: [ master ]
+    tags: [ 'v*' ]
+  pull_request:
+    branches: [ master ]
 
 jobs:
-  test:
-    runs-on: ubuntu-18.04
+  build:
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ ubuntu-latest, windows-latest, macos-latest ]
+        java: [ '17', '21', '22', '23', '24', '25' ]
+        javafx: [ '17.0.15', '21.0.7', '22.0.2', '23.0.2', '24.0.2', '25.0.2' ]
+        exclude:
+          # JavaFX N requires JDK >= N-2
+          - { java: '17', javafx: '22.0.2' }
+          - { java: '17', javafx: '23.0.2' }
+          - { java: '17', javafx: '24.0.2' }
+          - { java: '17', javafx: '25.0.2' }
+          #
+          - { java: '21', javafx: '24.0.2' }
+          - { java: '21', javafx: '25.0.2' }
+          #
+          - { java: '22', javafx: '25.0.2' }
+    name: ${{ matrix.os }} / JDK ${{ matrix.java }} / JavaFX ${{ matrix.javafx }}
     steps:
-      - uses: actions/checkout@v2
-      - name: Set up JDK 8
-        uses: actions/setup-java@v2
+      - uses: actions/checkout@v6
+
+      - name: Set up JDK ${{ matrix.java }}
+        uses: actions/setup-java@v5
         with:
-          distribution: 'zulu'
-          java-version: '8'
-          java-package: jdk+fx
+          distribution: 'corretto'
+          java-version: ${{ matrix.java }}
+          cache: 'maven'
+
+      - name: Install xvfb and JavaFX dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq xvfb libgtk-3-0 libgl1 > /dev/null
+
+      - name: Resolve dependencies
+        uses: nick-fields/retry@v4
+        with:
+          timeout_minutes: 5
+          max_attempts: 3
+          command: ./mvnw -B dependency:go-offline "-Djavafx.version=${{ matrix.javafx }}"
+
       - name: Build
-        run: mvn --batch-mode --update-snapshots compile
-      - name: Test
-        run: mvn --batch-mode --update-snapshots test
+        run: ./mvnw -B clean package -DskipTests "-Djavafx.version=${{ matrix.javafx }}"
+
+      - name: Test (Linux)
+        if: runner.os == 'Linux'
+        env:
+          DISPLAY: ':99'
+        run: |
+          Xvfb :99 -screen 0 1024x768x24 -ac &
+          sleep 1
+          ./mvnw -B verify "-Djavafx.version=${{ matrix.javafx }}"
+
+      - name: Test (Windows/macOS)
+        if: runner.os != 'Linux'
+        run: ./mvnw -B verify "-Djavafx.version=${{ matrix.javafx }}"
+
+      - name: Stage artifacts
+        if: github.event_name == 'push' && !env.ACT
+        shell: bash
+        run: |
+          mkdir -p staging
+          cp gesturefx/target/gesturefx-*.jar staging/
+          cp gesturefx-sample/target/gesturefx-sample-*-jar-with-dependencies.jar staging/
+          rm -f staging/*-sources.jar staging/*-javadoc.jar
+
+      - name: Upload artifacts
+        if: github.event_name == 'push' && !env.ACT
+        uses: actions/upload-artifact@v7
+        with:
+          name: gesturefx-${{ matrix.os }}-jdk${{ matrix.java }}-javafx${{ matrix.javafx }}
+          path: staging/*.jar
+          if-no-files-found: error
