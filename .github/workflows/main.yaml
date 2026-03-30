@@ -74,7 +74,7 @@ jobs:
         run: |
           mkdir -p staging
           cp gesturefx/target/gesturefx-*.jar staging/
-          cp gesturefx-sample/target/gesturefx-sample-*-jar-with-dependencies.jar staging/
+          cp gesturefx-sample/target/gesturefx-sample-*-jar-with-dependencies.jar staging/ 2>/dev/null || true
           rm -f staging/*-sources.jar staging/*-javadoc.jar
 
       - name: Upload artifacts

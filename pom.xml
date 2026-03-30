@@ -16,7 +16,7 @@
         <github.user>tom91136</github.user>
         <github.repo>gesturefx</github.repo>
         <javafx.version>11</javafx.version>
-        <sample.javafx.version>19</sample.javafx.version>
+        <sample.javafx.version>21.0.7</sample.javafx.version>
     </properties>
 
     <modules>
@@ -52,7 +52,7 @@
         <profile>
             <id>with-sample</id>
             <activation>
-                <jdk>[17,)</jdk>
+                <jdk>[21,)</jdk>
             </activation>
             <modules>
                 <module>gesturefx-sample</module>

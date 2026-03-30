@@ -131,6 +131,7 @@ public class GesturePane extends Control implements GesturePaneOps {
 	 *
 	 * @param target the transformable to apply the transforms to
 	 */
+	@SuppressWarnings("this-escape")
 	public GesturePane(Transformable target) {
 		this();
 		setTarget(target);
@@ -142,11 +143,13 @@ public class GesturePane extends Control implements GesturePaneOps {
 	 *
 	 * @param target the node to apply transforms to
 	 */
+	@SuppressWarnings("this-escape")
 	public GesturePane(Node target) {
 		this();
 		setContent(target);
 	}
 
+	@SuppressWarnings("this-escape")
 	public GesturePane() {
 		super();
 		// can't use bindBidirectional here because we need to clamp 

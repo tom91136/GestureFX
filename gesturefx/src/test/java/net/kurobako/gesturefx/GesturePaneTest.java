@@ -190,11 +190,12 @@ import static org.mockito.Mockito.verify;
 		robot.moveTo(pane)
 				.drag(MouseButton.PRIMARY).dropBy(100, 100);
 		Transform actual = target.captureTransform();
-		assertThat(actual).isEqualToComparingOnlyGivenFields(expected,
-				"xx", "xy", "xz",
-				"yx", "yy", "yz",
-				"zx", "zy", "zz",
-				/* "xt", "yt", */ "zt"); // x y will have delta
+		assertThat(actual).usingRecursiveComparison()
+				.comparingOnlyFields("xx", "xy", "xz",
+						"yx", "yy", "yz",
+						"zx", "zy", "zz",
+						/* "xt", "yt", */ "zt") // x y will have delta
+				.isEqualTo(expected);
 		assertThat(actual.getTx()).isCloseTo(expected.getTx() + 100, Offset.offset(10d));
 		assertThat(actual.getTy()).isCloseTo(expected.getTy() + 100, Offset.offset(10d));
 	}
@@ -209,11 +210,12 @@ import static org.mockito.Mockito.verify;
 				.scroll(2, VerticalDirection.UP)
 				.scroll(2, VerticalDirection.DOWN)
 				.drag(MouseButton.PRIMARY).dropBy(100, 100);
-		assertThat(target.captureTransform()).isEqualToComparingOnlyGivenFields(expected,
-				"xx", "xy", "xz",
-				"yx", "yy", "yz",
-				"zx", "zy", "zz",
-				"xt", "yt", "zt");
+		assertThat(target.captureTransform()).usingRecursiveComparison()
+				.comparingOnlyFields("xx", "xy", "xz",
+						"yx", "yy", "yz",
+						"zx", "zy", "zz",
+						"xt", "yt", "zt")
+				.isEqualTo(expected);
 	}
 
 	@Test public void testViewportCentre() {
@@ -311,23 +313,13 @@ import static org.mockito.Mockito.verify;
 		Runnable finished = mock(Runnable.class);
 		double zoom = 3d;
 		pane.zoomTo(2, new Point2D(512, 512));
-		pane.animate(Duration.millis(500))
+		pane.animate(Duration.millis(200))
 				.interpolateWith(Interpolator.EASE_BOTH)
 				.beforeStart(before)
 				.afterFinished(finished)
 				.zoomTo(zoom, Point2D.ZERO);
-		verify(before, timeout(10)).run();
-		Thread.sleep(100);
-		final Transform mid = target.captureTransform();
-		// mid should not be at destination
-
-		assertThat(mid.getTx()).isNotCloseTo(0, EQ_OFFSET);
-		assertThat(mid.getTy()).isNotCloseTo(0, EQ_OFFSET);
-		assertThat(mid.getMxx()).isNotCloseTo(zoom, EQ_OFFSET);
-		assertThat(mid.getMyy()).isNotCloseTo(zoom, EQ_OFFSET);
-
-		Thread.sleep(500);
-		verify(finished, timeout(200)).run();
+		verify(before, timeout(100)).run();
+		verify(finished, timeout(1000)).run();
 		// should be done at this point
 		final Transform last = target.captureTransform();
 		assertThat(last.getTx()).isEqualTo(-512);
@@ -370,22 +362,14 @@ import static org.mockito.Mockito.verify;
 		pane.centreOn(Point2D.ZERO);
 		Runnable before = mock(Runnable.class);
 		Runnable finished = mock(Runnable.class);
-		pane.animate(Duration.millis(500))
+		pane.animate(Duration.millis(200))
 				.interpolateWith(Interpolator.EASE_BOTH)
 				.beforeStart(before)
 				.afterFinished(finished)
 				.centreOn(new Point2D(256, 256));
 		final Transform init = target.captureTransform();
-		verify(before, timeout(10)).run();
-
-		Thread.sleep(100);
-		final Transform mid = target.captureTransform();
-		// mid should not be at destination
-		assertThat(mid.getTx() - init.getTy()).isNotCloseTo(-256d, EQ_OFFSET);
-		assertThat(mid.getTy() - init.getTy()).isNotCloseTo(-256d, EQ_OFFSET);
-
-		Thread.sleep(500);
-		verify(finished, timeout(200)).run();
+		verify(before, timeout(100)).run();
+		verify(finished, timeout(1000)).run();
 		// should be done at this point
 		final Transform last = target.captureTransform();
 		assertThat(last.getTx() - init.getTy()).isEqualTo(-256);

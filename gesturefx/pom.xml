@@ -64,8 +64,6 @@
                     <forkedProcessExitTimeoutInSeconds>5</forkedProcessExitTimeoutInSeconds>
                     <redirectTestOutputToFile>true</redirectTestOutputToFile>
                     <argLine>
-                        --add-opens javafx.graphics/com.sun.javafx.application=ALL-UNNAMED
-                        --add-exports javafx.graphics/com.sun.glass.utils=ALL-UNNAMED
                         -Dprism.order=sw
                         -Dprism.verbose=true
                     </argLine>

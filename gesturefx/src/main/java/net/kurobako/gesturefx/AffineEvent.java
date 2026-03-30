@@ -40,9 +40,9 @@ public final class AffineEvent extends Event {
 			new EventType<>(AffineEvent.ANY, "AFFINE_CHANGE_FINISHED");
 
 
-	private final Affine affine;
-	private final Affine previous;
-	private final Dimension2D targetDimension;
+	private final transient Affine affine;
+	private final transient Affine previous;
+	private final transient Dimension2D targetDimension;
 
 
 	public AffineEvent(EventType<? extends Event> eventType,
