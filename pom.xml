@@ -21,7 +21,6 @@
 
     <modules>
         <module>gesturefx</module>
-        <module>gesturefx-sample</module>
     </modules>
 
     <dependencyManagement>
@@ -50,6 +49,15 @@
     </dependencyManagement>
 
     <profiles>
+        <profile>
+            <id>with-sample</id>
+            <activation>
+                <jdk>[17,)</jdk>
+            </activation>
+            <modules>
+                <module>gesturefx-sample</module>
+            </modules>
+        </profile>
         <profile>
             <id>release</id>
             <build>

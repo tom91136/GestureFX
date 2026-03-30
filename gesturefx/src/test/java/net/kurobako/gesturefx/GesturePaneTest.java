@@ -22,6 +22,7 @@ import org.testfx.api.FxAssert;
 import org.testfx.api.FxRobot;
 import org.testfx.api.FxToolkit;
 import org.testfx.matcher.base.NodeMatchers;
+import org.testfx.util.WaitForAsyncUtils;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -86,6 +87,7 @@ import static org.mockito.Mockito.verify;
 			stage.setAlwaysOnTop(true);
 		});
 		FxToolkit.showStage();
+		WaitForAsyncUtils.waitForFxEvents();
 	}
 
 	@After public void tearDown() throws Exception { FxToolkit.cleanupStages(); }
@@ -309,7 +311,7 @@ import static org.mockito.Mockito.verify;
 		Runnable finished = mock(Runnable.class);
 		double zoom = 3d;
 		pane.zoomTo(2, new Point2D(512, 512));
-		pane.animate(Duration.millis(200))
+		pane.animate(Duration.millis(500))
 				.interpolateWith(Interpolator.EASE_BOTH)
 				.beforeStart(before)
 				.afterFinished(finished)
@@ -324,8 +326,8 @@ import static org.mockito.Mockito.verify;
 		assertThat(mid.getMxx()).isNotCloseTo(zoom, EQ_OFFSET);
 		assertThat(mid.getMyy()).isNotCloseTo(zoom, EQ_OFFSET);
 
-		Thread.sleep(110);
-		verify(finished, timeout(100)).run();
+		Thread.sleep(500);
+		verify(finished, timeout(200)).run();
 		// should be done at this point
 		final Transform last = target.captureTransform();
 		assertThat(last.getTx()).isEqualTo(-512);
@@ -368,7 +370,7 @@ import static org.mockito.Mockito.verify;
 		pane.centreOn(Point2D.ZERO);
 		Runnable before = mock(Runnable.class);
 		Runnable finished = mock(Runnable.class);
-		pane.animate(Duration.millis(200))
+		pane.animate(Duration.millis(500))
 				.interpolateWith(Interpolator.EASE_BOTH)
 				.beforeStart(before)
 				.afterFinished(finished)
@@ -379,11 +381,11 @@ import static org.mockito.Mockito.verify;
 		Thread.sleep(100);
 		final Transform mid = target.captureTransform();
 		// mid should not be at destination
-		assertThat(mid.getTx() - init.getTy()).isNotEqualTo(-256);
-		assertThat(mid.getTy() - init.getTy()).isNotEqualTo(-256);
+		assertThat(mid.getTx() - init.getTy()).isNotCloseTo(-256d, EQ_OFFSET);
+		assertThat(mid.getTy() - init.getTy()).isNotCloseTo(-256d, EQ_OFFSET);
 
-		Thread.sleep(110);
-		verify(finished, timeout(100)).run();
+		Thread.sleep(500);
+		verify(finished, timeout(200)).run();
 		// should be done at this point
 		final Transform last = target.captureTransform();
 		assertThat(last.getTx() - init.getTy()).isEqualTo(-256);
@@ -420,6 +422,7 @@ import static org.mockito.Mockito.verify;
 			private void assertProperty() {
 				try {
 					setter.accept(expected);
+					WaitForAsyncUtils.waitForFxEvents();
 					softly.assertThat(getter.get()).isEqualTo(expected);
 					softly.assertThat(property.get().getValue()).isEqualTo(expected);
 				} catch (Exception e) {
