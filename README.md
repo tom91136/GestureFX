@@ -140,22 +140,22 @@ and keyboard; you will see the test window flicker while different unit tests ar
 ## Release process
 
 1. Commit all changes before release
-2. Make sure `${user.home}/.m2/settings.xml` exist, if not copy it from maven home (i.e `cp usr/share/maven/conf/settings.xml ~/.m2/settings.xml` ) and add the following section to `<servers></servers>`:
+2. Make sure `${user.home}/.m2/settings.xml` exists with a `<server>` entry for the Central Portal token:
 
     ```xml
     <server>
-      <id>ossrh</id>
-      <username>${jira-username}</username>
-      <password>${jira-password}</password>
+      <id>central</id>
+      <username>${token-username}</username>
+      <password>${token-password}</password>
     </server>
     ```
-    Look up jira-username and jira-password is the username and password for sonatype, also make sure machine has SSH access to GitHub
+    Generate the token at https://central.sonatype.com. Also make sure the machine has a GPG key and SSH access to GitHub.
 3. Run `mvn release:prepare -DdryRun=true -Darguments=-DskipTests`, make sure it succeeds
 4. Run `mvn release:clean` to clean up from the release dry run
 5. Run `mvn release:prepare -Darguments=-DskipTests`, maven will tag and commit the new version.
 6. Inspect the commits after `release:prepare` and do a push, also push the tags via `git push --tags`
-7. Finally, run `mvn clean release:perform -Darguments=-DskipTests` to create docs and sources and upload sonatype
-8. Complete the release process by closing via `cd target/checkout && mvn nexus-staging:release`
+7. Finally, run `mvn clean release:perform -Darguments=-DskipTests` to create docs and sources and upload to Central Portal
+8. Verify and publish the deployment at https://central.sonatype.com/publishing
 
 ## Acknowledgements
 
