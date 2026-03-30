@@ -163,28 +163,29 @@ import static org.mockito.Mockito.verify;
 		pane.setContent(new Rectangle(1024, 1024));
 	}
 
-	@Test public void testContentBoundChanged() throws Exception {
+	@Test public void testContentBoundChanged() {
 		Rectangle rect = new Rectangle(128, 128, Color.RED);
 		pane.setContent(rect);
-		Thread.sleep(50);
+		WaitForAsyncUtils.waitForFxEvents();
 		rect.setWidth(1000);
 		rect.setHeight(1000);
-		Thread.sleep(50);
+		WaitForAsyncUtils.waitForFxEvents();
 		rect.setHeight(0);
 		rect.setHeight(0);
 	}
 
-	@Test public void testContainerBoundChanged() throws Exception {
+	@Test public void testContainerBoundChanged() {
 		pane.setScrollBarPolicy(ScrollBarPolicy.NEVER);
 		pane.getScene().getWindow().setWidth(256);
 		pane.getScene().getWindow().setHeight(256);
-		Thread.sleep(150); // wait for layout
+		WaitForAsyncUtils.waitForFxEvents();
 		assertThat(pane.getViewportBound()).isEqualTo(new BoundingBox(0, 0, 256, 256));
 		assertThat(pane.viewportCentre()).isEqualTo(new Point2D(128, 128));
 	}
 
 	@Test public void testDragAndDrop() {
 		pane.zoomTo(2, pane.targetPointAtViewportCentre());
+		WaitForAsyncUtils.waitForFxEvents();
 		Transform expected = target.captureTransform();
 		FxRobot robot = new FxRobot();
 		robot.moveTo(pane)
@@ -204,6 +205,7 @@ import static org.mockito.Mockito.verify;
 		pane.setScrollBarPolicy(ScrollBarPolicy.NEVER);
 		pane.setGestureEnabled(false);
 		pane.zoomTo(2, pane.targetPointAtViewportCentre());
+		WaitForAsyncUtils.waitForFxEvents();
 		Transform expected = target.captureTransform();
 		FxRobot robot = new FxRobot();
 		robot.moveTo(pane)
@@ -261,15 +263,15 @@ import static org.mockito.Mockito.verify;
 		assertThat(pane.getCurrentScale()).isEqualTo(factor);
 	}
 
-	@Test public void testScaleByScroll() throws Exception {
+	@Test public void testScaleByScroll() {
 		pane.scrollModeProperty().set(ScrollMode.ZOOM);
 		pane.zoomTo(5, pane.targetPointAtViewportCentre());
+		WaitForAsyncUtils.waitForFxEvents();
 		FxRobot robot = new FxRobot();
 		assertThat(pane.getCurrentScale()).isEqualTo(5d);
-		Thread.sleep(100);
 		robot.moveTo(pane);
 		robot.scroll(5, VerticalDirection.UP); // direction is platform dependent
-		Thread.sleep(100);
+		WaitForAsyncUtils.waitForFxEvents();
 		double expectedUp = 5 * Math.pow(1 + DEFAULT_SCROLL_FACTOR, 5);
 		double expectedDown = 5 * Math.pow(1 - DEFAULT_SCROLL_FACTOR, 5);
 
@@ -357,7 +359,7 @@ import static org.mockito.Mockito.verify;
 		pane.translateBy(new Dimension2D(dx, dy));
 		WaitForAsyncUtils.waitForFxEvents();
 		final Transform now = target.captureTransform();
-		assertThat(now.getTx() - previous.getTy()).isEqualTo(-dx * zoom);
+		assertThat(now.getTx() - previous.getTx()).isEqualTo(-dx * zoom);
 		assertThat(now.getTy() - previous.getTy()).isEqualTo(-dy * zoom);
 	}
 
@@ -380,7 +382,7 @@ import static org.mockito.Mockito.verify;
 		verify(finished, timeout(1000)).run();
 		// should be done at this point
 		final Transform last = target.captureTransform();
-		assertThat(last.getTx() - init.getTy()).isEqualTo(-256);
+		assertThat(last.getTx() - init.getTx()).isEqualTo(-256);
 		assertThat(last.getTy() - init.getTy()).isEqualTo(-256);
 	}
 
