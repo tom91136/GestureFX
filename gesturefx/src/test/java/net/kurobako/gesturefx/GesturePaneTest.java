@@ -313,6 +313,7 @@ import static org.mockito.Mockito.verify;
 		Runnable finished = mock(Runnable.class);
 		double zoom = 3d;
 		pane.zoomTo(2, new Point2D(512, 512));
+		WaitForAsyncUtils.waitForFxEvents();
 		pane.animate(Duration.millis(200))
 				.interpolateWith(Interpolator.EASE_BOTH)
 				.beforeStart(before)
@@ -334,8 +335,10 @@ import static org.mockito.Mockito.verify;
 		final double dy = 200d;
 		pane.setScrollBarPolicy(ScrollBarPolicy.NEVER);
 		pane.zoomTo(zoom, pane.targetPointAtViewportCentre());
+		WaitForAsyncUtils.waitForFxEvents();
 		final Transform last = target.captureTransform();
 		pane.centreOn(new Point2D(dx, dy));
+		WaitForAsyncUtils.waitForFxEvents();
 		final Transform now = target.captureTransform();
 		assertThat(now.getTx()).isEqualTo(-last.getTx() - dx * zoom);
 		assertThat(now.getTy()).isEqualTo(-last.getTy() - dy * zoom);
@@ -347,9 +350,12 @@ import static org.mockito.Mockito.verify;
 		final double dy = -40d;
 		pane.setScrollBarPolicy(ScrollBarPolicy.NEVER);
 		pane.zoomTo(zoom, pane.targetPointAtViewportCentre());
+		WaitForAsyncUtils.waitForFxEvents();
 		pane.centreOn(new Point2D(256, 256));
+		WaitForAsyncUtils.waitForFxEvents();
 		final Transform previous = target.captureTransform();
 		pane.translateBy(new Dimension2D(dx, dy));
+		WaitForAsyncUtils.waitForFxEvents();
 		final Transform now = target.captureTransform();
 		assertThat(now.getTx() - previous.getTy()).isEqualTo(-dx * zoom);
 		assertThat(now.getTy() - previous.getTy()).isEqualTo(-dy * zoom);
@@ -359,7 +365,9 @@ import static org.mockito.Mockito.verify;
 		final double zoom = 2d;
 		pane.setScrollBarPolicy(ScrollBarPolicy.NEVER);
 		pane.zoomTo(zoom, pane.targetPointAtViewportCentre());
+		WaitForAsyncUtils.waitForFxEvents();
 		pane.centreOn(Point2D.ZERO);
+		WaitForAsyncUtils.waitForFxEvents();
 		Runnable before = mock(Runnable.class);
 		Runnable finished = mock(Runnable.class);
 		pane.animate(Duration.millis(200))

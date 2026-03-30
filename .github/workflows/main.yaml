@@ -15,10 +15,18 @@ jobs:
       fail-fast: false
       matrix:
         os: [ ubuntu-latest, windows-latest, macos-latest ]
-        java: [ '17', '21', '22', '23', '24', '25' ]
-        javafx: [ '17.0.15', '21.0.7', '22.0.2', '23.0.2', '24.0.2', '25.0.2' ]
+        java: [ '11', '17', '21', '25' ]
+        javafx: [ '11.0.2', '17.0.15', '21.0.7', '22.0.2', '23.0.2', '24.0.2', '25.0.2' ]
         exclude:
           # JavaFX N requires JDK >= N-2
+          - { java: '11', javafx: '17.0.15' }
+          - { java: '11', javafx: '21.0.7' }
+          - { java: '11', javafx: '22.0.2' }
+          - { java: '11', javafx: '23.0.2' }
+          - { java: '11', javafx: '24.0.2' }
+          - { java: '11', javafx: '25.0.2' }
+          #
+          - { java: '17', javafx: '21.0.7' }
           - { java: '17', javafx: '22.0.2' }
           - { java: '17', javafx: '23.0.2' }
           - { java: '17', javafx: '24.0.2' }
@@ -26,8 +34,8 @@ jobs:
           #
           - { java: '21', javafx: '24.0.2' }
           - { java: '21', javafx: '25.0.2' }
-          #
-          - { java: '22', javafx: '25.0.2' }
+          # JavaFX 11 has no mac-aarch64 natives (predates Apple Silicon)
+          - { os: 'macos-latest', javafx: '11.0.2' }
     name: ${{ matrix.os }} / JDK ${{ matrix.java }} / JavaFX ${{ matrix.javafx }}
     steps:
       - uses: actions/checkout@v6
