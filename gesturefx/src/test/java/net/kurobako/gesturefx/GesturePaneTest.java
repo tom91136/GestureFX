@@ -24,6 +24,8 @@ import org.testfx.api.FxToolkit;
 import org.testfx.matcher.base.NodeMatchers;
 import org.testfx.util.WaitForAsyncUtils;
 
+import static org.testfx.util.WaitForAsyncUtils.waitForAsyncFx;
+
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.function.Consumer;
@@ -184,8 +186,7 @@ import static org.mockito.Mockito.verify;
 	}
 
 	@Test public void testDragAndDrop() {
-		pane.zoomTo(2, pane.targetPointAtViewportCentre());
-		WaitForAsyncUtils.waitForFxEvents();
+		waitForAsyncFx(5000, () -> pane.zoomTo(2, pane.targetPointAtViewportCentre()));
 		Transform expected = target.captureTransform();
 		FxRobot robot = new FxRobot();
 		robot.moveTo(pane)
@@ -204,8 +205,7 @@ import static org.mockito.Mockito.verify;
 	@Test public void testGestureDisabling() {
 		pane.setScrollBarPolicy(ScrollBarPolicy.NEVER);
 		pane.setGestureEnabled(false);
-		pane.zoomTo(2, pane.targetPointAtViewportCentre());
-		WaitForAsyncUtils.waitForFxEvents();
+		waitForAsyncFx(5000, () -> pane.zoomTo(2, pane.targetPointAtViewportCentre()));
 		Transform expected = target.captureTransform();
 		FxRobot robot = new FxRobot();
 		robot.moveTo(pane)
@@ -265,8 +265,7 @@ import static org.mockito.Mockito.verify;
 
 	@Test public void testScaleByScroll() {
 		pane.scrollModeProperty().set(ScrollMode.ZOOM);
-		pane.zoomTo(5, pane.targetPointAtViewportCentre());
-		WaitForAsyncUtils.waitForFxEvents();
+		waitForAsyncFx(5000, () -> pane.zoomTo(5, pane.targetPointAtViewportCentre()));
 		FxRobot robot = new FxRobot();
 		assertThat(pane.getCurrentScale()).isEqualTo(5d);
 		robot.moveTo(pane);
@@ -314,8 +313,7 @@ import static org.mockito.Mockito.verify;
 		Runnable before = mock(Runnable.class);
 		Runnable finished = mock(Runnable.class);
 		double zoom = 3d;
-		pane.zoomTo(2, new Point2D(512, 512));
-		WaitForAsyncUtils.waitForFxEvents();
+		waitForAsyncFx(5000, () -> pane.zoomTo(2, new Point2D(512, 512)));
 		pane.animate(Duration.millis(200))
 				.interpolateWith(Interpolator.EASE_BOTH)
 				.beforeStart(before)
@@ -323,6 +321,7 @@ import static org.mockito.Mockito.verify;
 				.zoomTo(zoom, Point2D.ZERO);
 		verify(before, timeout(100)).run();
 		verify(finished, timeout(1000)).run();
+		WaitForAsyncUtils.waitForFxEvents();
 		// should be done at this point
 		final Transform last = target.captureTransform();
 		assertThat(last.getTx()).isEqualTo(-512);
@@ -336,11 +335,9 @@ import static org.mockito.Mockito.verify;
 		final double dx = 300d;
 		final double dy = 200d;
 		pane.setScrollBarPolicy(ScrollBarPolicy.NEVER);
-		pane.zoomTo(zoom, pane.targetPointAtViewportCentre());
-		WaitForAsyncUtils.waitForFxEvents();
+		waitForAsyncFx(5000, () -> pane.zoomTo(zoom, pane.targetPointAtViewportCentre()));
 		final Transform last = target.captureTransform();
-		pane.centreOn(new Point2D(dx, dy));
-		WaitForAsyncUtils.waitForFxEvents();
+		waitForAsyncFx(5000, () -> pane.centreOn(new Point2D(dx, dy)));
 		final Transform now = target.captureTransform();
 		assertThat(now.getTx()).isEqualTo(-last.getTx() - dx * zoom);
 		assertThat(now.getTy()).isEqualTo(-last.getTy() - dy * zoom);
@@ -351,13 +348,10 @@ import static org.mockito.Mockito.verify;
 		final double dx = 30d;
 		final double dy = -40d;
 		pane.setScrollBarPolicy(ScrollBarPolicy.NEVER);
-		pane.zoomTo(zoom, pane.targetPointAtViewportCentre());
-		WaitForAsyncUtils.waitForFxEvents();
-		pane.centreOn(new Point2D(256, 256));
-		WaitForAsyncUtils.waitForFxEvents();
+		waitForAsyncFx(5000, () -> pane.zoomTo(zoom, pane.targetPointAtViewportCentre()));
+		waitForAsyncFx(5000, () -> pane.centreOn(new Point2D(256, 256)));
 		final Transform previous = target.captureTransform();
-		pane.translateBy(new Dimension2D(dx, dy));
-		WaitForAsyncUtils.waitForFxEvents();
+		waitForAsyncFx(5000, () -> pane.translateBy(new Dimension2D(dx, dy)));
 		final Transform now = target.captureTransform();
 		assertThat(now.getTx() - previous.getTx()).isEqualTo(-dx * zoom);
 		assertThat(now.getTy() - previous.getTy()).isEqualTo(-dy * zoom);
@@ -366,10 +360,8 @@ import static org.mockito.Mockito.verify;
 	@Test public void testAnimatedTranslate() throws Exception {
 		final double zoom = 2d;
 		pane.setScrollBarPolicy(ScrollBarPolicy.NEVER);
-		pane.zoomTo(zoom, pane.targetPointAtViewportCentre());
-		WaitForAsyncUtils.waitForFxEvents();
-		pane.centreOn(Point2D.ZERO);
-		WaitForAsyncUtils.waitForFxEvents();
+		waitForAsyncFx(5000, () -> pane.zoomTo(zoom, pane.targetPointAtViewportCentre()));
+		waitForAsyncFx(5000, () -> pane.centreOn(Point2D.ZERO));
 		Runnable before = mock(Runnable.class);
 		Runnable finished = mock(Runnable.class);
 		pane.animate(Duration.millis(200))
@@ -380,6 +372,7 @@ import static org.mockito.Mockito.verify;
 		final Transform init = target.captureTransform();
 		verify(before, timeout(100)).run();
 		verify(finished, timeout(1000)).run();
+		WaitForAsyncUtils.waitForFxEvents();
 		// should be done at this point
 		final Transform last = target.captureTransform();
 		assertThat(last.getTx() - init.getTx()).isEqualTo(-256);
