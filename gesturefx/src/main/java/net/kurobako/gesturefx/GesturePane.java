@@ -46,28 +46,35 @@ import static net.kurobako.gesturefx.GesturePane.ScrollBarPolicy.AS_NEEDED;
 import static net.kurobako.gesturefx.GesturePane.ScrollMode.PAN;
 
 /**
- * Pane that applies transformations to some implementation of {@link Transformable} when a
- * gesture is applied
+ * A pane that applies pan and zoom transformations to its content in response to mouse,
+ * trackpad, and touch gestures.
  * <p>
- * Terms:
- * <ol>
- * <li>Target - the actual object that receives transformation</li>
- * <li>Viewport - the view area of the target(not counting vertical and horizontal scrollbars)</li>
- * </ol>
+ * Two content models are supported:
+ * <ul>
+ *   <li><b>Node content</b> - set via {@link #setContent(Node)}; the node is added as a child
+ *       of the pane and transformed via a JavaFX {@link Affine} transform.</li>
+ *   <li><b>Transformable target</b> - set via {@link #setTarget(Transformable)}; the pane
+ *       delegates transformation to a custom {@link Transformable} implementation, suitable for
+ *       canvas or OpenGL surfaces that cannot be wrapped in a scene graph node.</li>
+ * </ul>
+ * Content and target are mutually exclusive: setting one clears the other.
  * <p>
- * The measured size of the node defaults the the target's size, you can use the usual
- * {@link Region#setPrefSize(double, double)} and related methods/bindings to
- * provide alternative dimensions.
- * To listen for transformation changes, register event listeners for {@link AffineEvent}, for
- * example:
- * <pre>
- * {@code
- * GesturePane pane = //...
- * pane.addEventHandler(AffineEvent.CHANGED, e ->{ ... });
- * }
- * </pre>
- * See documentation for the {@link AffineEvent} for more information on the methods provided in
- * the event
+ * The pane operates in two coordinate spaces:
+ * <ul>
+ *   <li><em>Viewport coordinates</em> - the pixel space of the pane itself.</li>
+ *   <li><em>Target coordinates</em> - the untransformed coordinate space of the content.</li>
+ * </ul>
+ * Methods that accept or return points are documented with which space they use.
+ * <p>
+ * To listen for transformation changes, register a handler for {@link AffineEvent}:
+ * <pre>{@code
+ * GesturePane pane = ...;
+ * pane.addEventHandler(AffineEvent.CHANGED, e -> { ... });
+ * }</pre>
+ * <p>
+ * The pane's preferred size defaults to the target's dimensions. Use
+ * {@link Region#setPrefSize(double, double)} or the {@code fitWidth}/{@code fitHeight}
+ * properties to override this.
  */
 @SuppressWarnings({"unused", "WeakerAccess"})
 @DefaultProperty("content")
@@ -127,9 +134,9 @@ public class GesturePane extends Control implements GesturePaneOps {
 	final ObjectProperty<Bounds> viewport = new SimpleObjectProperty<>(ZERO_BOX);
 
 	/**
-	 * Create a new {@link GesturePane} with the specified {@link Transformable}
+	 * Creates a new {@link GesturePane} backed by the given {@link Transformable}.
 	 *
-	 * @param target the transformable to apply the transforms to
+	 * @param target the transformable to apply transforms to; must not be null
 	 */
 	@SuppressWarnings("this-escape")
 	public GesturePane(Transformable target) {
@@ -138,10 +145,10 @@ public class GesturePane extends Control implements GesturePaneOps {
 	}
 
 	/**
-	 * Creates a new {@link GesturePane} with the specified node as children(i.e the node gets
-	 * added to the pane)
+	 * Creates a new {@link GesturePane} with the given node as its content.
+	 * The node is added as a child of the pane and transformed directly.
 	 *
-	 * @param target the node to apply transforms to
+	 * @param target the node to apply transforms to; must not be null
 	 */
 	@SuppressWarnings("this-escape")
 	public GesturePane(Node target) {
@@ -149,6 +156,11 @@ public class GesturePane extends Control implements GesturePaneOps {
 		setContent(target);
 	}
 
+	/**
+	 * Creates a new {@link GesturePane} with no content.
+	 * Content or a target can be set later via {@link #setContent(Node)} or
+	 * {@link #setTarget(Transformable)}.
+	 */
 	@SuppressWarnings("this-escape")
 	public GesturePane() {
 		super();
@@ -222,23 +234,18 @@ public class GesturePane extends Control implements GesturePaneOps {
 	protected Skin<?> createDefaultSkin() { return new GesturePaneSkin(this); }
 
 	/**
-	 * Centre of the current viewport.
-	 * <br>
-	 * This equivalent to :
-	 * <pre>
-	 * {@code new Point2D(getViewportWidth()/2, getViewportHeight()/2) })
-	 * </pre>
+	 * Returns the centre point of the viewport in viewport coordinates.
 	 *
-	 * @return a new point located at the centre of the viewport
+	 * @return a new point at {@code (viewportWidth / 2, viewportHeight / 2)}
 	 */
 	public Point2D viewportCentre() {
 		return new Point2D(getViewportWidth() / 2, getViewportHeight() / 2);
 	}
 
 	/**
-	 * The point on the target at which the current centre point of the viewport is.
+	 * Returns the point on the target that is currently visible at the centre of the viewport.
 	 *
-	 * @return a point on the target using target's coordinate system
+	 * @return the target-coordinate point aligned with the viewport centre
 	 */
 	public Point2D targetPointAtViewportCentre() {
 		try {
@@ -250,11 +257,11 @@ public class GesturePane extends Control implements GesturePaneOps {
 	}
 
 	/**
-	 * Computes the point on the target at the given viewport point.
+	 * Returns the target-coordinate point corresponding to the given viewport point.
 	 *
-	 * @param viewportPoint a point on the viewport
-	 * @return a point on the target that corresponds to the viewport point or empty if the point
-	 * is not within the the bound returned by {@link #getViewportBound()}
+	 * @param viewportPoint a point in viewport coordinates
+	 * @return the corresponding target-coordinate point, or empty if {@code viewportPoint}
+	 *         lies outside the bounds returned by {@link #getViewportBound()}
 	 */
 	public Optional<Point2D> targetPointAt(Point2D viewportPoint) {
 		if (!getViewportBound().contains(viewportPoint)) return Optional.empty();
@@ -267,10 +274,10 @@ public class GesturePane extends Control implements GesturePaneOps {
 	}
 
 	/**
-	 * Computes the point on the viewport at the given target point.
+	 * Returns the viewport-coordinate point corresponding to the given target point.
 	 *
-	 * @param targetPoint a point on the target
-	 * @return a point on the viewport that corresponds to the target point
+	 * @param targetPoint a point in target coordinates
+	 * @return the corresponding point in viewport coordinates
 	 */
 	public Point2D viewportPointAt(Point2D targetPoint) {
 		return affine.transform(targetPoint);
@@ -508,41 +515,58 @@ public class GesturePane extends Control implements GesturePaneOps {
 		};
 	}
 
+	/**
+	 * First step in the animation builder chain returned by {@link #animate(Duration)}.
+	 * Allows setting the interpolator before configuring callbacks and the operation.
+	 */
 	public interface AnimationInterpolatorBuilder extends AnimationStartBuilder {
 		/**
-		 * @param interpolator the interpolator to use for the animation
-		 * @return the next group of configurable options in a type-safe builder
+		 * Sets the interpolator for the animation. If not called, {@link Interpolator#LINEAR}
+		 * is used.
+		 *
+		 * @param interpolator the interpolator; must not be null
+		 * @return the next builder step
 		 */
 		AnimationStartBuilder interpolateWith(Interpolator interpolator);
 	}
 
+	/**
+	 * Second step in the animation builder chain. Allows registering a pre-start callback.
+	 */
 	public interface AnimationStartBuilder extends AnimationEndBuilder {
 		/**
-		 * @param action the action to execute <b>before</b> the animation starts
-		 * @return the next group of configurable options in a type-safe builder
+		 * Registers an action to run on the FX thread immediately before the animation begins.
+		 *
+		 * @param action the callback; must not be null
+		 * @return the next builder step
 		 */
 		AnimationEndBuilder beforeStart(Runnable action);
 	}
 
+	/**
+	 * Third step in the animation builder chain. Allows registering a post-finish callback,
+	 * then exposes the full {@link GesturePaneOps} API to specify the animated operation.
+	 */
 	public interface AnimationEndBuilder extends GesturePaneOps {
 		/**
-		 * @param action the action to execute <b>after</b> the animation finishes
-		 * @return the next group of configurable options in a type-safe builder
+		 * Registers an action to run on the FX thread after the animation completes.
+		 *
+		 * @param action the callback; must not be null
+		 * @return the ops interface used to specify the operation to animate
 		 */
 		GesturePaneOps afterFinished(Runnable action);
 	}
 
 	/**
-	 * Resets zoom to minimum scale
+	 * Resets the zoom to {@link #getMinScale()}, pivoting at the current viewport centre.
 	 */
 	public final void reset() {
 		zoomTo(getMinScale(), targetPointAtViewportCentre());
 	}
 
 	/**
-	 * Resets zoom to the minimum scale and conditionally centres the image depending on the
-	 * current
-	 * {@link FitMode}
+	 * Resets the scale to {@link #getMinScale()} and re-centres the content according to the
+	 * current {@link FitMode}.
 	 */
 	public void cover() {
 		fireAffineEvent(AffineEvent.CHANGE_STARTED);
@@ -626,24 +650,42 @@ public class GesturePane extends Control implements GesturePaneOps {
 		}
 
 		// clamp scale
+		boolean validTarget = targetWidth > 0 && targetHeight > 0;
+		double coverScale = validTarget ? Math.max(width / targetWidth, height / targetHeight) : 1;
+		double fitScale   = validTarget ? Math.min(width / targetWidth, height / targetHeight) : 0;
 		switch (fitMode.get()) {
 			case COVER:
-				if (width < scaledWidth && height < scaledHeight) break;
-				tsX = tsY = targetWidth <= 0 || targetHeight <= 0 ?
-						1 :
-						Math.max(width / targetWidth, height / targetHeight);
+				if (width >= scaledWidth || height >= scaledHeight)
+					tsX = tsY = coverScale;
+				break;
+			case COVER_FILL:
+				tsX = tsY = coverScale;
 				break;
 			case FIT:
-				double fitScale = (targetWidth <= 0 || targetHeight <= 0) ?
-						0 :
-						Math.min(width / targetWidth, height / targetHeight);
-				if (zoomPositive || scaleX > fitScale) break;
+				if (!zoomPositive && scaleX <= fitScale) {
+					tx = (width - fitScale * targetWidth) / 2;
+					ty = (height - fitScale * targetHeight) / 2;
+					tsX = tsY = fitScale;
+				}
+				break;
+			case FIT_FILL:
 				tx = (width - fitScale * targetWidth) / 2;
 				ty = (height - fitScale * targetHeight) / 2;
-				tsX = tsY  = fitScale;
+				tsX = tsY = fitScale;
 				break;
 			default:
 				break;
+		}
+
+		// If the scale changed (e.g. COVER/COVER_FILL on viewport resize), the translation was
+		// clamped against the old scale above and must be re-clamped against the new scale.
+		if (tsX != scaleX || tsY != scaleY) {
+			double newScaledWidth  = tsX * targetWidth;
+			double newScaledHeight = tsY * targetHeight;
+			tx = clamp(width - newScaledWidth, 0, tx);
+			ty = clamp(height - newScaledHeight, 0, ty);
+			if (width  >= newScaledWidth)  tx = (width  - newScaledWidth)  / 2;
+			if (height >= newScaledHeight) ty = (height - newScaledHeight) / 2;
 		}
 
 		// to prevent excessive affine events as we don't have access to the atomic change field 
@@ -711,47 +753,49 @@ public class GesturePane extends Control implements GesturePaneOps {
 		else return 0;
 	}
 
+	/** Returns the current viewport width in pixels, excluding scrollbar insets. */
 	public double getViewportWidth() { return viewport.get().getWidth(); }
+	/** Returns the current viewport height in pixels, excluding scrollbar insets. */
 	public double getViewportHeight() { return viewport.get().getHeight(); }
+	/** Returns the current viewport bounds in viewport coordinates. */
 	public Bounds getViewportBound() { return viewport.get(); }
+	/** Read-only property for the viewport bounds. */
 	public ReadOnlyObjectProperty<Bounds> viewportBoundProperty() { return viewport; }
 
 	/**
-	 * @return the current target if set; null if unset.
-	 * <b>NOTE</b>: Targets and content nodes are mutually exclusive, if one is set, the other one
-	 * is automatically set to null
+	 * Returns the current {@link Transformable} target, or {@code null} if none is set.
+	 * Target and content are mutually exclusive; setting one clears the other.
 	 */
 	public Transformable getTarget() { return target.get(); }
 	public ObjectProperty<Transformable> targetProperty() { return target; }
 	public void setTarget(Transformable target) { this.target.set(target); }
 
 	/**
-	 * @return the current content node if set; null if unset
-	 * <b>NOTE</b>: Targets and content nodes are mutually exclusive, if one is set, the other one
-	 * is automatically set to null
+	 * Returns the current content node, or {@code null} if none is set.
+	 * Content and target are mutually exclusive; setting one clears the other.
 	 */
 	public Node getContent() { return content.get(); }
 	public ObjectProperty<Node> contentProperty() { return content; }
 	public void setContent(Node content) { this.content.set(content); }
 
 	/**
-	 * @return which scrollbar policy the vertical scrollbar uses
+	 * Returns the {@link ScrollBarPolicy} applied to the vertical scrollbar.
 	 */
 	public ScrollBarPolicy getVbarPolicy() { return vbarPolicy.get(); }
 	public ObjectProperty<ScrollBarPolicy> vbarPolicyProperty() { return vbarPolicy; }
 	public void setVbarPolicy(ScrollBarPolicy policy) { this.vbarPolicy.set(policy); }
 
-
 	/**
-	 * @return which scrollbar policy the horizontal scrollbar uses
+	 * Returns the {@link ScrollBarPolicy} applied to the horizontal scrollbar.
 	 */
 	public ScrollBarPolicy getHbarPolicy() { return hbarPolicy.get(); }
 	public ObjectProperty<ScrollBarPolicy> hbarPolicyProperty() { return hbarPolicy; }
 	public void setHbarPolicy(ScrollBarPolicy policy) { this.hbarPolicy.set(policy); }
 
 	/**
-	 * Sets the same scrollbar policy for both vbar and hbar
-	 * @param policy the policy to use
+	 * Convenience method to set the same {@link ScrollBarPolicy} on both scrollbars at once.
+	 *
+	 * @param policy the policy to apply to both the horizontal and vertical scrollbars
 	 */
 	public void setScrollBarPolicy(ScrollBarPolicy policy) {
 		setHbarPolicy(policy);
@@ -759,100 +803,123 @@ public class GesturePane extends Control implements GesturePaneOps {
 	}
 
 	/**
-	 * @return whether there is an on-going animation or gesture
+	 * Returns {@code true} if a gesture or programmatic animation is currently in progress.
 	 */
 	public boolean isChanging() { return changing.get(); }
 	public ReadOnlyBooleanProperty changingProperty() { return changing; }
 
 	/**
-	 * @return whether gesture inputs are enabled; this only affects inputs and does not lock the
-	 * affine transform itself
+	 * Returns whether gesture inputs (mouse drag, scroll, touch) are enabled.
+	 * Disabling this does not lock the affine transform; programmatic changes still work.
 	 */
 	public boolean isGestureEnabled() { return gestureEnabled.get(); }
 	public BooleanProperty gestureEnabledProperty() { return gestureEnabled; }
 	public void setGestureEnabled(boolean enable) { this.gestureEnabled.set(enable); }
 
 	/**
-	 * @return whether the content node (if set) will be clipped with {@link Node#setClip(Node)}
-	 * using a viewport-sized rectangle
+	 * Returns whether the content node is clipped to the viewport bounds.
+	 * When enabled, a viewport-sized rectangle clip is applied via {@link Node#setClip(Node)}.
 	 */
 	public boolean isClipEnabled() { return clipEnabled.get(); }
 	public BooleanProperty clipEnabledProperty() { return clipEnabled; }
 	public void setClipEnabled(boolean enable) { this.clipEnabled.set(enable); }
 
-
+	/**
+	 * Returns whether the pane's preferred width tracks the target's width.
+	 * When {@code true}, the measured preferred width equals the target width.
+	 */
 	public boolean isFitWidth() { return fitWidth.get(); }
 	public BooleanProperty fitWidthProperty() { return fitWidth; }
 	public void setFitWidth(boolean fitWidth) { this.fitWidth.set(fitWidth); }
 
+	/**
+	 * Returns whether the pane's preferred height tracks the target's height.
+	 * When {@code true}, the measured preferred height equals the target height.
+	 */
 	public boolean isFitHeight() { return fitHeight.get(); }
 	public BooleanProperty fitHeightProperty() { return fitHeight; }
 	public void setFitHeight(boolean fitHeight) { this.fitHeight.set(fitHeight); }
 
 	/**
-	 * @return the current {@link FitMode}
+	 * Returns the current {@link FitMode}, which controls how content is scaled relative to
+	 * the viewport. Defaults to {@link FitMode#FIT}.
 	 */
 	public FitMode getFitMode() { return fitMode.get(); }
 	public ObjectProperty<FitMode> fitModeProperty() { return fitMode; }
 	public void setFitMode(FitMode mode) { this.fitMode.set(mode); }
 
 	/**
-	 * @return the current {@link ScrollMode}
+	 * Returns the current {@link ScrollMode}, which controls how scroll events are interpreted.
+	 * Defaults to {@link ScrollMode#PAN}.
 	 */
 	public ScrollMode getScrollMode() { return scrollMode.get(); }
 	public ObjectProperty<ScrollMode> scrollModeProperty() { return scrollMode; }
 	public void setScrollMode(ScrollMode mode) { this.scrollMode.set(mode); }
 
-
+	/**
+	 * Returns whether scroll translation direction is inverted.
+	 * When {@code true}, scrolling up moves content down (natural/trackpad-style scrolling).
+	 */
 	public boolean isInvertScrollTranslate() { return invertScrollTranslate.get(); }
 	public BooleanProperty invertScrollTranslateProperty() { return invertScrollTranslate; }
 	public void setInvertScrollTranslate(boolean invertScrollTranslate) { this.invertScrollTranslate.set(invertScrollTranslate); }
 
+	/**
+	 * Returns whether scaling on the x-axis is locked.
+	 * When locked, zoom gestures and programmatic zoom have no effect on the x-axis scale.
+	 */
 	public boolean isLockScaleX() { return lockScaleX.get(); }
 	public BooleanProperty lockScaleXProperty() { return lockScaleX; }
 	public void setLockScaleX(boolean lockScaleX) { this.lockScaleX.set(lockScaleX); }
 
+	/**
+	 * Returns whether scaling on the y-axis is locked.
+	 * When locked, zoom gestures and programmatic zoom have no effect on the y-axis scale.
+	 */
 	public boolean isLockScaleY() { return lockScaleY.get(); }
 	public BooleanProperty lockScaleYProperty() { return lockScaleY; }
 	public void setLockScaleY(boolean lockScaleY) { this.lockScaleY.set(lockScaleY); }
 
-
 	/**
-	 * @return the current x axis scale (x == y iff bindScale is true); defaults to 1.0 initially unless the selected {@link FitMode}
-	 * disallows this
+	 * Returns the current x-axis scale. When {@link #isBindScale()} is {@code true} the x and
+	 * y scales are kept equal, so this is equivalent to {@link #getCurrentScaleX()}.
 	 */
 	public double getCurrentScale() { return scaleX.get(); }
 	public DoubleProperty currentScaleProperty() { return scaleX; }
 
+	/**
+	 * Returns whether the x and y scales are bound together.
+	 * When {@code true}, any change to one axis scale is immediately applied to the other.
+	 */
 	public boolean isBindScale() { return bindScale.get(); }
 	public BooleanProperty bindScaleProperty() { return bindScale; }
 	public void setBindScale(boolean bindScale) { this.bindScale.set(bindScale); }
 
 	/**
-	 * @return the current minimum scale; defaults to {@link GesturePane#DEFAULT_MIN_SCALE}
+	 * Returns the minimum allowed scale. Defaults to {@link #DEFAULT_MIN_SCALE}.
+	 * The active {@link FitMode} may enforce a higher effective minimum.
 	 */
 	public double getMinScale() { return minScale.get(); }
 	public DoubleProperty minScaleProperty() { return minScale; }
 	public void setMinScale(double scale) { this.minScale.set(scale); }
 
 	/**
-	 * @return the current maximum scale; defaults to {@link GesturePane#DEFAULT_MAX_SCALE}
+	 * Returns the maximum allowed scale. Defaults to {@link #DEFAULT_MAX_SCALE}.
 	 */
 	public double getMaxScale() { return maxScale.get(); }
 	public DoubleProperty maxScaleProperty() { return maxScale; }
 	public void setMaxScale(double scale) { this.maxScale.set(scale); }
 
 	/**
-	 * @return the current x axis scale; defaults to 1.0 initially unless the selected {@link FitMode}
-	 * disallows this
+	 * Returns the current x-axis scale factor. The initial value is 1.0 unless the active
+	 * {@link FitMode} computes a different scale on first layout.
 	 */
 	public double getCurrentScaleX() { return scaleX.get(); }
 	public DoubleProperty currentScaleXProperty() { return scaleX; }
 
-
 	/**
-	 * @return the current y axis scale; defaults to 1.0 initially unless the selected {@link FitMode}
-	 * disallows this
+	 * Returns the current y-axis scale factor. The initial value is 1.0 unless the active
+	 * {@link FitMode} computes a different scale on first layout.
 	 */
 	public double getCurrentScaleY() { return scaleY.get(); }
 	public DoubleProperty currentScaleYProperty() { return scaleY; }
@@ -860,8 +927,9 @@ public class GesturePane extends Control implements GesturePaneOps {
 
 
 	/**
-	 * @return the current x axis offset in <b>target coordinates</b>, see
-	 * {@link GesturePane#getTargetViewport()}
+	 * Returns the current x-axis pan offset in target coordinates.
+	 *
+	 * @see #getTargetViewport()
 	 */
 	public double getCurrentX() { return affine.getTx() / getCurrentScaleX(); }
 	public DoubleBinding currentXProperty() {
@@ -869,8 +937,9 @@ public class GesturePane extends Control implements GesturePaneOps {
 	}
 
 	/**
-	 * @return the current y axis offset in <b>target coordinates</b>, see
-	 * {@link GesturePane#getTargetViewport()}
+	 * Returns the current y-axis pan offset in target coordinates.
+	 *
+	 * @see #getTargetViewport()
 	 */
 	public double getCurrentY() { return affine.getTy() / getCurrentScaleY(); }
 	public DoubleBinding currentYProperty() {
@@ -878,21 +947,24 @@ public class GesturePane extends Control implements GesturePaneOps {
 	}
 
 	/**
-	 * @return the scroll zoom factor controlling the constant factor of how much each scroll
-	 * event affects the transformation; defaults to 1
+	 * Returns the scroll zoom factor: a multiplier applied to each scroll zoom event.
+	 * Higher values produce larger zoom steps per scroll tick. Defaults to
+	 * {@value #DEFAULT_ZOOM_FACTOR}.
 	 */
 	public double getScrollZoomFactor() { return scrollZoomFactor.get(); }
 	public DoubleProperty scrollZoomFactorProperty() { return scrollZoomFactor; }
 	public void setScrollZoomFactor(double factor) { this.scrollZoomFactor.set(factor); }
 
 	/**
-	 * @return the viewport bounding box in <b>target coordinates</b>
+	 * Returns the currently visible area of the target as a bounding box in target coordinates.
+	 * This is the inverse-transformed viewport: the region of the target currently on screen.
 	 */
 	public Bounds getTargetViewport() { return targetRect.get(); }
 	public ObjectProperty<Bounds> targetViewportProperty() { return targetRect; }
 
 	/**
-	 * @return a <b>copy</b> of the current affine transformation
+	 * Returns a snapshot copy of the current affine transformation.
+	 * Modifying the returned object has no effect on the pane.
 	 */
 	public Affine getAffine() { return new Affine(affine); }
 
@@ -903,73 +975,111 @@ public class GesturePane extends Control implements GesturePaneOps {
 	}
 
 	/**
-	 * Modes for different minimum scales
+	 * Controls how the content is scaled relative to the viewport.
+	 * <p>
+	 * Modes ending in {@code _FILL} track the viewport size in both directions - if the viewport
+	 * shrinks, the content shrinks with it. The plain variants only enforce a minimum scale:
+	 * the user can zoom in freely, and the scale is not adjusted when the viewport shrinks.
 	 */
 	public enum FitMode {
 		/**
-		 * Node will be scaled to cover the entire pane
+		 * Content is scaled to the smallest size that completely covers the viewport
+		 * (analogous to CSS {@code object-fit: cover}).
+		 * The user may zoom in further, but the scale will not drop below the cover scale.
+		 * If the viewport grows such that the current scale no longer covers, the scale is
+		 * increased to compensate; shrinking the viewport does not reduce the scale.
 		 */
 		COVER,
 		/**
-		 * Node will be scaled such that any of the edge touches the pane
+		 * Content is always scaled to exactly cover the viewport, tracking resize in both
+		 * directions. The scale is recomputed whenever the viewport changes size, so the
+		 * content always fills the pane with no letterboxing. User zoom gestures are ignored.
+		 */
+		COVER_FILL,
+		/**
+		 * Content is scaled to the largest size that fits entirely within the viewport
+		 * (analogous to CSS {@code object-fit: contain}).
+		 * The user may zoom in further, but the scale will not drop below the fit scale.
+		 * If the viewport grows, the scale is increased so the content continues to fit;
+		 * shrinking the viewport does not reduce the scale.
 		 */
 		FIT,
 		/**
-		 * Node will not be scaled but constrained to the center of the viewport
+		 * Content is always scaled to exactly fit within the viewport, tracking resize in both
+		 * directions. The scale is recomputed whenever the viewport changes size, so the content
+		 * always fills the pane edge-to-edge with no overflow. User zoom gestures are ignored.
+		 * Analogous to CSS {@code object-fit: contain}.
+		 */
+		FIT_FILL,
+		/**
+		 * Content is not scaled. It is translated so that it remains centred within the
+		 * viewport, but the user cannot pan it outside the viewport bounds.
 		 */
 		CENTER,
 		/**
-		 * Node will not be scaled nor constrained; this also disables both vertical and
-		 * horizontal scrollbar if enabled
+		 * Content is neither scaled nor constrained. The user can pan and zoom freely,
+		 * including outside the viewport bounds. Scrollbars are also disabled in this mode.
 		 */
 		UNBOUNDED
 	}
 
 	/**
-	 * Modes for interpreting scroll events
+	 * Controls how scroll wheel (or trackpad scroll) events are interpreted.
 	 */
 	public enum ScrollMode {
 		/**
-		 * Treat scroll as zoom
+		 * Scroll events zoom the content. The zoom pivot is the cursor position.
 		 */
 		ZOOM,
 		/**
-		 * Treat scroll as pan
+		 * Scroll events pan the content. Horizontal and vertical scroll axes are both supported.
 		 */
 		PAN
 	}
 
+	/**
+	 * Controls when the scrollbars are shown.
+	 */
 	public enum ScrollBarPolicy {
 		/**
-		 * No scrollbar
+		 * Scrollbars are never shown.
 		 */
 		NEVER,
 		/**
-		 * Always enable scrollbar
+		 * Scrollbars are always shown.
 		 */
 		ALWAYS,
 		/**
-		 * Show scrollbar when viewport is panning
+		 * Scrollbars are shown only while the content is being panned, then fade out.
 		 */
 		AS_NEEDED;
 	}
 
 	/**
-	 * A target that can be transformed
+	 * Abstraction for content that is not a JavaFX {@link Node} but still needs to be
+	 * panned and zoomed by a {@link GesturePane}.
+	 * <p>
+	 * Implement this interface to allow the pane to transform a custom surface such as a
+	 * {@link javafx.scene.canvas.Canvas} or an OpenGL viewport. The pane calls
+	 * {@link #setTransform(Affine)} once on attachment to hand over the live affine object;
+	 * the implementation is responsible for applying it on every render pass.
 	 */
 	public interface Transformable {
 		/**
-		 * @return the target width, must not be negative
+		 * Returns the intrinsic width of the target in target coordinates. Must not be negative.
 		 */
 		double width();
+
 		/**
-		 * @return the target height, must not be negative
+		 * Returns the intrinsic height of the target in target coordinates. Must not be negative.
 		 */
 		double height();
+
 		/**
-		 * Sets the transformation for the target, will only happen once
+		 * Called once by the pane to hand over the live {@link Affine} transform object.
+		 * The implementation should apply this transform on every render pass.
 		 *
-		 * @param affine the transformation; never null
+		 * @param affine the transform to apply; never null
 		 */
 		default void setTransform(Affine affine) {}
 	}

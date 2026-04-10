@@ -1,6 +1,16 @@
 Changelog
 =========
 
+## 0.9.0 (TBD)
+
+Library
+
+ * Added `FitMode.FIT_FILL` - always scales content to fit the viewport in both directions, tracking resize exactly (analogous to CSS `object-fit: contain`)
+ * Added `FitMode.COVER_FILL` - always scales content to cover the viewport in both directions, tracking resize exactly (analogous to CSS `object-fit: cover`)
+ * Fixed a bug where `FitMode.FIT` and `FitMode.COVER` did not re-scale when the viewport shrank while content was above the fit/cover scale
+ * Fixed a bug where `clampAtBound` clamped translation against the old scale before updating it, causing a one-frame translation offset after a viewport resize in `COVER`/`COVER_FILL` modes
+ * Rewrote all public API javadoc across `GesturePane`, `GesturePaneOps`, and all nested types
+
 ## 0.8.0 (30/3/2026)
 
 Library
